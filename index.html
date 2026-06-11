@@ -402,6 +402,7 @@ select:focus,input:focus{border-color:var(--gold)}
   25%{transform:translateX(-8px)}
   75%{transform:translateX(8px)}
 }</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 </head>
 <body>
 
@@ -1638,164 +1639,358 @@ function renderMesajlar() {
 }
 
 // ── ÖLÇÜM ──
-async function renderOlcum() {
-  const el=document.getElementById('olcum-c');
-  if(!data.length){el.innerHTML='<div class="alert a-blue" style="margin:12px 16px">Önce öğrenci ekle.</div>';return;}
-  const o=data[olcumOgrIdx];
-  gosterYukleniyor();
-  try{
-    const {data:d,error}=await sb.from('olcumler').select('*').eq('ogrenci_id',o._id).order('tarih',{ascending:true});
-    if(!error) olcumler=d||[];
-  }catch(e){olcumler=[];}
-  gizleYukleniyor();
 
-  const son=olcumler.length?olcumler[olcumler.length-1]:null;
-  const ilk=olcumler.length>1?olcumler[0]:null;
-
-  let html=`<div style="padding:12px 16px 4px;display:flex;gap:8px;align-items:center">
-    <select style="flex:1" onchange="olcumOgrIdx=parseInt(this.value);renderOlcum()">
-      ${data.map((d,i)=>`<option value="${i}"${i===olcumOgrIdx?' selected':''}>${d.ad}</option>`).join('')}
-    </select>
-    <button class="btn btn-ghost btn-sm" onclick="csvYukleAc()">📂 CSV</button>
-    <button class="btn btn-ghost btn-sm" onclick="manuelOlcumEkle()">➕</button>
-  </div>
-  <input type="file" id="csv-input" accept=".csv" style="display:none" onchange="csvOku(event)">`;
-
-  if(son) {
-    const kiloFark=ilk?((son.kilo||0)-(ilk.kilo||0)).toFixed(1):null;
-    html+=`<div class="metric-grid">
-      ${son.kilo?`<div class="metric-card"><div class="metric-label">Güncel Kilo</div><div class="metric-value">${son.kilo}<span style="font-size:12px"> kg</span></div></div>`:''}
-      ${son.yag_yuzdesi?`<div class="metric-card"><div class="metric-label">Yağ Oranı</div><div class="metric-value" style="color:var(--gold)">${son.yag_yuzdesi}<span style="font-size:12px">%</span></div></div>`:''}
-      ${son.kas_yuzdesi?`<div class="metric-card"><div class="metric-label">Kas Oranı</div><div class="metric-value" style="color:var(--blue)">${son.kas_yuzdesi}<span style="font-size:12px">%</span></div></div>`:''}
-      ${kiloFark!==null?`<div class="metric-card"><div class="metric-label">Değişim</div><div class="metric-value" style="color:${kiloFark<0?'var(--green)':'var(--red)'}">${kiloFark>0?'+':''}${kiloFark}<span style="font-size:12px"> kg</span></div></div>`:''}
-    </div>`;
-
-    // Grafik
-    const son8=olcumler.slice(-8);
-    const maxK=Math.max(...son8.map(x=>x.kilo||0),1);
-    html+=`<div class="section-title">📊 KİLO GRAFİĞİ</div>
-    <div class="card" style="margin:0 16px">
-      <div style="display:flex;align-items:flex-end;gap:6px;height:100px;margin-bottom:8px">
-        ${son8.map(o=>{const h=Math.round(((o.kilo||0)/maxK)*90);return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px">
-          <div style="font-size:9px;color:var(--text2);font-weight:600">${o.kilo||''}</div>
-          <div style="width:100%;height:${h}px;background:linear-gradient(180deg,var(--gold-light),var(--gold-dark));border-radius:4px 4px 0 0;min-height:2px"></div>
-          <div style="font-size:8px;color:var(--text3)">${new Date(o.tarih).toLocaleDateString('tr-TR',{day:'2-digit',month:'2-digit'})}</div>
-        </div>`;}).join('')}
-      </div>
-    </div>`;
-
-    // Tablo
-    html+=`<div class="section-title">📋 TÜM ÖLÇÜMLER</div>
-    <div class="card" style="margin:0 16px;padding:0;overflow-x:auto">
-      <table style="width:100%;font-size:12px;border-collapse:collapse">
-        <thead><tr style="border-bottom:1px solid var(--border)">
-          <th style="padding:8px 10px;text-align:left;color:var(--text2);font-weight:600">Tarih</th>
-          <th style="padding:8px 6px;text-align:center;color:var(--text2);font-weight:600">Kilo</th>
-          <th style="padding:8px 6px;text-align:center;color:var(--text2);font-weight:600">Yağ%</th>
-          <th style="padding:8px 6px;text-align:center;color:var(--text2);font-weight:600">Kas%</th>
-          <th style="padding:8px 6px;text-align:center;color:var(--text2);font-weight:600">BMI</th>
-          <th style="padding:8px 6px"></th>
-        </tr></thead><tbody>
-        ${(()=>{
-          // Aylık grupla
-          const aylar=['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
-          const gruplar={};
-          olcumler.forEach(ol=>{
-            const d=new Date(ol.tarih);
-            const k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
-            if(!gruplar[k])gruplar[k]=[];
-            gruplar[k].push(ol);
-          });
-          let rows='';
-          Object.keys(gruplar).sort().reverse().forEach(ay=>{
-            const [yil,m]=ay.split('-');
-            const ayAdi=aylar[parseInt(m)-1]+' '+yil;
-            rows+=`<tr style="background:var(--card2)">
-              <td colspan="6" style="padding:6px 10px;font-size:11px;font-weight:700;color:var(--gold-dark);letter-spacing:1px;text-transform:uppercase">${ayAdi}</td>
-            </tr>`;
-            gruplar[ay].slice().reverse().forEach(ol=>{
-              rows+=`<tr style="border-bottom:0.5px solid var(--border)">
-                <td style="padding:8px 10px">${new Date(ol.tarih).toLocaleDateString('tr-TR')}</td>
-                <td style="padding:8px 6px;text-align:center;font-weight:600">${ol.kilo||'-'}</td>
-                <td style="padding:8px 6px;text-align:center;color:var(--gold)">${ol.yag_yuzdesi?ol.yag_yuzdesi+'%':'-'}</td>
-                <td style="padding:8px 6px;text-align:center;color:var(--blue)">${ol.kas_yuzdesi?ol.kas_yuzdesi+'%':'-'}</td>
-                <td style="padding:8px 6px;text-align:center">${ol.bmi||'-'}</td>
-                <td style="padding:6px;text-align:center">
-                  <button onclick="olcumSil('${ol.id}')" 
-                    style="background:var(--red-bg);border:1px solid var(--red-border);color:var(--red);cursor:pointer;border-radius:6px;padding:3px 8px;font-size:11px" 
-                    title="Bu ölçümü sil">🗑 Sil</button>
-                </td>
-              </tr>`;
-            });
-          });
-          return rows;
-        })()}
-        </tbody>
-      </table>
-    </div>
-    <div style="padding:12px 16px;display:flex;gap:8px">
-      <button class="btn btn-primary" style="flex:1" onclick="olcumMailGonder(${olcumOgrIdx})">📧 Mail Gönder</button>
-      <button class="btn btn-wa" style="flex:1" onclick="olcumWaGonder(${olcumOgrIdx})">📱 WhatsApp</button>
-    </div>`;
-  } else {
-    html+=`<div class="alert a-blue" style="margin:12px 16px">📏 ${o.ad} için henüz ölçüm yok.</div>`;
+// ── PDF.js WORKER ─────────────────────────────────────────────
+async function pdfdenMetinCikar(file) {
+  const arrayBuffer = await file.arrayBuffer();
+  if (typeof pdfjsLib === 'undefined') {
+    throw new Error('pdf.js yüklenmedi.');
   }
-  el.innerHTML=html;
-}
-
-function csvYukleAc(){document.getElementById('csv-input').click();}
-async function csvOku(event){
-  const file=event.target.files[0];if(!file)return;
-  const text=await file.text();
-  const lines=text.split('\n').filter(l=>l.trim());
-  if(!lines.length)return;
-  const headers=lines[0].toLowerCase().split(',').map(h=>h.trim().replace(/"/g,''));
-  const rows=[];
-  for(let i=1;i<lines.length;i++){
-    const cols=lines[i].split(',').map(c=>c.trim().replace(/"/g,''));
-    if(!cols.length||!cols[0])continue;
-    const row={ogrenci_id:data[olcumOgrIdx]._id};
-    headers.forEach((h,idx)=>{
-      const val=parseFloat(cols[idx]);
-      if(h.includes('tarih')||h.includes('date'))row.tarih=cols[idx]||todayStr();
-      else if(h.includes('kilo')||h.includes('weight'))row.kilo=isNaN(val)?null:val;
-      else if(h.includes('yag')||h.includes('fat'))row.yag_yuzdesi=isNaN(val)?null:val;
-      else if(h.includes('kas')||h.includes('muscle'))row.kas_yuzdesi=isNaN(val)?null:val;
-      else if(h.includes('bmi'))row.bmi=isNaN(val)?null:val;
-      else if(h.includes('su')||h.includes('water'))row.su_yuzdesi=isNaN(val)?null:val;
-      else if(h.includes('viseral'))row.viseral_yag=isNaN(val)?null:val;
+  pdfjsLib.GlobalWorkerOptions.workerSrc =
+    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  let tamMetin = '';
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const textContent = await page.getTextContent();
+    const items = textContent.items;
+    const satirlar = {};
+    items.forEach(item => {
+      const y = Math.round(item.transform[5]);
+      if (!satirlar[y]) satirlar[y] = [];
+      satirlar[y].push({ x: item.transform[4], text: item.str });
     });
-    if(!row.tarih)row.tarih=todayStr();
-    rows.push(row);
+    const siralanmis = Object.keys(satirlar)
+      .sort((a, b) => b - a)
+      .map(y => satirlar[y].sort((a, b) => a.x - b.x).map(i => i.text).join(' '));
+    tamMetin += siralanmis.join('\n') + '\n';
   }
-  if(!rows.length){alert('CSV formatı tanınamadı.');return;}
-  gosterYukleniyor();
-  try{
-    for(const row of rows)await sb.from('olcumler').insert(row);
-    alert(`✅ ${rows.length} ölçüm kaydedildi!`);
-    renderOlcum();
-  }catch(e){alert('Hata: '+e.message);}
-  finally{gizleYukleniyor();event.target.value='';}
+  return tamMetin;
 }
 
-function manuelOlcumEkle(){
-  const tarih=prompt('Tarih (YYYY-MM-DD):',todayStr());if(!tarih)return;
-  const kilo=parseFloat(prompt('Kilo (kg):','')||'0')||null;
-  const yag=parseFloat(prompt('Yağ %:','')||'0')||null;
-  const kas=parseFloat(prompt('Kas %:','')||'0')||null;
-  const bmi=parseFloat(prompt('BMI:','')||'0')||null;
+function pdfVeriParse(metin) {
+  const veri = {};
+  const satirlar = metin.split('\n').map(s => s.trim()).filter(s => s);
+  function sayi(str) {
+    if (!str) return null;
+    const m = String(str).match(/([\d]+[,.]?[\d]*)/);
+    if (!m) return null;
+    const n = parseFloat(m[1].replace(',', '.'));
+    return isNaN(n) ? null : n;
+  }
+  function bul(pattern, grupNo = 1) {
+    const m = metin.match(pattern);
+    return m ? sayi(m[grupNo]) : null;
+  }
+  const adM = metin.match(/Adı\s*Soyadı[^\n]*?\n([A-ZÇĞIİÖŞÜa-zçğıiöşü\s]+?)(?:\n|Vücut|Sporcu)/);
+  if (adM) veri.ad_soyad = adM[1].trim();
+  const tarihM = metin.match(/(\d{1,2})[.\/](\d{1,2})[.\/](\d{4})/);
+  if (tarihM) {
+    const [_, g, a, y] = tarihM;
+    veri.tarih = `${y}-${String(a).padStart(2,'0')}-${String(g).padStart(2,'0')}`;
+  } else {
+    veri.tarih = new Date().toISOString().split('T')[0];
+  }
+  veri.kilo = bul(/Kilo[:\s]*(\d+[.,]\d+|\d+)\s*(?:kg)?/i);
+  veri.boy = bul(/Boy[:\s]*(\d{3})/i);
+  veri.bmi = bul(/BMI[:\s]*(\d+[.,]\d)/i);
+  veri.yas = bul(/Yaş[:\s]*(\d{2,3})/i);
+  veri.yag_yuzdesi = bul(/Yağ\s*%[:\s]*(\d+[.,]\d)/i);
+  const yagSegM = metin.match(/Yağ\s*\(%\)\s+([\d.,\s]+)/i);
+  if (yagSegM) {
+    const vals = yagSegM[1].split(/\s+/).map(v => parseFloat(v.replace(',','.'))).filter(v => !isNaN(v) && v > 0 && v < 100);
+    if (vals[0]) veri.seg_sag_bacak_yag = vals[0];
+    if (vals[1]) veri.seg_sol_bacak_yag = vals[1];
+    if (vals[2]) veri.seg_sag_kol_yag   = vals[2];
+    if (vals[3]) veri.seg_sol_kol_yag   = vals[3];
+    if (vals[4]) veri.seg_govde_yag     = vals[4];
+  }
+  const kasSegM = metin.match(/Kas\s*\(kg\)\s+([\d.,\s]+)/i);
+  if (kasSegM) {
+    const vals = kasSegM[1].split(/\s+/).map(v => parseFloat(v.replace(',','.'))).filter(v => !isNaN(v) && v > 0);
+    if (vals[0]) veri.seg_sag_bacak_kas = vals[0];
+    if (vals[1]) veri.seg_sol_bacak_kas = vals[1];
+    if (vals[2]) veri.seg_sag_kol_kas   = vals[2];
+    if (vals[3]) veri.seg_sol_kol_kas   = vals[3];
+    if (vals[4]) veri.seg_govde_kas     = vals[4];
+  }
+  veri.gunluk_kalori = bul(/Günlük\s*Kalori[^0-9]*(\d{3,4})/i);
+  veri.bmr = bul(/BMR[^0-9]*(\d{3,4})/i) || bul(/Bazal\s*Metabolizma[^0-9]*([\d.]+)/i);
+  if (veri.bmr && veri.bmr < 100) veri.bmr = Math.round(veri.bmr * 1000);
+  veri.ic_yaglama = bul(/İç\s*Yağlanma[:\s]*(\d{1,2})/i);
+  veri.metabolizma_yasi = bul(/Metabolizma\s*Yaşı[:\s]*(\d{2,3})/i);
+  veri.yag_agirlik = bul(/Yağ\s*Ağırlığı[^0-9]*([\d,]+)/i);
+  veri.sivi_agirlik = bul(/Sıvı\s*Ağırlığı[^0-9]*([\d,]+)/i);
+  veri.su_yuzdesi = bul(/Sıvı\s*Oranı[^%]*%\)\s*([\d.,]+)/i) || bul(/Su\s*%[:\s]*([\d.,]+)/i);
+  veri.hedef_kilo = bul(/Hedef\s*Kilo[:\s]*(\d{2,3})/i);
+  veri.kemik_kutlesi = bul(/Kemik\s*Kütlesi[:\s]*([\d.,]+)/i);
+  const temiz = {};
+  Object.entries(veri).forEach(([k, v]) => { if (v !== null && v !== undefined && v !== '') temiz[k] = v; });
+  return temiz;
+}
+
+async function pdfYukle(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const btn = document.getElementById('pdf-yukle-btn');
+  const durum = document.getElementById('pdf-durum');
+  if (btn) btn.style.opacity='0.6';
+  if (durum) {
+    durum.style.display = 'block';
+    durum.innerHTML = '<div style="display:flex;align-items:center;gap:8px;color:var(--gold-dark);padding:8px 0"><div class="spinner" style="width:16px;height:16px;border-width:2px"></div><span>PDF okunuyor...</span></div>';
+  }
+  try {
+    const metin = await pdfdenMetinCikar(file);
+    const veri = pdfVeriParse(metin);
+    const alanSayisi = Object.keys(veri).filter(k => k !== 'tarih' && k !== 'ad_soyad').length;
+    if (alanSayisi === 0) throw new Error("PDF'den veri çıkarılamadı.");
+    let eslenenOgr = null;
+    if (veri.ad_soyad) {
+      const adNorm = veri.ad_soyad.toUpperCase().trim();
+      eslenenOgr = data.find(o => {
+        const oAdNorm = o.ad.toUpperCase().trim();
+        return oAdNorm === adNorm || oAdNorm.includes(adNorm) || adNorm.includes(oAdNorm);
+      });
+    }
+    pdfOnayModali(veri, eslenenOgr);
+  } catch (e) {
+    if (durum) durum.innerHTML = '<div class="alert a-red">❌ ' + e.message + '</div>';
+    else alert('❌ ' + e.message);
+  } finally {
+    if (btn) btn.style.opacity='1';
+    event.target.value = '';
+    if (durum) setTimeout(()=>{ durum.style.display='none'; }, 4000);
+  }
+}
+
+function pdfOnayModali(veri, eslenenOgr) {
+  const alanlar = [
+    { key: 'kilo',            label: 'Kilo (kg)',             renk: 'var(--gold-dark)' },
+    { key: 'bmi',             label: 'BMI',                   renk: 'var(--blue)' },
+    { key: 'yag_yuzdesi',     label: 'Yağ Oranı (%)',         renk: '#E07020' },
+    { key: 'su_yuzdesi',      label: 'Sıvı Oranı (%)',        renk: 'var(--blue)' },
+    { key: 'gunluk_kalori',   label: 'Günlük Kalori',         renk: 'var(--green)' },
+    { key: 'bmr',             label: 'BMR (kcal)',             renk: 'var(--green)' },
+    { key: 'ic_yaglama',      label: 'İç Yağlanma',           renk: '#E07020' },
+    { key: 'metabolizma_yasi',label: 'Metabolizma Yaşı',      renk: 'var(--purple,#8A6A9A)' },
+    { key: 'yag_agirlik',     label: 'Yağ Ağırlığı (kg)',     renk: '#E07020' },
+    { key: 'sivi_agirlik',    label: 'Sıvı Ağırlığı (kg)',    renk: 'var(--blue)' },
+    { key: 'hedef_kilo',      label: 'Hedef Kilo (kg)',        renk: 'var(--green)' },
+    { key: 'kemik_kutlesi',   label: 'Kemik Kütlesi',         renk: 'var(--text2)' },
+    { key: 'seg_sag_bacak_yag', label: 'Sağ Bacak Yağ%',     renk: '#E07020' },
+    { key: 'seg_sol_bacak_yag', label: 'Sol Bacak Yağ%',      renk: '#E07020' },
+    { key: 'seg_sag_kol_yag',   label: 'Sağ Kol Yağ%',       renk: '#E07020' },
+    { key: 'seg_sol_kol_yag',   label: 'Sol Kol Yağ%',        renk: '#E07020' },
+    { key: 'seg_govde_yag',     label: 'Gövde Yağ%',          renk: '#E07020' },
+    { key: 'seg_sag_bacak_kas', label: 'Sağ Bacak Kas (kg)',  renk: 'var(--blue)' },
+    { key: 'seg_sol_bacak_kas', label: 'Sol Bacak Kas (kg)',   renk: 'var(--blue)' },
+    { key: 'seg_sag_kol_kas',   label: 'Sağ Kol Kas (kg)',    renk: 'var(--blue)' },
+    { key: 'seg_sol_kol_kas',   label: 'Sol Kol Kas (kg)',     renk: 'var(--blue)' },
+    { key: 'seg_govde_kas',     label: 'Gövde Kas (kg)',       renk: 'var(--blue)' },
+  ];
+  const bulunanlar = alanlar.filter(a => veri[a.key] !== undefined);
+  const bulunamayanlar = alanlar.filter(a => veri[a.key] === undefined);
+  const modal = document.createElement('div');
+  modal.id = 'pdf-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px;overflow-y:auto';
+  modal.innerHTML = `
+  <div style="background:var(--bg,#FAF7F0);border-radius:16px;width:100%;max-width:540px;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.25);overflow:hidden">
+    <div style="padding:18px 20px;background:linear-gradient(135deg,#975B09,#946C18,#D2A941);color:white;flex-shrink:0">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-size:15px;font-weight:700">📄 PDF Okundu — ${bulunanlar.length} alan bulundu</div>
+          <div style="font-size:11px;opacity:.85;margin-top:2px">Kontrol edip kaydedin</div>
+        </div>
+        <button onclick="document.getElementById('pdf-modal').remove()" style="background:rgba(255,255,255,.2);border:none;color:white;width:28px;height:28px;border-radius:50%;font-size:16px;cursor:pointer">✕</button>
+      </div>
+    </div>
+    <div style="overflow-y:auto;padding:18px 20px;flex:1">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+        <div>
+          <div style="font-size:10px;letter-spacing:1.5px;color:var(--gold-dark,#946C18);font-weight:600;margin-bottom:5px">TARİH</div>
+          <input type="date" id="pdf-tarih" value="${veri.tarih || new Date().toISOString().split('T')[0]}"
+            style="width:100%;padding:9px 11px;border:1px solid var(--border,#E8DFD0);border-radius:8px;background:white;color:var(--text,#2A2015);font-size:13px;outline:none">
+        </div>
+        <div>
+          <div style="font-size:10px;letter-spacing:1.5px;color:var(--gold-dark,#946C18);font-weight:600;margin-bottom:5px">ÖĞRENCİ</div>
+          <select id="pdf-ogr-sec" style="width:100%;padding:9px 11px;border:1px solid var(--border,#E8DFD0);border-radius:8px;background:white;color:var(--text,#2A2015);font-size:13px">
+            ${data.map((o, i) => '<option value="' + i + '"' + (eslenenOgr && data.indexOf(eslenenOgr)===i?' selected':'') + '>' + o.ad + '</option>').join('')}
+          </select>
+        </div>
+      </div>
+      ${eslenenOgr ? '<div style="background:rgba(90,138,90,.1);border:1px solid rgba(90,138,90,.25);border-radius:8px;padding:8px 12px;margin-bottom:14px;font-size:12px;color:var(--green,#5A8A5A)">✓ <strong>' + eslenenOgr.ad + '</strong> ile eşleşti</div>' : ''}
+      <div style="font-size:11px;font-weight:700;color:var(--text,#2A2015);letter-spacing:1px;margin-bottom:10px">DEĞERLER <span style="font-weight:400;color:var(--text3,#A89070)">(düzenleyebilirsiniz)</span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+        ${bulunanlar.map(a => '<div style="background:white;border:1px solid var(--border,#E8DFD0);border-radius:8px;padding:9px 11px;border-left:3px solid ' + a.renk + '"><div style="font-size:9px;color:var(--text3,#A89070);letter-spacing:1px;font-weight:600;margin-bottom:4px">' + a.label.toUpperCase() + '</div><input type="number" step="0.1" id="pdf-f-' + a.key + '" value="' + veri[a.key] + '" style="width:100%;border:none;background:transparent;font-size:14px;font-weight:700;color:' + a.renk + ';font-family:Georgia,serif;outline:none;padding:0"></div>').join('')}
+      </div>
+      ${bulunamayanlar.length > 0 ? '<details style="margin-bottom:10px"><summary style="font-size:11px;color:var(--text3,#A89070);cursor:pointer;padding:6px 0">' + bulunamayanlar.length + ' alan bulunamadı — manuel ekle</summary><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">' + bulunamayanlar.map(a => '<div style="background:var(--card2,#FDF9F3);border:1px dashed var(--border,#E8DFD0);border-radius:8px;padding:9px 11px"><div style="font-size:9px;color:var(--text3,#A89070);letter-spacing:1px;font-weight:600;margin-bottom:4px">' + a.label.toUpperCase() + '</div><input type="number" step="0.1" id="pdf-f-' + a.key + '" placeholder="—" style="width:100%;border:none;background:transparent;font-size:13px;color:var(--text,#2A2015);outline:none;padding:0"></div>').join('') + '</div></details>' : ''}
+    </div>
+    <div style="padding:14px 20px;border-top:1px solid var(--border,#E8DFD0);display:flex;gap:10px;flex-shrink:0;background:var(--bg,#FAF7F0)">
+      <button onclick="document.getElementById('pdf-modal').remove()" style="flex:1;padding:11px;border:1px solid var(--border,#E8DFD0);background:white;border-radius:9px;cursor:pointer;font-size:13px;color:var(--text2,#6B5A3A);font-weight:600">İptal</button>
+      <button onclick="pdfKaydet()" style="flex:2;padding:11px;background:linear-gradient(135deg,#975B09,#946C18,#D2A941);color:white;border:none;border-radius:9px;cursor:pointer;font-size:13px;font-weight:700;letter-spacing:.5px">💾 Supabase'e Kaydet</button>
+    </div>
+  </div>`;
+  document.body.appendChild(modal);
+  modal.onclick = e => { if (e.target === modal) modal.remove(); };
+}
+
+async function pdfKaydet() {
+  const ogrIdx = parseInt(document.getElementById('pdf-ogr-sec')?.value);
+  const tarih  = document.getElementById('pdf-tarih')?.value;
+  if (isNaN(ogrIdx) || !data[ogrIdx]) { alert('Öğrenci seçin!'); return; }
+  if (!tarih) { alert('Tarih girin!'); return; }
+  const o = data[ogrIdx];
+  const f = (id) => {
+    const el = document.getElementById('pdf-f-' + id);
+    if (!el || !el.value) return null;
+    const v = parseFloat(el.value);
+    return isNaN(v) ? null : v;
+  };
+  const row = {
+    ogrenci_id:o._id, tarih,
+    kilo:f('kilo'), bmi:f('bmi'), yag_yuzdesi:f('yag_yuzdesi'),
+    su_yuzdesi:f('su_yuzdesi'), kas_yuzdesi:f('kas_yuzdesi'),
+    gunluk_kalori:f('gunluk_kalori'), bmr:f('bmr'),
+    ic_yaglama:f('ic_yaglama'), metabolizma_yasi:f('metabolizma_yasi'),
+    yag_agirlik:f('yag_agirlik'), sivi_agirlik:f('sivi_agirlik'),
+    hedef_kilo:f('hedef_kilo'), kemik_kutlesi:f('kemik_kutlesi'),
+    seg_sag_bacak_yag:f('seg_sag_bacak_yag'), seg_sol_bacak_yag:f('seg_sol_bacak_yag'),
+    seg_sag_kol_yag:f('seg_sag_kol_yag'),     seg_sol_kol_yag:f('seg_sol_kol_yag'),
+    seg_govde_yag:f('seg_govde_yag'),
+    seg_sag_bacak_kas:f('seg_sag_bacak_kas'), seg_sol_bacak_kas:f('seg_sol_bacak_kas'),
+    seg_sag_kol_kas:f('seg_sag_kol_kas'),     seg_sol_kol_kas:f('seg_sol_kol_kas'),
+    seg_govde_kas:f('seg_govde_kas'),
+  };
+  Object.keys(row).forEach(k => { if (row[k] === null) delete row[k]; });
+  const saveBtn = document.querySelector('#pdf-modal button:last-child');
+  if (saveBtn) { saveBtn.disabled=true; saveBtn.textContent='⏳ Kaydediliyor...'; }
+  try {
+    const { error } = await sb.from('olcumler').insert(row);
+    if (error) throw error;
+    document.getElementById('pdf-modal')?.remove();
+    const toast = document.createElement('div');
+    toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#5A8A5A;color:white;padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;z-index:9998;box-shadow:0 4px 16px rgba(0,0,0,.2)';
+    toast.textContent = '✅ ' + o.ad + ' için ölçüm kaydedildi!';
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3500);
+    olcumOgrIdx = ogrIdx;
+    renderOlcum();
+  } catch(e) {
+    alert('❌ Kayıt hatası: ' + e.message);
+    if (saveBtn) { saveBtn.disabled=false; saveBtn.textContent="💾 Supabase'e Kaydet"; }
+  }
+}
+
+async function renderOlcum() {
+  const el = document.getElementById('olcum-c');
+  if (!data.length) { el.innerHTML='<div class="alert a-blue" style="margin:12px 16px">Önce öğrenci ekle.</div>'; return; }
+  const o = data[olcumOgrIdx];
   gosterYukleniyor();
-  sb.from('olcumler').insert({ogrenci_id:data[olcumOgrIdx]._id,tarih,kilo,yag_yuzdesi:yag,kas_yuzdesi:kas,bmi})
-    .then(()=>renderOlcum()).catch(e=>alert('Hata: '+e.message)).finally(()=>gizleYukleniyor());
+  try {
+    const {data:d,error} = await sb.from('olcumler').select('*').eq('ogrenci_id',o._id).order('tarih',{ascending:true});
+    if (!error) olcumler = d||[];
+  } catch(e) { olcumler=[]; }
+  gizleYukleniyor();
+  const son = olcumler.length ? olcumler[olcumler.length-1] : null;
+  const ilk = olcumler.length > 1 ? olcumler[0] : null;
+  let html = `
+  <div style="padding:12px 16px 8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;border-bottom:1px solid var(--border)">
+    <select style="flex:1;min-width:130px" onchange="olcumOgrIdx=parseInt(this.value);renderOlcum()">
+      ${data.map((d,i)=>'<option value="'+i+'"'+(i===olcumOgrIdx?' selected':'')+'>'+d.ad+'</option>').join('')}
+    </select>
+    <label id="pdf-yukle-btn" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:linear-gradient(135deg,#975B09,#946C18);color:white;border-radius:8px;cursor:pointer;font-size:12px;font-weight:700;letter-spacing:.5px;box-shadow:0 2px 8px rgba(148,108,24,.25)">
+      📄 PDF Yükle
+      <input type="file" accept=".pdf" style="display:none" onchange="pdfYukle(event)">
+    </label>
+    <button class="btn btn-ghost btn-sm" onclick="manuelOlcumEkle()">➕ Manuel</button>
+  </div>
+  <div id="pdf-durum" style="display:none;padding:0 16px"></div>`;
+
+  if (!son) {
+    html += '<div class="alert a-blue" style="margin:12px 16px">📄 '+o.ad+' için henüz ölçüm yok. Yukaridaki PDF Yukle butonunu kullanin.</div>';
+    el.innerHTML = html; return;
+  }
+  const kiloFark = ilk ? ((son.kilo||0)-(ilk.kilo||0)).toFixed(1) : null;
+  const hasSeg = son.seg_sag_bacak_yag || son.seg_sol_bacak_yag;
+
+  // Metrikler
+  html += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:12px 16px 8px">';
+  if(son.kilo) html+='<div class="metric-card" style="border-top:3px solid var(--gold-dark)"><div class="metric-label">KİLO</div><div style="font-size:24px;font-weight:800;font-family:Georgia,serif">'+son.kilo+'</div>'+(kiloFark?'<div style="font-size:11px;font-weight:600;color:'+(parseFloat(kiloFark)<0?'var(--green)':'var(--red)')+'">'+( parseFloat(kiloFark)>0?'+':'')+kiloFark+'kg</div>':'')+'</div>';
+  if(son.yag_yuzdesi) html+='<div class="metric-card" style="border-top:3px solid #E07020"><div class="metric-label">YAĞ%</div><div style="font-size:24px;font-weight:800;color:#E07020;font-family:Georgia,serif">'+son.yag_yuzdesi+'%</div></div>';
+  if(son.bmi) html+='<div class="metric-card" style="border-top:3px solid var(--blue)"><div class="metric-label">BMI</div><div style="font-size:24px;font-weight:800;color:var(--blue);font-family:Georgia,serif">'+son.bmi+'</div><div style="font-size:9px;color:var(--text3)">'+( son.bmi<25?'Normal':son.bmi<30?'Fazla':'Obez')+'</div></div>';
+  if(son.gunluk_kalori) html+='<div class="metric-card" style="border-top:3px solid var(--green)"><div class="metric-label">KALORİ</div><div style="font-size:20px;font-weight:800;color:var(--green);font-family:Georgia,serif">'+son.gunluk_kalori+'</div><div style="font-size:9px;color:var(--text3)">kcal/gün</div></div>';
+  html += '</div>';
+
+  // Fark analizi
+  if (ilk) {
+    const fs=[['Kilo','kilo','kg'],['Yağ%','yag_yuzdesi','%'],['Sıvı%','su_yuzdesi','%'],['Yağ kg','yag_agirlik','kg']];
+    html+='<div style="padding:0 16px 8px"><div style="font-size:10px;font-weight:700;color:var(--gold-dark);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:8px">FARK ANALİZİ</div><div style="background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden"><table style="width:100%;font-size:11px;border-collapse:collapse"><thead><tr style="background:var(--card2)"><th style="padding:7px 10px;text-align:left;color:var(--text3)">Alan</th><th style="padding:7px 8px;text-align:center;color:var(--text3)">'+new Date(ilk.tarih).toLocaleDateString("tr-TR",{day:"2-digit",month:"2-digit"})+'</th><th style="padding:7px 8px;text-align:center;color:var(--text3)">'+new Date(son.tarih).toLocaleDateString("tr-TR",{day:"2-digit",month:"2-digit"})+'</th><th style="padding:7px 8px;text-align:center;color:var(--text3)">Fark</th></tr></thead><tbody>';
+    fs.forEach(([label,key,unit])=>{
+      const v1=ilk[key],v2=son[key];
+      if(!v1||!v2)return;
+      const f=(v2-v1).toFixed(1);
+      const r=parseFloat(f)===0?'var(--text3)':parseFloat(f)<0?'var(--green)':'var(--red)';
+      html+='<tr style="border-bottom:0.5px solid var(--border)"><td style="padding:7px 10px;color:var(--text2)">'+label+'</td><td style="padding:7px 8px;text-align:center">'+v1+unit+'</td><td style="padding:7px 8px;text-align:center;font-weight:600">'+v2+unit+'</td><td style="padding:7px 8px;text-align:center;font-weight:700;color:'+r+'">'+(parseFloat(f)>0?'+':'')+f+unit+'</td></tr>';
+    });
+    html+='</tbody></table></div></div>';
+  }
+
+  // Segmental + Metabolizma
+  if (hasSeg || son.bmr) {
+    html+='<div style="display:grid;grid-template-columns:'+(window.innerWidth>=768?'1fr 1fr':'1fr')+';gap:12px;padding:0 16px 8px">';
+    if(hasSeg){
+      html+='<div><div style="font-size:10px;font-weight:700;color:var(--gold-dark);letter-spacing:1.5px;margin-bottom:8px">SEGMENTAL</div><div style="background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden"><table style="width:100%;font-size:11px;border-collapse:collapse"><thead><tr style="background:var(--card2)"><th style="padding:7px 10px;text-align:left;color:var(--text3)">Bölge</th><th style="padding:7px 8px;text-align:center;color:var(--text3)">Yağ%</th><th style="padding:7px 8px;text-align:center;color:var(--text3)">Kas kg</th></tr></thead><tbody>';
+      [['Sağ Bacak','seg_sag_bacak'],['Sol Bacak','seg_sol_bacak'],['Sağ Kol','seg_sag_kol'],['Sol Kol','seg_sol_kol'],['Gövde','seg_govde']].forEach(([n,k])=>{
+        const y=son[k+'_yag'],m=son[k+'_kas'];
+        if(!y)return;
+        const r=y<25?'var(--green)':y<32?'var(--gold-dark)':y<40?'#E07020':'var(--red)';
+        html+='<tr style="border-bottom:0.5px solid var(--border)"><td style="padding:6px 10px;color:var(--text2)">'+n+'</td><td style="padding:6px 8px;text-align:center"><span style="font-weight:700;color:'+r+'">'+y+'%</span></td><td style="padding:6px 8px;text-align:center;color:var(--blue);font-weight:600">'+(m?m+'kg':'-')+'</td></tr>';
+      });
+      html+='</tbody></table></div></div>';
+    }
+    if(son.bmr||son.metabolizma_yasi||son.ic_yaglama){
+      html+='<div><div style="font-size:10px;font-weight:700;color:var(--gold-dark);letter-spacing:1.5px;margin-bottom:8px">METABOLİZMA</div><div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:6px">';
+      if(son.bmr) html+='<div style="display:flex;justify-content:space-between;font-size:12px;padding-bottom:5px;border-bottom:0.5px solid var(--border)"><span style="color:var(--text2)">BMR</span><strong>'+son.bmr+' kcal</strong></div>';
+      if(son.metabolizma_yasi) html+='<div style="display:flex;justify-content:space-between;font-size:12px;padding-bottom:5px;border-bottom:0.5px solid var(--border)"><span style="color:var(--text2)">Met. Yaşı</span><strong style="color:'+(son.metabolizma_yasi>50?'var(--red)':'var(--green)')+'">'+son.metabolizma_yasi+'</strong></div>';
+      if(son.ic_yaglama) html+='<div style="display:flex;justify-content:space-between;font-size:12px;padding-bottom:5px;border-bottom:0.5px solid var(--border)"><span style="color:var(--text2)">İç Yağ</span><strong style="color:'+(son.ic_yaglama>5?'var(--red)':'var(--green)')+'">'+son.ic_yaglama+'/10</strong></div>';
+      if(son.hedef_kilo) html+='<div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--text2)">Hedef Kilo</span><strong style="color:var(--green)">'+son.hedef_kilo+' kg</strong></div>';
+      html+='</div></div>';
+    }
+    html+='</div>';
+  }
+
+  // Tüm ölçümler tablosu - aylık gruplu
+  html+='<div style="padding:0 16px 16px"><div style="font-size:10px;font-weight:700;color:var(--gold-dark);letter-spacing:1.5px;margin-bottom:8px">TÜM ÖLÇÜMLER</div><div style="background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:auto"><table style="width:100%;font-size:11px;border-collapse:collapse;min-width:320px"><thead><tr style="background:var(--card2)"><th style="padding:8px 10px;text-align:left;color:var(--text2)">Tarih</th><th style="padding:8px 6px;text-align:center;color:var(--text2)">Kilo</th><th style="padding:8px 6px;text-align:center;color:var(--text2)">Yağ%</th><th style="padding:8px 6px;text-align:center;color:var(--text2)">BMI</th><th style="padding:8px 6px;text-align:center;color:var(--text2)">Sıvı%</th><th style="padding:8px 6px"></th></tr></thead><tbody>';
+  const aylar2=['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+  const gruplar={};
+  olcumler.forEach(ol=>{const d=new Date(ol.tarih);const k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');if(!gruplar[k])gruplar[k]=[];gruplar[k].push(ol);});
+  Object.keys(gruplar).sort().reverse().forEach(ay=>{
+    const [yil,m]=ay.split('-');
+    html+='<tr style="background:var(--card2)"><td colspan="6" style="padding:6px 10px;font-size:11px;font-weight:700;color:var(--gold-dark);letter-spacing:1px">'+aylar2[parseInt(m)-1]+' '+yil+'</td></tr>';
+    gruplar[ay].slice().reverse().forEach(ol=>{
+      html+='<tr style="border-bottom:0.5px solid var(--border)"><td>'+new Date(ol.tarih).toLocaleDateString("tr-TR")+'</td><td style="text-align:center;font-weight:700">'+(ol.kilo?ol.kilo+'kg':'-')+'</td><td style="text-align:center;color:#E07020">'+(ol.yag_yuzdesi?ol.yag_yuzdesi+'%':'-')+'</td><td style="text-align:center">'+(ol.bmi||'-')+'</td><td style="text-align:center;color:var(--blue)">'+(ol.su_yuzdesi?ol.su_yuzdesi+'%':'-')+'</td><td style="text-align:center"><button onclick="olcumSil('+JSON.stringify(ol.id)+')" class="btn-sil">🗑</button></td></tr>';
+    });
+  });
+  html+='</tbody></table></div><div style="display:flex;gap:8px;margin-top:10px"><button class="btn btn-primary" style="flex:1" onclick="olcumMailGonder('+olcumOgrIdx+')">📧 Mail</button><button class="btn btn-wa" style="flex:1" onclick="olcumWaGonder('+olcumOgrIdx+')">📱 WhatsApp</button></div></div>';
+  el.innerHTML = html;
 }
 
 async function olcumSil(id){
-  if(!confirm('Silinsin mi?'))return;
+  if(!confirm('Bu ölçüm silinsin mi?'))return;
   gosterYukleniyor();
-  try{await sb.from('olcumler').delete().eq('id',id);renderOlcum();}
-  catch(e){alert('Hata: '+e.message);}
+  try{
+    const {error}=await sb.from('olcumler').delete().eq('id',id);
+    if(error)throw error;
+    const toast=document.createElement('div');
+    toast.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#C03010;color:white;padding:10px 18px;border-radius:10px;font-size:13px;font-weight:600;z-index:9998';
+    toast.textContent='🗑 Ölçüm silindi';
+    document.body.appendChild(toast);
+    setTimeout(()=>toast.remove(),2500);
+    renderOlcum();
+  }catch(e){alert('Hata: '+e.message);}
   finally{gizleYukleniyor();}
 }
+
 
 function olcumRaporu(idx){
   const o=data[idx];
