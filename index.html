@@ -1968,12 +1968,31 @@ async function renderOlcum() {
     const [yil,m]=ay.split('-');
     html+='<tr style="background:var(--card2)"><td colspan="6" style="padding:6px 10px;font-size:11px;font-weight:700;color:var(--gold-dark);letter-spacing:1px">'+aylar2[parseInt(m)-1]+' '+yil+'</td></tr>';
     gruplar[ay].slice().reverse().forEach(ol=>{
-      html+='<tr style="border-bottom:0.5px solid var(--border)"><td>'+new Date(ol.tarih).toLocaleDateString("tr-TR")+'</td><td style="text-align:center;font-weight:700">'+(ol.kilo?ol.kilo+'kg':'-')+'</td><td style="text-align:center;color:#E07020">'+(ol.yag_yuzdesi?ol.yag_yuzdesi+'%':'-')+'</td><td style="text-align:center">'+(ol.bmi||'-')+'</td><td style="text-align:center;color:var(--blue)">'+(ol.su_yuzdesi?ol.su_yuzdesi+'%':'-')+'</td><td style="text-align:center"><button onclick="olcumSilBtn(this)" data-id="'+ol.id+'" style="background:var(--red-bg);border:1px solid var(--red-border);color:var(--red);cursor:pointer;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:600">🗑 Sil</button></td></tr>';
+      html+='<tr style="border-bottom:0.5px solid var(--border)"><td>'+new Date(ol.tarih).toLocaleDateString("tr-TR")+'</td><td style="text-align:center;font-weight:700">'+(ol.kilo?ol.kilo+'kg':'-')+'</td><td style="text-align:center;color:#E07020">'+(ol.yag_yuzdesi?ol.yag_yuzdesi+'%':'-')+'</td><td style="text-align:center">'+(ol.bmi||'-')+'</td><td style="text-align:center;color:var(--blue)">'+(ol.su_yuzdesi?ol.su_yuzdesi+'%':'-')+'</td><td style="text-align:center"><button onclick="window._silOlcum(\''+ol.id+'\')" style="background:var(--red-bg);border:1px solid var(--red-border);color:var(--red);cursor:pointer;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:600">🗑 Sil</button></td></tr>';
     });
   });
   html+='</tbody></table></div><div style="display:flex;gap:8px;margin-top:10px"><button class="btn btn-primary" style="flex:1" onclick="olcumMailGonder('+olcumOgrIdx+')">📧 Mail</button><button class="btn btn-wa" style="flex:1" onclick="olcumWaGonder('+olcumOgrIdx+')">📱 WhatsApp</button></div></div>';
   el.innerHTML = html;
 }
+
+window._silOlcum = async function(id) {
+  if(!confirm('Bu ölçüm silinsin mi?')) return;
+  gosterYukleniyor();
+  try {
+    const {error} = await sb.from('olcumler').delete().eq('id', id);
+    if(error) throw error;
+    const toast = document.createElement('div');
+    toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#C03010;color:white;padding:10px 18px;border-radius:10px;font-size:13px;font-weight:600;z-index:9998;box-shadow:0 4px 14px rgba(0,0,0,.2)';
+    toast.textContent = '🗑 Ölçüm silindi';
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 2500);
+    await renderOlcum();
+  } catch(e) {
+    alert('Hata: ' + e.message);
+  } finally {
+    gizleYukleniyor();
+  }
+};
 
 function olcumSilBtn(btn){
   const id = btn.getAttribute('data-id');
