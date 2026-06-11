@@ -1691,9 +1691,32 @@ function pdfVeriParse(metin) {
   } else {
     veri.tarih = new Date().toISOString().split('T')[0];
   }
-  veri.kilo = bul(/Kilo[:\s]*(\d+[.,]\d+|\d+)\s*(?:kg)?/i);
+  // Kilo: 40-200 arası makul aralık kontrolü
+  const kiloRaw = bul(/Kilo[:\s]*(\d+[.,]\d+|\d+)\s*(?:kg)?/i);
+  if(kiloRaw && kiloRaw >= 30 && kiloRaw <= 250) {
+    veri.kilo = kiloRaw;
+  } else {
+    // Tablo satırından dene: Boy kilo BMI formatı (ör: 160.0 75.7 23.5)
+    const tabloM = metin.match(/(1[4-9]\d|[2][0-4]\d)[.,]\d\s+(\d{2,3}[.,]\d)/);
+    if(tabloM) veri.kilo = sayi(tabloM[2]);
+    // Hala yoksa 40-200 arası ilk sayı
+    if(!veri.kilo) {
+      const tumSayilar = metin.match(/\b([4-9]\d|1\d{2})\b/g);
+      if(tumSayilar) {
+        for(const s of tumSayilar) {
+          const n = parseFloat(s);
+          if(n >= 40 && n <= 200) { veri.kilo = n; break; }
+        }
+      }
+    }
+  }
   veri.boy = bul(/Boy[:\s]*(\d{3})/i);
   veri.bmi = bul(/BMI[:\s]*(\d+[.,]\d)/i);
+  // BMI yoksa hesapla
+  if(!veri.bmi && veri.kilo && veri.boy) {
+    const boyM = veri.boy/100;
+    veri.bmi = Math.round((veri.kilo/(boyM*boyM))*10)/10;
+  }
   veri.yas = bul(/Yaş[:\s]*(\d{2,3})/i);
   veri.yag_yuzdesi = bul(/Yağ\s*%[:\s]*(\d+[.,]\d)/i);
   const yagSegM = metin.match(/Yağ\s*\(%\)\s+([\d.,\s]+)/i);
