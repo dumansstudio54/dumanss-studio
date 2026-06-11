@@ -1670,7 +1670,7 @@ async function pdfdenMetinCikar(file) {
 
 function pdfVeriParse(metin) {
   const veri = {};
-  const satirlar = metin.split('\n').map(s => s.trim()).filter(s => s);
+
   function sayi(str) {
     if (!str) return null;
     const m = String(str).match(/([\d]+[,.]?[\d]*)/);
@@ -1678,79 +1678,143 @@ function pdfVeriParse(metin) {
     const n = parseFloat(m[1].replace(',', '.'));
     return isNaN(n) ? null : n;
   }
-  function bul(pattern, grupNo = 1) {
+
+  function bul(pattern, grupNo) {
+    grupNo = grupNo || 1;
     const m = metin.match(pattern);
     return m ? sayi(m[grupNo]) : null;
   }
-  const adM = metin.match(/Adı\s*Soyadı[^\n]*?\n([A-ZÇĞIİÖŞÜa-zçğıiöşü\s]+?)(?:\n|Vücut|Sporcu)/);
-  if (adM) veri.ad_soyad = adM[1].trim();
-  const tarihM = metin.match(/(\d{1,2})[.\/](\d{1,2})[.\/](\d{4})/);
+
+  // ── TARİH ──
+  const tarihM = metin.match(/(\d{1,2})[./](\d{2})[./](\d{4})/);
   if (tarihM) {
     const [_, g, a, y] = tarihM;
-    veri.tarih = `${y}-${String(a).padStart(2,'0')}-${String(g).padStart(2,'0')}`;
+    veri.tarih = y + '-' + String(a).padStart(2,'0') + '-' + String(g).padStart(2,'0');
   } else {
     veri.tarih = new Date().toISOString().split('T')[0];
   }
-  // Kilo: 40-200 arası makul aralık kontrolü
-  const kiloRaw = bul(/Kilo[:\s]*(\d+[.,]\d+|\d+)\s*(?:kg)?/i);
-  if(kiloRaw && kiloRaw >= 30 && kiloRaw <= 250) {
-    veri.kilo = kiloRaw;
-  } else {
-    // Tablo satırından dene: Boy kilo BMI formatı (ör: 160.0 75.7 23.5)
-    const tabloM = metin.match(/(1[4-9]\d|[2][0-4]\d)[.,]\d\s+(\d{2,3}[.,]\d)/);
-    if(tabloM) veri.kilo = sayi(tabloM[2]);
-    // Hala yoksa 40-200 arası ilk sayı
-    if(!veri.kilo) {
-      const tumSayilar = metin.match(/\b([4-9]\d|1\d{2})\b/g);
-      if(tumSayilar) {
-        for(const s of tumSayilar) {
-          const n = parseFloat(s);
-          if(n >= 40 && n <= 200) { veri.kilo = n; break; }
-        }
-      }
+
+  // ── AD SOYAD ──
+  // Format: "HATİCE BAŞOĞLU Sporcu Olmayan 47 160.0 75.7 ..."
+  const adM = metin.match(/([A-ZÇĞIİÖŞÜ][A-ZÇĞIİÖŞÜ\s]{2,30})\s+(?:Sporcu|Normal|Obez|Zayıf)/);
+  if (adM) veri.ad_soyad = adM[1].trim();
+
+  // ── ANA TABLO SATIRI ──
+  // Format: "HATİCE BAŞOĞLU Sporcu Olmayan 47 160.0 75.7 29.6 33,9 %"
+  // Yaş Boy Kilo BMI Yağ% sırasıyla
+  const tabloM = metin.match(/(\d{2,3})\s+(1[4-9]\d[.,]\d)\s+(\d{2,3}[.,]\d)\s+(\d{2}[.,]\d)\s+(\d{2}[.,]\d)/);
+  if (tabloM) {
+    veri.yas    = sayi(tabloM[1]);
+    veri.boy    = sayi(tabloM[2]);
+    veri.kilo   = sayi(tabloM[3]);
+    veri.bmi    = sayi(tabloM[4]);
+    veri.yag_yuzdesi = sayi(tabloM[5]);
+  }
+
+  // Kilo yedek: "Kilo" kelimesinden sonra 40-200 arası sayı
+  if (!veri.kilo || veri.kilo < 30 || veri.kilo > 250) {
+    const kiloM = metin.match(/Kilo\s+(\d{2,3}[.,]?\d*)/i);
+    if (kiloM) {
+      const k = sayi(kiloM[1]);
+      if (k >= 30 && k <= 250) veri.kilo = k;
     }
   }
-  veri.boy = bul(/Boy[:\s]*(\d{3})/i);
-  veri.bmi = bul(/BMI[:\s]*(\d+[.,]\d)/i);
-  // BMI yoksa hesapla
-  if(!veri.bmi && veri.kilo && veri.boy) {
-    const boyM = veri.boy/100;
-    veri.bmi = Math.round((veri.kilo/(boyM*boyM))*10)/10;
+
+  // BMI yedek
+  if (!veri.bmi) {
+    const bmiM = metin.match(/BMI\s+(\d{2}[.,]\d)/i);
+    if (bmiM) veri.bmi = sayi(bmiM[1]);
   }
-  veri.yas = bul(/Yaş[:\s]*(\d{2,3})/i);
-  veri.yag_yuzdesi = bul(/Yağ\s*%[:\s]*(\d+[.,]\d)/i);
+
+  // Yağ% yedek - "Yağ Oranı (%)" satırından
+  if (!veri.yag_yuzdesi) {
+    const yagM = metin.match(/Yağ\s*Oranı\s*\(%\)\s*(\d{2,3}[,.]\d)/i);
+    if (yagM) veri.yag_yuzdesi = sayi(yagM[1]);
+  }
+
+  // ── SEGMENTAL ──
+  // "Yağ (%) 40.5 40.7 37.8 36.2 28.7"
   const yagSegM = metin.match(/Yağ\s*\(%\)\s+([\d.,\s]+)/i);
   if (yagSegM) {
-    const vals = yagSegM[1].split(/\s+/).map(v => parseFloat(v.replace(',','.'))).filter(v => !isNaN(v) && v > 0 && v < 100);
+    const vals = yagSegM[1].split(/\s+/)
+      .map(v => parseFloat(v.replace(',','.')))
+      .filter(v => !isNaN(v) && v > 0 && v < 100);
     if (vals[0]) veri.seg_sag_bacak_yag = vals[0];
     if (vals[1]) veri.seg_sol_bacak_yag = vals[1];
     if (vals[2]) veri.seg_sag_kol_yag   = vals[2];
     if (vals[3]) veri.seg_sol_kol_yag   = vals[3];
     if (vals[4]) veri.seg_govde_yag     = vals[4];
   }
+
+  // "Kas(kg) 7.7 7.6 2.4 2.6 27.3"
   const kasSegM = metin.match(/Kas\s*\(kg\)\s+([\d.,\s]+)/i);
   if (kasSegM) {
-    const vals = kasSegM[1].split(/\s+/).map(v => parseFloat(v.replace(',','.'))).filter(v => !isNaN(v) && v > 0);
+    const vals = kasSegM[1].split(/\s+/)
+      .map(v => parseFloat(v.replace(',','.')))
+      .filter(v => !isNaN(v) && v > 0);
     if (vals[0]) veri.seg_sag_bacak_kas = vals[0];
     if (vals[1]) veri.seg_sol_bacak_kas = vals[1];
     if (vals[2]) veri.seg_sag_kol_kas   = vals[2];
     if (vals[3]) veri.seg_sol_kol_kas   = vals[3];
     if (vals[4]) veri.seg_govde_kas     = vals[4];
   }
-  veri.gunluk_kalori = bul(/Günlük\s*Kalori[^0-9]*(\d{3,4})/i);
-  veri.bmr = bul(/BMR[^0-9]*(\d{3,4})/i) || bul(/Bazal\s*Metabolizma[^0-9]*([\d.]+)/i);
-  if (veri.bmr && veri.bmr < 100) veri.bmr = Math.round(veri.bmr * 1000);
-  veri.ic_yaglama = bul(/İç\s*Yağlanma[:\s]*(\d{1,2})/i);
-  veri.metabolizma_yasi = bul(/Metabolizma\s*Yaşı[:\s]*(\d{2,3})/i);
-  veri.yag_agirlik = bul(/Yağ\s*Ağırlığı[^0-9]*([\d,]+)/i);
-  veri.sivi_agirlik = bul(/Sıvı\s*Ağırlığı[^0-9]*([\d,]+)/i);
-  veri.su_yuzdesi = bul(/Sıvı\s*Oranı[^%]*%\)\s*([\d.,]+)/i) || bul(/Su\s*%[:\s]*([\d.,]+)/i);
-  veri.hedef_kilo = bul(/Hedef\s*Kilo[:\s]*(\d{2,3})/i);
-  veri.kemik_kutlesi = bul(/Kemik\s*Kütlesi[:\s]*([\d.,]+)/i);
+
+  // ── KALORİ & METABOLİZMA ──
+  // "Günlük Kalori İhtiyacı 2384 9.975"
+  veri.gunluk_kalori = bul(/Günlük\s*Kalori\s*İhtiyacı\s*(\d{3,4})/i);
+
+  // "BMR Bazal Metabolizma Hızı 1.597 6683" → 1597
+  const bmrM = metin.match(/BMR\s*Bazal\s*Metabolizma[^0-9]*(\d[.,]\d{3}|\d{3,4})/i);
+  if (bmrM) {
+    let bmr = sayi(bmrM[1]);
+    // "1.597" → 1597 (binlik nokta)
+    if (bmr < 500) bmr = Math.round(bmr * 1000);
+    veri.bmr = bmr;
+  }
+
+  // "İç Yağlanma 5" — ama "İç Yağlanma 5 BMI 29.6" satırı
+  const icYagM = metin.match(/İç\s*Yağlanma\s*(\d{1,2})\s/i);
+  if (icYagM) veri.ic_yaglama = sayi(icYagM[1]);
+
+  // "Metabolizma Yaşı 43" — ama "Metabolizma Yaşı 43 BMR/Kilo 21" satırı
+  // NOT: BMR/Kilo 21 → bunu kilo olarak alma!
+  const metYasM = metin.match(/Metabolizma\s*Yaşı\s*(\d{2,3})\s/i);
+  if (metYasM) veri.metabolizma_yasi = sayi(metYasM[1]);
+
+  // "Yağ Ağırlığı(kg) 25,66"
+  const yagAgirM = metin.match(/Yağ\s*Ağırlığı[^0-9]*(\d{2,3}[,.]\d{1,2})/i);
+  if (yagAgirM) veri.yag_agirlik = sayi(yagAgirM[1]);
+
+  // "Sıvı Ağırlığı (kg) 37,32"
+  const siviAgirM = metin.match(/Sıvı\s*Ağırlığı[^0-9]*(\d{2,3}[,.]\d{1,2})/i);
+  if (siviAgirM) veri.sivi_agirlik = sayi(siviAgirM[1]);
+
+  // "Sıvı Oranı (%) 49.3"
+  const siviOranM = metin.match(/Sıvı\s*Oranı\s*\(%\)\s*(\d{2}[.,]\d)/i);
+  if (siviOranM) veri.su_yuzdesi = sayi(siviOranM[1]);
+
+  // "Hedef Kilo 52"
+  const hedefM = metin.match(/Hedef\s*Kilo\s*(\d{2,3})/i);
+  if (hedefM) veri.hedef_kilo = sayi(hedefM[1]);
+
+  // "Kemik Kütlesi 2.5"
+  const kemikM = metin.match(/Kemik\s*Kütlesi\s*(\d[.,]\d)/i);
+  if (kemikM) veri.kemik_kutlesi = sayi(kemikM[1]);
+
+  // BMI yedek hesapla
+  if (!veri.bmi && veri.kilo && veri.boy) {
+    const boyM2 = veri.boy / 100;
+    veri.bmi = Math.round((veri.kilo / (boyM2 * boyM2)) * 10) / 10;
+  }
+
+  // Temizle
   const temiz = {};
-  Object.entries(veri).forEach(([k, v]) => { if (v !== null && v !== undefined && v !== '') temiz[k] = v; });
+  Object.entries(veri).forEach(([k, v]) => {
+    if (v !== null && v !== undefined && v !== '') temiz[k] = v;
+  });
   return temiz;
 }
+
 
 async function pdfYukle(event) {
   const file = event.target.files[0];
