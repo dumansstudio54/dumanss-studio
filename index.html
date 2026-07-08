@@ -391,7 +391,7 @@ select:focus,input:focus{border-color:var(--gold)}
   .ogr-card{margin:0 24px 12px}
   .ders-item{margin:0 24px 10px}
   .alert{margin:8px 24px}
-  #ana-c,#ogr-c,#ekle-c,#takvim-c,#gelir-c,#olcum-c,#bildirimler-c,#mesajlar-c,#diyet-c{
+  #ana-c,#ogr-c,#ekle-c,#takvim-c,#gelir-c,#olcum-c,#bildirimler-c,#mesajlar-c,#diyet-c,#kaloritakip-c{
     max-width:1000px;
     margin:0 auto;
     padding:0 0 24px;
@@ -465,7 +465,8 @@ select:focus,input:focus{border-color:var(--gold)}
   <button class="snav-btn" id="snav-gelir" onclick="sp('gelir')"><span>📊</span> Gelir / Gider</button>
   <div class="snav-section">ARAÇLAR</div>
   <button class="snav-btn" id="snav-olcum" onclick="sp('olcum')"><span>📏</span> Vücut Ölçümleri</button>
-  <button class="snav-btn" id="snav-diyet" onclick="sp('diyet')"><span>🥗</span> AI Diyet Menüsü</button>
+  <button class="snav-btn" id="snav-kaloritakip" onclick="sp('kaloritakip')"><span>🔥</span> Öğrenci Kalorileri</button>
+  <button class="snav-btn" id="snav-diyet" onclick="sp('diyet')"><span>📰</span> Günlük Menüler ve Haberler</button>
   <button class="snav-btn" id="snav-notlar" onclick="sp('notlar')"><span>📝</span> Notlar</button>
   <button class="snav-btn" id="snav-rapor" onclick="sp('rapor')"><span>📊</span> Raporlama</button>
   <div style="flex:1"></div>
@@ -481,6 +482,7 @@ select:focus,input:focus{border-color:var(--gold)}
   <div id="takvim" class="page"><div id="takvim-c"></div></div>
   <div id="gelir" class="page"><div id="gelir-c"></div></div>
   <div id="olcum" class="page"><div id="olcum-c"></div></div>
+  <div id="kaloritakip" class="page"><div id="kaloritakip-c"></div></div>
   <div id="diyet" class="page"><div id="diyet-c"></div></div>
 <div id="notlar" class="page"><div id="notlar-c"></div></div>
 <div id="rapor" class="page"><div id="rapor-c"></div></div>
@@ -556,12 +558,89 @@ function sp(page) {
   if(nb) nb.classList.add('active');
   const sb = document.getElementById('snav-'+page);
   if(sb) sb.classList.add('active');
-  const renders = {ana:renderAna,ogr:renderOgr,takvim:renderTakvim,gelir:renderGelir,bildirimler:renderBildirimler,mesajlar:renderMesajlar,olcum:renderOlcum,diyet:renderDiyet,notlar:renderNotlar,rapor:renderRapor};
+  const renders = {ana:renderAna,ogr:renderOgr,takvim:renderTakvim,gelir:renderGelir,bildirimler:renderBildirimler,mesajlar:renderMesajlar,olcum:renderOlcum,diyet:renderDiyet,kaloritakip:renderKaloriTakip,notlar:renderNotlar,rapor:renderRapor};
   if(renders[page]) renders[page]();
   window.scrollTo(0,0);
 }
 
 
+
+// ── ÖĞRENCİ KALORİLERİ (yönetici görünümü) ──
+function bugun(){const t=new Date();return t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');}
+let _kaloriGirmeyenler=[];
+async function renderKaloriTakip() {
+  const el = document.getElementById('kaloritakip-c');
+  el.innerHTML = '<div class="section-title">🔥 ÖĞRENCİ KALORİLERİ</div><div style="padding:20px;text-align:center"><div class="spinner"></div></div>';
+
+  const { data: kayitlar, error } = await sb.from('kalori_kayitlari').select('*').order('tarih', { ascending: false });
+  if (error) { el.innerHTML = `<div class="section-title">🔥 ÖĞRENCİ KALORİLERİ</div><div style="padding:0 16px;color:var(--red);font-size:12px">Yüklenemedi: ${error.message}</div>`; return; }
+
+  const bugunStr = bugun();
+  const gruplar = {};
+  (kayitlar || []).forEach(k => { (gruplar[k.ogrenci_id] = gruplar[k.ogrenci_id] || []).push(k); });
+
+  const satirlar = (data || []).map(o => {
+    const kk = (gruplar[o.id||o._id] || []).sort((a, b) => b.tarih.localeCompare(a.tarih));
+    const bugunKal = kk.find(k => k.tarih === bugunStr)?.kalori;
+    const son7 = kk.slice(0, 7);
+    const ort7 = son7.length ? Math.round(son7.reduce((s, k) => s + k.kalori, 0) / son7.length) : null;
+    return { ad: o.ad, tel: o.tel, tur: o.tur, bugunKal, ort7, girdi: !!bugunKal };
+  });
+
+  _kaloriGirmeyenler = satirlar.filter(s => !s.girdi && s.tel);
+
+  el.innerHTML = `
+  <div class="section-title">🔥 ÖĞRENCİ KALORİLERİ</div>
+  <div style="padding:0 16px">
+    <div style="font-size:12px;color:var(--text2);margin-bottom:14px;line-height:1.7">
+      Öğrencilerin kendi panellerine girdiği günlük kalori verileridir. Bugün girmeyenlere WhatsApp ile hatırlatma gönderebilirsiniz.
+    </div>
+    ${_kaloriGirmeyenler.length ? `<button class="btn btn-wa" style="width:100%;margin-bottom:14px" onclick="kaloriTopluHatirlat()">📱 Bugün Girmeyenleri Hatırlat (${_kaloriGirmeyenler.length})</button>` : ''}
+    ${!satirlar.length ? '<div style="font-size:12px;color:var(--text3);padding:12px 0">Kayıtlı öğrenci yok.</div>' : `
+    <div class="card" style="padding:0;overflow:hidden">
+      <table style="width:100%;border-collapse:collapse">
+        <thead>
+          <tr style="background:var(--bg2);text-align:left">
+            <th style="padding:10px 14px;font-size:11px;color:var(--text3)">ÖĞRENCİ</th>
+            <th style="padding:10px 14px;font-size:11px;color:var(--text3)">BUGÜN</th>
+            <th style="padding:10px 14px;font-size:11px;color:var(--text3)">7 GÜN ORT.</th>
+            <th style="padding:10px 14px;font-size:11px;color:var(--text3)"></th>
+          </tr>
+        </thead>
+        <tbody>
+          ${satirlar.map((s,i) => `
+            <tr style="border-top:1px solid var(--border)">
+              <td style="padding:10px 14px;font-size:12.5px;color:var(--text);font-weight:600">${s.ad} <span class="b-pilates" style="margin-left:6px">${s.tur === 'ems' ? 'EMS' : 'Pilates'}</span></td>
+              <td style="padding:10px 14px;font-size:12.5px;color:${s.girdi ? 'var(--gold-dark)' : 'var(--text3)'}">${s.girdi ? s.bugunKal + ' kcal ✅' : '⏰ Girmedi'}</td>
+              <td style="padding:10px 14px;font-size:12.5px;color:var(--text2)">${s.ort7 ? s.ort7 + ' kcal' : '—'}</td>
+              <td style="padding:10px 14px;text-align:right">${(!s.girdi && s.tel) ? `<button class="btn btn-ghost btn-sm" onclick="kaloriTekilHatirlat('${s.ad.replace(/'/g,"\\'")}','${s.tel}')">📱 Hatırlat</button>` : ''}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`}
+  </div>`;
+}
+function kaloriHatirlatMesaji(ad){
+  return `Merhaba ${ad.split(' ')[0]} 👋\n\nDumansStudio öğrenci panelinden bugünkü kalori girişinizi henüz yapmadığınızı fark ettik. Beslenme takibinizin devam etmesi için birkaç saniyenizi ayırabilir misiniz? 🙏\n\n💪 DumansStudio | Sakarya`;
+}
+function kaloriTekilHatirlat(ad,tel){
+  const numara=(tel||'').replace(/\D/g,'');
+  const intNum=numara.startsWith('0')?'90'+numara.slice(1):numara;
+  window.open(`https://wa.me/${intNum}?text=${encodeURIComponent(kaloriHatirlatMesaji(ad))}`,'_blank');
+}
+function kaloriTopluHatirlat(){
+  if(!_kaloriGirmeyenler.length){alert('Herkes bugün kalori girmiş! 🎉');return;}
+  if(!confirm(`${_kaloriGirmeyenler.length} öğrenciye WhatsApp hatırlatması gönderilsin mi?`))return;
+  let idx=0;
+  function sonraki(){
+    if(idx>=_kaloriGirmeyenler.length){alert('✅ Tüm hatırlatmalar açıldı!');return;}
+    const s=_kaloriGirmeyenler[idx];
+    kaloriTekilHatirlat(s.ad,s.tel);
+    idx++;
+    if(idx<_kaloriGirmeyenler.length) setTimeout(sonraki,1500);
+  }
+  sonraki();
+}
 
 // ── NOTLAR ──
 function renderNotlar() {
@@ -2243,235 +2322,130 @@ async function kaydet(){
 }
 
 
-// ── AI DİYET MODÜLÜ ──
-// Gemini API - ücretsiz (dakikada 60 istek, günde 1500)
-const GEMINI_KEY = 'AQ.Ab8RN6I_Ux0YyGrEeC-savtg4rqUznqvaJ-TIx1gsiB_ZdeD7g'; // Google AI Studio
-const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
-
-let diyetGecmis = JSON.parse(localStorage.getItem('ds_diyet_gecmis')||'[]');
-let diyetYukleniyor = false;
+// ── GÜNLÜK MENÜLER VE HABERLER (BÜLTEN) ──
+// Yönetici, kendi Gemini/ChatGPT sohbetinde menüyü yazdırıp buraya yapıştırır.
+// "Tüm Öğrencilere" veya "Seçili Öğrenciye" olarak yayınlanır, 24 saat görünür kalır.
 
 async function renderDiyet() {
   const el = document.getElementById('diyet-c');
+  const ogrenciOptions = (data||[]).map(o => `<option value="${o.id}">${o.ad}</option>`).join('');
   el.innerHTML = `
-  <div class="section-title">🥗 AI DİYET MENÜSÜ</div>
+  <div class="section-title">📰 GÜNLÜK MENÜLER VE HABERLER</div>
   <div style="padding:0 16px">
     <div class="card" style="margin-bottom:12px">
-      <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px">Günlük Menü Oluştur</div>
-      <div style="font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.7">
-        AI, pilates ve EMS öğrencilerinize özel günlük diyet menüsü oluşturur. Tüm öğrencilere WhatsApp ile gönderebilirsiniz.
+      <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px">Yeni Bülten Yayınla</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:14px;line-height:1.7">
+        Menüyü kendi ChatGPT / Gemini sohbetinizde oluşturup buraya yapıştırın. Gün içinde istediğiniz kadar bülten yayınlayabilirsiniz — menü veya duyuru olabilir.
       </div>
+
       <div style="margin-bottom:10px">
-        <div class="field-label">MENÜ TÜRÜ</div>
-        <select id="diyet-tur" style="width:100%">
-          <option value="genel">Genel Sağlıklı Beslenme</option>
-          <option value="kilo-verme">Kilo Verme Odaklı</option>
-          <option value="kas-yapma">Kas Geliştirme</option>
-          <option value="detoks">Detoks & Hafif</option>
-          <option value="akdeniz">Akdeniz Diyeti</option>
+        <div class="field-label">KONU BAŞLIĞI</div>
+        <input type="text" id="bulten-baslik" placeholder="Örn: Bugünün Menüsü / Yarın Stüdyo Kapalı" style="width:100%">
+      </div>
+
+      <div style="margin-bottom:12px">
+        <div class="field-label">İÇERİK (Yapıştırın)</div>
+        <textarea id="bulten-icerik" rows="7" placeholder="Menü veya duyuru metnini buraya yapıştırın..." style="width:100%;font-family:inherit;font-size:12.5px;padding:10px;border:1px solid var(--border);border-radius:8px;resize:vertical"></textarea>
+      </div>
+
+      <div style="margin-bottom:12px">
+        <div class="field-label">KİME GÖNDERİLSİN</div>
+        <div style="display:flex;gap:16px;margin-top:6px;font-size:12.5px;color:var(--text2)">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+            <input type="radio" name="bhedef" value="tumu" checked onchange="bultenHedefDegisti()"> Tüm Öğrencilere
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+            <input type="radio" name="bhedef" value="ogrenci" onchange="bultenHedefDegisti()"> Seçili Öğrenciye
+          </label>
+        </div>
+      </div>
+
+      <div id="bulten-ogrenci-sec" style="display:none;margin-bottom:14px">
+        <select id="bulten-ogrenci" style="width:100%">
+          <option value="">Öğrenci seçin…</option>
+          ${ogrenciOptions}
         </select>
       </div>
-      <div style="margin-bottom:12px">
-        <div class="field-label">EKSTRA NOT (isteğe bağlı)</div>
-        <input type="text" id="diyet-not" placeholder="Örn: glütensiz, laktoz intoleransı, vejetaryen..." style="width:100%">
-      </div>
-      <button class="btn btn-primary" style="width:100%;margin-bottom:8px" onclick="aiDiyetOlustur()" id="diyet-btn">
-        ✨ AI ile Menü Oluştur
+
+      <button class="btn btn-primary" style="width:100%" onclick="bultenYayinla()">
+        📣 Bülteni Yayınla (24 saat görünür)
       </button>
     </div>
-    
-    <div id="diyet-sonuc" style="display:none" class="card" style="margin-bottom:12px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-        <div style="font-size:13px;font-weight:600;color:var(--text)">📋 Bugünün Menüsü</div>
-        <div id="diyet-tarih" style="font-size:11px;color:var(--text3)"></div>
-      </div>
-      <div id="diyet-icerik" style="font-size:13px;color:var(--text2);line-height:1.8;white-space:pre-line"></div>
-      <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
-        <button class="btn btn-wa" style="flex:1" onclick="diyetTopluWa()">
-          📱 Tüm Öğrencilere WhatsApp
-        </button>
-        <button class="btn btn-ghost" style="flex:1" onclick="diyetKopyala()">
-          📋 Kopyala
-        </button>
-        <button class="btn btn-ghost btn-sm" onclick="diyetKaydet()">
-          💾 Kaydet
-        </button>
-      </div>
-    </div>
 
-    <div id="diyet-api-uyari" class="alert a-gold" style="margin:0 0 12px;display:${GEMINI_KEY.includes('BURAYA')?'block':'none'}">
-      ⚠️ Gemini API anahtarı henüz ayarlanmamış. 
-      <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--gold-dark);font-weight:600">
-        Ücretsiz API anahtarı al →
-      </a>
-      Aldıktan sonra bana söyle, koda ekleyeyim.
+    <div class="section-title" style="padding-left:0">Bugün Yayınlananlar</div>
+    <div id="bulten-liste">
+      <div style="font-size:12px;color:var(--text3);padding:8px 0">Yükleniyor...</div>
     </div>
-    
-    ${diyetGecmis.length > 0 ? `
-    <div class="section-title" style="padding-left:0">Geçmiş Menüler</div>
-    ${diyetGecmis.slice(-5).reverse().map((d,i) => `
-      <div class="card" style="margin-bottom:8px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-          <div style="font-size:12px;font-weight:600;color:var(--text)">${d.tarih}</div>
-          <span class="b-pilates">${d.tur}</span>
-        </div>
-        <div style="font-size:11px;color:var(--text3);line-height:1.6">${d.ozet}</div>
-        <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="diyetGecmisGoster(${diyetGecmis.length-1-i})">
-          Tümünü Gör →
-        </button>
-      </div>`).join('')}
-    ` : ''}
   </div>`;
+  bultenListesiYukle();
 }
 
-async function aiDiyetOlustur() {
-  if(GEMINI_KEY.includes('BURAYA')) {
-    alert('❌ Önce Gemini API anahtarı gerekli!\n\nhttps://aistudio.google.com/app/apikey adresinden ücretsiz alabilirsiniz.');
+function bultenHedefDegisti() {
+  const tip = document.querySelector('input[name="bhedef"]:checked').value;
+  document.getElementById('bulten-ogrenci-sec').style.display = tip === 'ogrenci' ? 'block' : 'none';
+}
+
+async function bultenYayinla() {
+  const baslik = document.getElementById('bulten-baslik').value.trim();
+  const icerik = document.getElementById('bulten-icerik').value.trim();
+  const tip = document.querySelector('input[name="bhedef"]:checked').value;
+  const ogrId = document.getElementById('bulten-ogrenci').value;
+
+  if (!baslik || !icerik) { alert('❌ Konu başlığı ve içerik gerekli!'); return; }
+  if (tip === 'ogrenci' && !ogrId) { alert('❌ Lütfen bir öğrenci seçin!'); return; }
+
+  const { error } = await sb.from('bultenler').insert({
+    baslik, icerik,
+    hedef_tip: tip,
+    ogrenci_id: tip === 'ogrenci' ? ogrId : null
+  });
+  if (error) { alert('❌ Hata: ' + error.message + '\n\n(Supabase\'de "bultenler" tablosunu oluşturmayı unutmadınız mı?)'); return; }
+
+  document.getElementById('bulten-baslik').value = '';
+  document.getElementById('bulten-icerik').value = '';
+  document.querySelector('input[name="bhedef"][value="tumu"]').checked = true;
+  bultenHedefDegisti();
+  bultenListesiYukle();
+}
+
+async function bultenListesiYukle() {
+  const listEl = document.getElementById('bulten-liste');
+  if (!listEl) return;
+  const { data: rows, error } = await sb.from('bultenler').select('*').order('olusturulma', { ascending: false });
+  if (error) { listEl.innerHTML = `<div style="font-size:12px;color:var(--red)">Yüklenemedi: ${error.message}</div>`; return; }
+
+  const now = Date.now();
+  const aktif = (rows || []).filter(r => now - new Date(r.olusturulma).getTime() < 24 * 3600 * 1000);
+
+  if (!aktif.length) {
+    listEl.innerHTML = '<div style="font-size:12px;color:var(--text3);padding:8px 0">Bugün henüz bülten yayınlanmadı.</div>';
     return;
   }
-  if(diyetYukleniyor) return;
-  diyetYukleniyor = true;
-  
-  const tur = document.getElementById('diyet-tur').value;
-  const not = document.getElementById('diyet-not').value;
-  const btn = document.getElementById('diyet-btn');
-  btn.textContent = '⏳ AI menü hazırlıyor...';
-  btn.disabled = true;
 
-  const turAcik = {
-    'genel': 'genel sağlıklı beslenme',
-    'kilo-verme': 'kilo verme odaklı düşük kalorili',
-    'kas-yapma': 'kas geliştirme ve protein ağırlıklı',
-    'detoks': 'detoks ve hafif beslenme',
-    'akdeniz': 'akdeniz diyeti'
-  }[tur] || 'sağlıklı';
-
-  const prompt = `Sen bir diyetisyen ve fitness uzmanısın. Pilates ve EMS antrenmanı yapan kişiler için ${turAcik} günlük diyet menüsü hazırla.
-${not ? `Özel not: ${not}` : ''}
-
-Türkçe olarak şu formatta hazırla:
-🌅 KAHVALTI (yaklaşık kalori)
-[yemekler listesi]
-
-☀️ ARA ÖĞÜN (yaklaşık kalori)  
-[yemekler listesi]
-
-🍽️ ÖĞLE YEMEĞİ (yaklaşık kalori)
-[yemekler listesi]
-
-🌙 ARA ÖĞÜN (yaklaşık kalori)
-[yemekler listesi]
-
-🌃 AKŞAM YEMEĞİ (yaklaşık kalori)
-[yemekler listesi]
-
-💧 GÜNLÜK SU HEDEFİ: [miktar]
-📊 TOPLAM KALORİ: [kalori]
-
-💡 BUGÜNÜN İPUCU: [kısa motivasyon ve beslenme ipucu]
-
-Pilates/EMS antrenmanı yapanların ihtiyaçlarını göz önünde bulundur. Gerçekçi ve uygulanabilir öneriler ver.`;
-
-  try {
-    const resp = await fetch(`${GEMINI_URL}?key=${GEMINI_KEY}`, {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({
-        contents: [{parts: [{text: prompt}]}],
-        generationConfig: {temperature: 0.7, maxOutputTokens: 1000}
-      })
-    });
-    
-    if(!resp.ok) throw new Error(`API hatası: ${resp.status}`);
-    const result = await resp.json();
-    const metin = result.candidates?.[0]?.content?.parts?.[0]?.text || 'Menü oluşturulamadı.';
-    
-    // Göster
-    const sonucEl = document.getElementById('diyet-sonuc');
-    sonucEl.style.display = 'block';
-    document.getElementById('diyet-icerik').textContent = metin;
-    document.getElementById('diyet-tarih').textContent = new Date().toLocaleDateString('tr-TR',{weekday:'long',day:'numeric',month:'long'});
-    
-    // Global sakla
-    window._sonDiyet = {metin, tur: turAcik, tarih: new Date().toLocaleDateString('tr-TR')};
-    
-    sonucEl.scrollIntoView({behavior:'smooth', block:'start'});
-    
-  } catch(e) {
-    alert('❌ AI bağlantı hatası: ' + e.message + '\n\nAPI anahtarınızı kontrol edin.');
-  } finally {
-    diyetYukleniyor = false;
-    btn.textContent = '✨ AI ile Menü Oluştur';
-    btn.disabled = false;
-  }
+  listEl.innerHTML = aktif.map(r => {
+    const hedefTxt = r.hedef_tip === 'tumu' ? 'Tüm Öğrenciler' : ((data||[]).find(o => o.id === r.ogrenci_id)?.ad || 'Öğrenci');
+    const kalanSaat = Math.max(0, Math.round(24 - (now - new Date(r.olusturulma).getTime()) / 3600000));
+    const kisa = r.icerik.length > 140 ? r.icerik.slice(0, 140) + '…' : r.icerik;
+    return `
+      <div class="card" style="margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:8px">
+          <div style="font-size:12.5px;font-weight:600;color:var(--text)">${r.baslik}</div>
+          <span class="b-pilates" style="flex-shrink:0">${hedefTxt}</span>
+        </div>
+        <div style="font-size:11px;color:var(--text3);line-height:1.6;white-space:pre-line">${kisa}</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">
+          <span style="font-size:10px;color:var(--text3)">⏳ ${kalanSaat} saat kaldı</span>
+          <button class="btn btn-ghost btn-sm" onclick="bultenSil('${r.id}')">🗑 Kaldır</button>
+        </div>
+      </div>`;
+  }).join('');
 }
 
-function diyetKaydet() {
-  if(!window._sonDiyet) return;
-  const ozet = window._sonDiyet.metin.split('\n').slice(0,3).join(' ').substring(0,120)+'...';
-  diyetGecmis.push({
-    tarih: window._sonDiyet.tarih,
-    tur: window._sonDiyet.tur,
-    metin: window._sonDiyet.metin,
-    ozet
-  });
-  if(diyetGecmis.length > 30) diyetGecmis = diyetGecmis.slice(-30);
-  localStorage.setItem('ds_diyet_gecmis', JSON.stringify(diyetGecmis));
-  alert('✅ Menü kaydedildi!');
-  renderDiyet();
-}
-
-function diyetKopyala() {
-  if(!window._sonDiyet) return;
-  navigator.clipboard.writeText(window._sonDiyet.metin)
-    .then(() => alert('✅ Menü kopyalandı!'))
-    .catch(() => alert('Manuel kopyalayın:\n' + window._sonDiyet.metin));
-}
-
-function diyetTopluWa() {
-  if(!window._sonDiyet) return;
-  if(!data.length) {alert('Öğrenci yok!'); return;}
-  
-  const mesaj = `🥗 DUMANSSTUDIO — Bugünün Diyet Menüsü\n${new Date().toLocaleDateString('tr-TR',{weekday:'long',day:'numeric',month:'long'})}\n\n${window._sonDiyet.metin}\n\n💪 DUMANSSTUDIO | Sakarya`;
-  
-  const telList = data.filter(o=>o.tel).map(o=>({ad:o.ad, tel:o.tel}));
-  if(!telList.length) {alert('Kayıtlı telefon numarası olan öğrenci yok!'); return;}
-  
-  if(!confirm(`${telList.length} öğrenciye WhatsApp ile diyet menüsü gönderilsin mi?`)) return;
-  
-  // İlk öğrenciye aç, kullanıcı diğerlerini manuel gönderecek
-  // (WhatsApp API olmadan her birini ayrı ayrı açmak gerekiyor)
-  let idx = 0;
-  function sonrakiGonder() {
-    if(idx >= telList.length) {
-      alert(`✅ ${telList.length} öğrencinin WhatsApp penceresi açıldı!`);
-      return;
-    }
-    const o = telList[idx];
-    const numara = o.tel.replace(/\D/g,'');
-    const intNum = numara.startsWith('0') ? '90'+numara.slice(1) : numara;
-    window.open(`https://wa.me/${intNum}?text=${encodeURIComponent(mesaj)}`, '_blank');
-    idx++;
-    if(idx < telList.length) {
-      setTimeout(sonrakiGonder, 1500); // Her 1.5 saniyede bir aç
-    } else {
-      alert(`✅ Tüm ${telList.length} öğrenciye gönderildi!`);
-    }
-  }
-  sonrakiGonder();
-}
-
-function diyetGecmisGoster(i) {
-  const d = diyetGecmis[i];
-  if(!d) return;
-  window._sonDiyet = {metin: d.metin, tur: d.tur, tarih: d.tarih};
-  const sonucEl = document.getElementById('diyet-sonuc');
-  if(sonucEl) {
-    sonucEl.style.display = 'block';
-    document.getElementById('diyet-icerik').textContent = d.metin;
-    document.getElementById('diyet-tarih').textContent = d.tarih;
-    sonucEl.scrollIntoView({behavior:'smooth'});
-  }
+async function bultenSil(id) {
+  if (!confirm('Bu bülteni kaldırmak istiyor musunuz?')) return;
+  const { error } = await sb.from('bultenler').delete().eq('id', id);
+  if (error) { alert('Hata: ' + error.message); return; }
+  bultenListesiYukle();
 }
 
 // ── UYGULAMA BAŞLAT ──
