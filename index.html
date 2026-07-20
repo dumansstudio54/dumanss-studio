@@ -466,6 +466,7 @@ select:focus,input:focus{border-color:var(--gold)}
   <div class="snav-section">ARAÇLAR</div>
   <button class="snav-btn" id="snav-olcum" onclick="sp('olcum')"><span>📏</span> Vücut Ölçümleri</button>
   <button class="snav-btn" id="snav-kaloritakip" onclick="sp('kaloritakip')"><span>🔥</span> Öğrenci Kalorileri</button>
+  <button class="snav-btn" id="snav-saglikform" onclick="sp('saglikform')"><span>🩺</span> Sağlık Formları</button>
   <button class="snav-btn" id="snav-diyet" onclick="sp('diyet')"><span>📰</span> Günlük Menüler ve Haberler</button>
   <button class="snav-btn" id="snav-notlar" onclick="sp('notlar')"><span>📝</span> Notlar</button>
   <button class="snav-btn" id="snav-rapor" onclick="sp('rapor')"><span>📊</span> Raporlama</button>
@@ -483,6 +484,7 @@ select:focus,input:focus{border-color:var(--gold)}
   <div id="gelir" class="page"><div id="gelir-c"></div></div>
   <div id="olcum" class="page"><div id="olcum-c"></div></div>
   <div id="kaloritakip" class="page"><div id="kaloritakip-c"></div></div>
+  <div id="saglikform" class="page"><div id="saglikform-c"></div></div>
   <div id="diyet" class="page"><div id="diyet-c"></div></div>
 <div id="notlar" class="page"><div id="notlar-c"></div></div>
 <div id="rapor" class="page"><div id="rapor-c"></div></div>
@@ -558,7 +560,7 @@ function sp(page) {
   if(nb) nb.classList.add('active');
   const sb = document.getElementById('snav-'+page);
   if(sb) sb.classList.add('active');
-  const renders = {ana:renderAna,ogr:renderOgr,takvim:renderTakvim,gelir:renderGelir,bildirimler:renderBildirimler,mesajlar:renderMesajlar,olcum:renderOlcum,diyet:renderDiyet,kaloritakip:renderKaloriTakip,notlar:renderNotlar,rapor:renderRapor};
+  const renders = {ana:renderAna,ogr:renderOgr,takvim:renderTakvim,gelir:renderGelir,bildirimler:renderBildirimler,mesajlar:renderMesajlar,olcum:renderOlcum,diyet:renderDiyet,kaloritakip:renderKaloriTakip,saglikform:renderSaglikFormlari,notlar:renderNotlar,rapor:renderRapor};
   if(renders[page]) renders[page]();
   window.scrollTo(0,0);
 }
@@ -642,7 +644,124 @@ function kaloriTopluHatirlat(){
   sonraki();
 }
 
-// ── NOTLAR ──
+// ── SAĞLIK FORMLARI ──
+async function renderSaglikFormlari() {
+  const el = document.getElementById('saglikform-c');
+  el.innerHTML = '<div class="section-title">🩺 SAĞLIK FORMLARI</div><div style="padding:20px;text-align:center"><div class="spinner"></div></div>';
+  const { data: formlar, error } = await sb.from('saglik_formlari').select('*').order('created_at', { ascending: false });
+  if (error) { el.innerHTML = `<div class="section-title">🩺 SAĞLIK FORMLARI</div><div style="padding:0 16px;color:var(--red);font-size:12px">Yüklenemedi: ${error.message}<br><span style="color:var(--text3)">("saglik_formlari" tablosu Supabase'de oluşturulmuş mu?)</span></div>`; return; }
+
+  const toplam = formlar ? formlar.length : 0;
+  const riskli = formlar ? formlar.filter(f => (f.risk_sayisi||0) > 0).length : 0;
+  const ogrenciSayisi = formlar ? formlar.filter(f => f.ogrenci_id).length : 0;
+  const katilimciSayisi = toplam - ogrenciSayisi;
+  const yediGunOnce = Date.now() - 7*24*60*60*1000;
+  const buHafta = formlar ? formlar.filter(f => new Date(f.created_at).getTime() > yediGunOnce).length : 0;
+
+  el.innerHTML = `
+  <div class="section-title">🩺 SAĞLIK FORMLARI</div>
+  <div style="padding:0 16px">
+    <div style="font-size:12px;color:var(--text2);margin-bottom:14px;line-height:1.7">
+      Öğrenci veya etkinlik katılımcılarının doldurduğu Sağlık Bilgi ve Beyan Formları. "Evet" işaretli maddeler kırmızı ile vurgulanır.
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;margin-bottom:20px">
+      <div class="card" style="padding:14px 16px;text-align:center"><div style="font-size:24px;font-weight:700;color:var(--text)">${toplam}</div><div style="font-size:10.5px;color:var(--text3);margin-top:2px">Toplam Form</div></div>
+      <div class="card" style="padding:14px 16px;text-align:center"><div style="font-size:24px;font-weight:700;color:var(--red)">${riskli}</div><div style="font-size:10.5px;color:var(--text3);margin-top:2px">Riskli Beyan</div></div>
+      <div class="card" style="padding:14px 16px;text-align:center"><div style="font-size:24px;font-weight:700;color:var(--gold-dark)">${ogrenciSayisi}</div><div style="font-size:10.5px;color:var(--text3);margin-top:2px">Öğrenci</div></div>
+      <div class="card" style="padding:14px 16px;text-align:center"><div style="font-size:24px;font-weight:700;color:var(--text)">${katilimciSayisi}</div><div style="font-size:10.5px;color:var(--text3);margin-top:2px">Katılımcı</div></div>
+      <div class="card" style="padding:14px 16px;text-align:center"><div style="font-size:24px;font-weight:700;color:var(--green)">${buHafta}</div><div style="font-size:10.5px;color:var(--text3);margin-top:2px">Bu Hafta</div></div>
+    </div>
+    ${!formlar || !formlar.length ? '<div style="font-size:12px;color:var(--text3);padding:12px 0">Henüz doldurulmuş form yok.</div>' : formlar.map(f => {
+      const risk = f.risk_sayisi || 0;
+      const tarih = new Date(f.created_at).toLocaleDateString('tr-TR', {day:'2-digit',month:'long',year:'numeric'});
+      const cevapSatirlari = Object.entries(f.cevaplar||{}).map(([k,v]) => `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text2)">${k}</span><span style="font-weight:600;color:${v==='Evet'?'var(--red)':'var(--green)'}">${v}</span></div>`).join('');
+      return `
+      <div class="card" style="margin-bottom:16px;padding:0;overflow:hidden">
+        <div style="padding:16px 20px;display:flex;justify-content:space-between;align-items:center;background:${risk>0?'rgba(192,48,44,0.05)':'var(--bg2)'}">
+          <div style="cursor:pointer;flex:1" onclick="this.closest('.card').querySelector('.sf-detay').style.display=this.closest('.card').querySelector('.sf-detay').style.display==='none'?'block':'none'">
+            <div style="font-weight:700;font-size:14.5px;color:var(--text)">${f.ad} ${f.ogrenci_id ? '<span class="b-pilates" style="margin-left:6px">Öğrenci</span>' : '<span style="font-size:10px;background:var(--gold-light);color:var(--gold-dark);padding:2px 8px;border-radius:8px;margin-left:6px">Katılımcı</span>'}</div>
+            <div style="font-size:11.5px;color:var(--text3);margin-top:2px">${f.tel} · ${tarih}</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            ${risk>0 ? `<span style="font-size:12px;font-weight:700;color:var(--red)">⚠ ${risk} risk</span>` : '<span style="font-size:12px;color:var(--green)">✓ Risk yok</span>'}
+            <button class="btn btn-ghost btn-sm" onclick="saglikFormuDuzenle('${f.id}')">✏️ Düzelt</button>
+            <button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="saglikFormuSil('${f.id}')">🗑</button>
+          </div>
+        </div>
+        <div class="sf-detay" style="display:none;padding:16px 20px;border-top:1px solid var(--border)">
+          <div style="font-size:11px;color:var(--text3);margin-bottom:6px">Doğum/Yaş: ${f.dogum||'—'}</div>
+          ${cevapSatirlari}
+          ${f.notlar && f.notlar!=='Yok' ? `<div style="margin-top:12px;padding:10px 12px;background:var(--bg2);border-radius:8px;font-size:12.5px;color:var(--text2)"><b>Not:</b> ${f.notlar}</div>` : ''}
+          ${f.imza ? `<div style="margin-top:12px"><div style="font-size:11px;color:var(--text3);margin-bottom:4px">İmza:</div><img src="${f.imza}" style="max-width:220px;border:1px solid var(--border);border-radius:8px;background:#fff"></div>` : ''}
+        </div>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+async function saglikFormuSil(id) {
+  if (!confirm('Bu sağlık formu kalıcı olarak silinsin mi?')) return;
+  const { error } = await sb.from('saglik_formlari').delete().eq('id', id);
+  if (error) { alert('❌ Silinemedi: ' + error.message); return; }
+  renderSaglikFormlari();
+}
+
+async function saglikFormuDuzenle(id) {
+  const { data, error } = await sb.from('saglik_formlari').select('*').eq('id', id).single();
+  if (error || !data) { alert('❌ Form bulunamadı'); return; }
+  const f = data;
+  const cevapAnahtarlari = Object.keys(f.cevaplar || {});
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+  modal.innerHTML = `
+  <div style="background:var(--card,#fff);border-radius:14px;max-width:520px;width:100%;max-height:88vh;overflow-y:auto;padding:24px">
+    <div style="font-size:16px;font-weight:700;margin-bottom:16px;color:var(--text)">✏️ Sağlık Formunu Düzelt</div>
+    <label style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase">Ad Soyad</label>
+    <input id="sfd-ad" value="${(f.ad||'').replace(/"/g,'&quot;')}" style="width:100%;padding:9px 12px;margin:4px 0 12px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+    <label style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase">Telefon</label>
+    <input id="sfd-tel" value="${(f.tel||'').replace(/"/g,'&quot;')}" style="width:100%;padding:9px 12px;margin:4px 0 12px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+    <label style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase">Doğum / Yaş</label>
+    <input id="sfd-dogum" value="${(f.dogum||'').replace(/"/g,'&quot;')}" style="width:100%;padding:9px 12px;margin:4px 0 12px;border:1px solid var(--border);border-radius:8px;font-size:13px">
+    <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;margin:14px 0 6px">Cevaplar</div>
+    ${cevapAnahtarlari.map(k => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)">
+        <span style="font-size:12.5px;color:var(--text2)">${k}</span>
+        <select id="sfd-cevap-${cevapAnahtarlari.indexOf(k)}" style="padding:5px 10px;border:1px solid var(--border);border-radius:7px;font-size:12px">
+          <option value="Hayır" ${f.cevaplar[k]==='Hayır'?'selected':''}>Hayır</option>
+          <option value="Evet" ${f.cevaplar[k]==='Evet'?'selected':''}>Evet</option>
+        </select>
+      </div>`).join('')}
+    <label style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;display:block;margin-top:14px">Özel Notlar</label>
+    <textarea id="sfd-notlar" rows="3" style="width:100%;padding:9px 12px;margin:4px 0 16px;border:1px solid var(--border);border-radius:8px;font-size:13px">${(f.notlar||'').replace(/</g,'&lt;')}</textarea>
+    <div style="display:flex;gap:10px">
+      <button onclick="this.closest('div[style*=fixed]').remove()" style="flex:1;padding:11px;border:1px solid var(--border);background:#fff;border-radius:9px;cursor:pointer;font-size:13px">İptal</button>
+      <button id="sfd-kaydet-btn" onclick="saglikFormuKaydetDuzenleme('${id}',${JSON.stringify(cevapAnahtarlari).replace(/"/g,'&quot;')})" style="flex:2;padding:11px;background:linear-gradient(135deg,#975B09,#946C18,#D2A941);color:#fff;border:none;border-radius:9px;cursor:pointer;font-size:13px;font-weight:700">💾 Kaydet</button>
+    </div>
+  </div>`;
+  document.body.appendChild(modal);
+}
+
+async function saglikFormuKaydetDuzenleme(id, cevapAnahtarlari) {
+  const btn = document.getElementById('sfd-kaydet-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Kaydediliyor...'; }
+  const yeniCevaplar = {};
+  cevapAnahtarlari.forEach((k, i) => { yeniCevaplar[k] = document.getElementById('sfd-cevap-'+i).value; });
+  const riskSayisi = Object.values(yeniCevaplar).filter(v => v === 'Evet').length;
+  const payload = {
+    ad: document.getElementById('sfd-ad').value.trim(),
+    tel: document.getElementById('sfd-tel').value.trim(),
+    dogum: document.getElementById('sfd-dogum').value.trim(),
+    notlar: document.getElementById('sfd-notlar').value.trim() || 'Yok',
+    cevaplar: yeniCevaplar,
+    risk_sayisi: riskSayisi
+  };
+  const { error } = await sb.from('saglik_formlari').update(payload).eq('id', id);
+  if (error) { alert('❌ Kaydedilemedi: ' + error.message); if (btn) { btn.disabled=false; btn.textContent='💾 Kaydet'; } return; }
+  document.querySelectorAll('div[style*="position:fixed"]').forEach(m => { if (m.innerHTML.includes('Sağlık Formunu Düzelt')) m.remove(); });
+  renderSaglikFormlari();
+}
+
+
 function renderNotlar() {
   const el = document.getElementById('notlar-c');
   const notlar = JSON.parse(localStorage.getItem('ds_notlar') || '[]');
@@ -1047,7 +1166,19 @@ async function ogrKaydet(o) {
     const {data:d,error} = await sb.from('ogrenciler').insert(row).select().single();
     if(error) throw error;
     o._id = d.id;
+    saglikFormuEslestir(o._id, o.tel);
   }
+}
+async function saglikFormuEslestir(ogrenciId, tel) {
+  const digits = (tel||'').replace(/\D/g,'');
+  if (!digits) return;
+  try {
+    const { data: eslesen } = await sb.from('saglik_formlari').select('id').is('ogrenci_id', null).ilike('tel', '%'+digits.slice(-9)+'%');
+    if (eslesen && eslesen.length) {
+      const ids = eslesen.map(f => f.id);
+      await sb.from('saglik_formlari').update({ ogrenci_id: ogrenciId }).in('id', ids);
+    }
+  } catch (e) { console.error('Sağlık formu eşleştirme hatası:', e); }
 }
 async function ogrSilDB(id) {
   const {error} = await sb.from('ogrenciler').delete().eq('id',id);
@@ -2041,11 +2172,47 @@ async function pdfKaydet() {
   }
 }
 
+async function olcumOzetHtml() {
+  const { data: hepsi, error } = await sb.from('olcumler').select('ogrenci_id,tarih,kilo,yag_yuzdesi,kas_yuzdesi').order('tarih', { ascending: true });
+  if (error || !hepsi || !hepsi.length) return '';
+  const gruplar = {};
+  hepsi.forEach(o => { (gruplar[o.ogrenci_id] = gruplar[o.ogrenci_id] || []).push(o); });
+
+  let zayiflayan = 0, toplamKiloKaybi = 0, yagKaybeden = 0, kasKazanan = 0, ilerlemeYok = 0;
+  Object.values(gruplar).forEach(arr => {
+    if (arr.length < 2) return;
+    const ilk = arr[0], son = arr[arr.length-1];
+    const kiloFark = (son.kilo||0) - (ilk.kilo||0);
+    const yagFark = (son.yag_yuzdesi||0) - (ilk.yag_yuzdesi||0);
+    const kasFark = (son.kas_yuzdesi||0) - (ilk.kas_yuzdesi||0);
+    if (kiloFark < -0.3) { zayiflayan++; toplamKiloKaybi += Math.abs(kiloFark); }
+    else if (kiloFark > 0.3 || yagFark < -0.3 || kasFark > 0.3) { /* değişim var ama kilo artmış olabilir */ }
+    else ilerlemeYok++;
+    if (yagFark < -0.3) yagKaybeden++;
+    if (kasFark > 0.3) kasKazanan++;
+  });
+  const ogrSayisi = Object.keys(gruplar).filter(id => gruplar[id].length >= 2).length;
+  if (!ogrSayisi) return '';
+
+  return `
+  <div style="padding:16px 16px 4px">
+    <div style="font-size:10px;font-weight:700;color:var(--gold-dark);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px">TÜM ÖĞRENCİLER — İLERLEME ÖZETİ (${ogrSayisi} öğrenci, 2+ ölçüm)</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-bottom:16px">
+      <div class="card" style="padding:12px;text-align:center"><div style="font-size:20px;font-weight:800;color:var(--green)">${zayiflayan}</div><div style="font-size:9.5px;color:var(--text3);margin-top:2px">Kilo Verdi</div></div>
+      <div class="card" style="padding:12px;text-align:center"><div style="font-size:20px;font-weight:800;color:var(--gold-dark)">${toplamKiloKaybi.toFixed(1)}kg</div><div style="font-size:9.5px;color:var(--text3);margin-top:2px">Toplam Kayıp</div></div>
+      <div class="card" style="padding:12px;text-align:center"><div style="font-size:20px;font-weight:800;color:#E07020">${yagKaybeden}</div><div style="font-size:9.5px;color:var(--text3);margin-top:2px">Yağ Oranı Düştü</div></div>
+      <div class="card" style="padding:12px;text-align:center"><div style="font-size:20px;font-weight:800;color:var(--blue)">${kasKazanan}</div><div style="font-size:9.5px;color:var(--text3);margin-top:2px">Kas Oranı Arttı</div></div>
+      <div class="card" style="padding:12px;text-align:center"><div style="font-size:20px;font-weight:800;color:var(--text3)">${ilerlemeYok}</div><div style="font-size:9.5px;color:var(--text3);margin-top:2px">Değişim Yok</div></div>
+    </div>
+  </div>`;
+}
+
 async function renderOlcum() {
   const el = document.getElementById('olcum-c');
   if (!data.length) { el.innerHTML='<div class="alert a-blue" style="margin:12px 16px">Önce öğrenci ekle.</div>'; return; }
   const o = data[olcumOgrIdx];
   gosterYukleniyor();
+  const ozetHtml = await olcumOzetHtml();
   try {
     const {data:d,error} = await sb.from('olcumler').select('*').eq('ogrenci_id',o._id).order('tarih',{ascending:true});
     if (!error) olcumler = d||[];
@@ -2053,7 +2220,7 @@ async function renderOlcum() {
   gizleYukleniyor();
   const son = olcumler.length ? olcumler[olcumler.length-1] : null;
   const ilk = olcumler.length > 1 ? olcumler[0] : null;
-  let html = `
+  let html = ozetHtml + `
   <div style="padding:12px 16px 8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;border-bottom:1px solid var(--border)">
     <select style="flex:1;min-width:130px" onchange="olcumOgrIdx=parseInt(this.value);renderOlcum()">
       ${data.map((d,i)=>'<option value="'+i+'"'+(i===olcumOgrIdx?' selected':'')+'>'+d.ad+'</option>').join('')}
