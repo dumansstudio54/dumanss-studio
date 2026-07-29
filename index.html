@@ -5,6 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="DS Yönetici">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#946C18">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png">
 <title>DUMANSSTUDIO</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
@@ -2568,11 +2574,43 @@ async function bultenYayinla() {
   });
   if (error) { alert('❌ Hata: ' + error.message + '\n\n(Supabase\'de "bultenler" tablosunu oluşturmayı unutmadınız mı?)'); return; }
 
+  const gonderTip = tip;
+  const gonderOgrId = ogrId;
   document.getElementById('bulten-baslik').value = '';
   document.getElementById('bulten-icerik').value = '';
   document.querySelector('input[name="bhedef"][value="tumu"]').checked = true;
   bultenHedefDegisti();
   bultenListesiYukle();
+
+  if (confirm('✅ Bülten yayınlandı!\n\n📱 Aynı içerik WhatsApp\'tan da toplu gönderilsin mi?')) {
+    bultenWhatsappGonder(baslik, icerik, gonderTip, gonderOgrId);
+  }
+}
+
+function bultenWhatsappMesaji(baslik, icerik) {
+  return `*${baslik}*\n\n${icerik}\n\n💪 DumansStudio | Sakarya`;
+}
+async function bultenWhatsappGonder(baslik, icerik, tip, ogrId) {
+  let hedefler = [];
+  if (tip === 'ogrenci') {
+    const o = (data||[]).find(x => x.id === ogrId);
+    if (o && o.tel) hedefler = [o];
+  } else {
+    hedefler = (data||[]).filter(o => o.tel);
+  }
+  if (!hedefler.length) { alert('Gönderilecek telefon numarası bulunamadı.'); return; }
+  const mesaj = bultenWhatsappMesaji(baslik, icerik);
+  let idx = 0;
+  function sonraki() {
+    if (idx >= hedefler.length) return;
+    const o = hedefler[idx];
+    const numara = (o.tel||'').replace(/\D/g,'');
+    const intNum = numara.startsWith('0') ? '90'+numara.slice(1) : numara;
+    window.open(`https://wa.me/${intNum}?text=${encodeURIComponent(mesaj)}`, '_blank');
+    idx++;
+    if (idx < hedefler.length) setTimeout(sonraki, 1500);
+  }
+  sonraki();
 }
 
 async function bultenListesiYukle() {
@@ -2653,6 +2691,9 @@ async function uygulamaBaslat(){
   }
   requestAnimationFrame(fr);
 })();
+</script>
+<script>
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
 </script>
 </body>
 </html>
