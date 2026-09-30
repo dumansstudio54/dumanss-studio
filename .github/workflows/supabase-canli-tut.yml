@@ -1,0 +1,17 @@
+name: Supabase Canli Tut
+
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Supabase'e istek gonder
+        run: |
+          curl -s -o /dev/null -w "Durum kodu: %{http_code}\n" \
+            "${{ secrets.SUPABASE_URL }}/rest/v1/ogrenciler?select=id&limit=1" \
+            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}"
