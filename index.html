@@ -688,6 +688,12 @@ input:focus,select:focus,textarea:focus{border-color:var(--ds-gold6) !important;
 .ds-sira-sec .ds-ic{color:var(--ds-gold6,#b8932a);font-size:15px}
 .ds-sira-sec select{flex:1;border:0 !important;background:transparent !important;font:500 13px 'Jost',sans-serif;color:var(--ds-ink);padding:0 !important;height:auto !important;box-shadow:none !important}
 @media(min-width:900px){.ds-ogr-ust .ds-sira-sec{margin-top:0;flex:none;min-width:240px}}
+.ds-liste-arac{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+.ds-liste-sec{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ds-liste-sec .ds-sira-sec{margin-top:0;min-width:0}
+.ds-liste-sec .ds-sira-sec select{min-width:0;text-overflow:ellipsis}
+.ds-liste-sayac{font-size:11px;color:var(--ds-ink5);letter-spacing:.04em}
+@media(max-width:520px){.ds-liste-sec{grid-template-columns:1fr}}
 /* Davet indirimi notu ve davet sıralaması */
 .ds-indirim-not{display:flex;align-items:center;justify-content:flex-end;gap:4px;font-size:10.5px;color:var(--ds-gold7);margin:2px 0}
 .ds-indirim-not .ds-ic{font-size:12px}
@@ -963,10 +969,11 @@ async function renderKaloriTakip() {
     const bugunKal = kk.find(k => k.tarih === bugunStr)?.kalori;
     const son7 = kk.slice(0, 7);
     const ort7 = son7.length ? Math.round(son7.reduce((s, k) => s + k.kalori, 0) / son7.length) : null;
-    return { ad: o.ad, tel: o.tel, tur: o.tur, bugunKal, ort7, girdi: !!bugunKal };
+    return { ad: o.ad, tel: o.tel, tur: o.tur, bugunKal, ort7, girdi: !!bugunKal, kayitSayisi: kk.length };
   });
 
-  _kaloriGirmeyenler = satirlar.filter(s => !s.girdi && s.tel);
+  _kaloriSatirlar = satirlar;
+  _kaloriGirmeyenler = satirlar.filter(s => !s.girdi && s.tel).sort(adKarsilastir);
 
   el.innerHTML = `
   <div class="section-title">🔥 ÖĞRENCİ KALORİLERİ</div>
@@ -975,7 +982,30 @@ async function renderKaloriTakip() {
       Öğrencilerin kendi panellerine girdiği günlük kalori verileridir. Bugün girmeyenlere WhatsApp ile hatırlatma gönderebilirsiniz.
     </div>
     ${_kaloriGirmeyenler.length ? `<button class="btn btn-wa" style="width:100%;margin-bottom:14px" onclick="kaloriTopluHatirlat()">📱 Bugün Girmeyenleri Hatırlat (${_kaloriGirmeyenler.length})</button>` : ''}
-    ${!satirlar.length ? '<div style="font-size:12px;color:var(--text3);padding:12px 0">Kayıtlı öğrenci yok.</div>' : `
+    ${!satirlar.length ? '<div style="font-size:12px;color:var(--text3);padding:12px 0">Kayıtlı öğrenci yok.</div>' : listeAraclari('kalori', KALORI_FILTRELERI, KALORI_SIRALARI) + '<div id="kalori-liste"></div>'}
+  </div>`;
+  kaloriListeCiz();
+}
+let _kaloriSatirlar=[];
+const KALORI_FILTRELERI={
+  hepsi:['Tümü',()=>true],
+  girmedi:['Bugün girmeyenler',s=>!s.girdi],
+  girdi:['Bugün girenler',s=>s.girdi],
+  hic:['Hiç kalori girmeyenler',s=>!s.kayitSayisi],
+  pilates:['Pilates',s=>s.tur!=='ems'],
+  ems:['EMS',s=>s.tur==='ems']
+};
+const KALORI_SIRALARI={
+  ad:['Ada göre (A-Z)',(a,b)=>adKarsilastir(a,b)],
+  za:['Ada göre (Z-A)',(a,b)=>adKarsilastir(b,a)],
+  girmeyen:['Bugün girmeyen önce',(a,b)=>(a.girdi-b.girdi)||adKarsilastir(a,b)],
+  ort:['7 gün ortalaması yüksek',(a,b)=>((b.ort7||0)-(a.ort7||0))||adKarsilastir(a,b)]
+};
+function kaloriListeCiz(){
+  const kutu=document.getElementById('kalori-liste');if(!kutu)return;
+  const satirlar=listeSuz('kalori',_kaloriSatirlar,KALORI_FILTRELERI,KALORI_SIRALARI,s=>s.ad+' '+(s.tel||''));
+  listeSayac('kalori',satirlar.length,_kaloriSatirlar.length);
+  kutu.innerHTML = !satirlar.length ? '<div style="font-size:12px;color:var(--text3);padding:12px 0">Bu filtreye uyan öğrenci yok.</div>' : `
     <div class="card" style="padding:0;overflow:hidden">
       <table style="width:100%;border-collapse:collapse">
         <thead>
@@ -996,8 +1026,35 @@ async function renderKaloriTakip() {
             </tr>`).join('')}
         </tbody>
       </table>
-    </div>`}
+    </div>`;
+}
+// ── Liste araçları (arama + filtre + sıralama) — Kaloriler ve Sağlık Formları sayfalarında ortak ──
+const _liste={}; // ad -> {ara, filtre, sira}
+function listeAraclari(ad, filtreler, siralar){
+  const d=_liste[ad]||(_liste[ad]={ara:'',filtre:'hepsi',sira:'ad'});
+  const sec=(tip,obj)=>`<select onchange="_liste['${ad}'].${tip}=this.value;${ad}ListeCiz()">${Object.entries(obj).map(([k,v])=>`<option value="${k}"${k===d[tip]?' selected':''}>${v[0]}</option>`).join('')}</select>`;
+  return `<div class="ds-liste-arac">
+    <label class="ds-arama">${dsIc('search')}<input type="text" placeholder="İsim veya telefon ara" value="${d.ara.replace(/&/g,'&amp;').replace(/"/g,'&quot;')}" oninput="_liste['${ad}'].ara=this.value;${ad}ListeCiz()"></label>
+    <div class="ds-liste-sec">
+      <label class="ds-sira-sec">${dsIc('filter')}<span>Göster</span>${sec('filtre',filtreler)}</label>
+      <label class="ds-sira-sec">${dsIc('chart')}<span>Sırala</span>${sec('sira',siralar)}</label>
+    </div>
+    <div class="ds-liste-sayac" id="${ad}-sayac"></div>
   </div>`;
+}
+function listeSuz(ad, liste, filtreler, siralar, metin){
+  const d=_liste[ad]||{ara:'',filtre:'hepsi',sira:'ad'};
+  const q=d.ara.trim().toLocaleLowerCase('tr'), qRakam=q.replace(/\D/g,'');
+  return liste.filter(x=>{
+    if(!(filtreler[d.filtre]||filtreler.hepsi)[1](x))return false;
+    if(!q)return true;
+    const m=metin(x);
+    return m.toLocaleLowerCase('tr').includes(q)||(qRakam.length>=3&&m.replace(/\D/g,'').includes(qRakam));
+  }).sort((siralar[d.sira]||siralar.ad)[1]);
+}
+function listeSayac(ad, gosterilen, toplam){
+  const e=document.getElementById(ad+'-sayac');
+  if(e)e.textContent=gosterilen===toplam?toplam+' kayıt':gosterilen+' / '+toplam+' kayıt gösteriliyor';
 }
 function kaloriHatirlatMesaji(ad){
   return `Merhaba ${ad.split(' ')[0]} 👋\n\nDumansStudio öğrenci panelinden bugünkü kalori girişinizi henüz yapmadığınızı fark ettik. Beslenme takibinizin devam etmesi için birkaç saniyenizi ayırabilir misiniz? 🙏\n\n💪 DumansStudio | Sakarya`;
@@ -1048,7 +1105,34 @@ async function renderSaglikFormlari() {
       <div class="card" style="padding:14px 16px;text-align:center"><div style="font-size:24px;font-weight:700;color:var(--text)">${katilimciSayisi}</div><div style="font-size:10.5px;color:var(--text3);margin-top:2px">Katılımcı</div></div>
       <div class="card" style="padding:14px 16px;text-align:center"><div style="font-size:24px;font-weight:700;color:var(--green)">${buHafta}</div><div style="font-size:10.5px;color:var(--text3);margin-top:2px">Bu Hafta</div></div>
     </div>
-    ${!formlar || !formlar.length ? '<div style="font-size:12px;color:var(--text3);padding:12px 0">Henüz doldurulmuş form yok.</div>' : formlar.map(f => {
+    ${!formlar || !formlar.length ? '<div style="font-size:12px;color:var(--text3);padding:12px 0">Henüz doldurulmuş form yok.</div>' : listeAraclari('saglik', SF_FILTRELERI, SF_SIRALARI) + '<div id="saglik-liste"></div>'}
+  </div>`;
+  _sfFormlar = formlar || [];
+  saglikListeCiz();
+}
+let _sfFormlar=[];
+const sfZaman=f=>new Date(f.created_at).getTime()||0;
+const SF_FILTRELERI={
+  hepsi:['Tümü',()=>true],
+  ogrenci:['Öğrenciler',f=>!!f.ogrenci_id],
+  katilimci:['Katılımcılar',f=>!f.ogrenci_id],
+  riskli:['Riskli beyanlar',f=>(f.risk_sayisi||0)>0],
+  risksiz:['Risk yok',f=>!(f.risk_sayisi||0)],
+  hafta:['Son 7 gün',f=>sfZaman(f)>Date.now()-7*864e5],
+  ay:['Son 30 gün',f=>sfZaman(f)>Date.now()-30*864e5]
+};
+const SF_SIRALARI={
+  ad:['Ada göre (A-Z)',(a,b)=>adKarsilastir(a,b)||sfZaman(b)-sfZaman(a)],
+  za:['Ada göre (Z-A)',(a,b)=>adKarsilastir(b,a)||sfZaman(b)-sfZaman(a)],
+  yeni:['En yeni önce',(a,b)=>sfZaman(b)-sfZaman(a)],
+  eski:['En eski önce',(a,b)=>sfZaman(a)-sfZaman(b)],
+  risk:['Riskli önce',(a,b)=>((b.risk_sayisi||0)-(a.risk_sayisi||0))||adKarsilastir(a,b)]
+};
+function saglikListeCiz(){
+  const kutu=document.getElementById('saglik-liste');if(!kutu)return;
+  const formlar=listeSuz('saglik',_sfFormlar,SF_FILTRELERI,SF_SIRALARI,f=>(f.ad||'')+' '+(f.tel||''));
+  listeSayac('saglik',formlar.length,_sfFormlar.length);
+  kutu.innerHTML = !formlar.length ? '<div style="font-size:12px;color:var(--text3);padding:12px 0">Bu filtreye uyan form yok.</div>' : formlar.map(f => {
       const risk = f.risk_sayisi || 0;
       const tarih = new Date(f.created_at).toLocaleDateString('tr-TR', {day:'2-digit',month:'long',year:'numeric'});
       const cevapSatirlari = Object.entries(f.cevaplar||{}).map(([k,v]) => `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text2)">${k}</span><span style="font-weight:600;color:${v==='Evet'?'var(--red)':'var(--green)'}">${v}</span></div>`).join('');
@@ -1072,8 +1156,7 @@ async function renderSaglikFormlari() {
           ${f.imza ? `<div style="margin-top:12px"><div style="font-size:11px;color:var(--text3);margin-bottom:4px">İmza:</div><img src="${f.imza}" style="max-width:220px;border:1px solid var(--border);border-radius:8px;background:#fff"></div>` : ''}
         </div>
       </div>`;
-    }).join('')}
-  </div>`;
+    }).join('');
 }
 
 async function saglikFormuSil(id) {
@@ -1125,7 +1208,7 @@ async function saglikFormuKaydetDuzenleme(id, cevapAnahtarlari) {
   cevapAnahtarlari.forEach((k, i) => { yeniCevaplar[k] = document.getElementById('sfd-cevap-'+i).value; });
   const riskSayisi = Object.values(yeniCevaplar).filter(v => v === 'Evet').length;
   const payload = {
-    ad: document.getElementById('sfd-ad').value.trim(),
+    ad: adDuzelt(document.getElementById('sfd-ad').value),
     tel: document.getElementById('sfd-tel').value.trim(),
     dogum: document.getElementById('sfd-dogum').value.trim(),
     notlar: document.getElementById('sfd-notlar').value.trim() || 'Yok',
@@ -1690,6 +1773,11 @@ function renderOgr() {
 // Öğrenci listesi sıralaması (kartlar data içindeki asıl sırasıyla işlem yapar; burada yalnızca gösterim sırası değişir)
 let ogrSira='ad';
 const adKarsilastir=(a,b)=>(a.ad||'').localeCompare(b.ad||'','tr',{sensitivity:'base'});
+// "EZGİ TOR" / "ezgi tor" -> "Ezgi Tor" (veritabanındaki ad_duzelt tetikleyicisiyle aynı kural)
+function adDuzelt(s){
+  return String(s||'').trim().replace(/\s+/g,' ').split(' ')
+    .map(k=>k.toLocaleLowerCase('tr').split('-').map(p=>p.charAt(0).toLocaleUpperCase('tr')+p.slice(1)).join('-')).join(' ');
+}
 const odemeOnceligi=o=>o.ilkOdemeAlindi===false||o.odemeBekliyor?0:(o.borcTl||0)>0||efektifKalan(o)<=0||gecikmiMi(o)?1:2;
 const OGR_SIRALARI={
   ad:['Ada göre (A-Z)',(a,b)=>adKarsilastir(a,b)],
@@ -3598,7 +3686,7 @@ function pdfOnayModali(veri, eslenenOgr) {
         <div>
           <div style="font-size:10px;letter-spacing:1.5px;color:var(--gold-dark,#946C18);font-weight:600;margin-bottom:5px">ÖĞRENCİ</div>
           <select id="pdf-ogr-sec" style="width:100%;padding:9px 11px;border:1px solid var(--border,#E8DFD0);border-radius:8px;background:white;color:var(--text,#2A2015);font-size:13px">
-            ${data.map((o, i) => '<option value="' + i + '"' + (eslenenOgr && data.indexOf(eslenenOgr)===i?' selected':'') + '>' + o.ad + '</option>').join('')}
+            ${data.map((o, i) => ({o, i})).sort((a, b) => adKarsilastir(a.o, b.o)).map(({o, i}) => '<option value="' + i + '"' + (eslenenOgr && data.indexOf(eslenenOgr)===i?' selected':'') + '>' + o.ad + '</option>').join('')}
           </select>
         </div>
       </div>
@@ -3657,7 +3745,7 @@ async function pdfKaydet() {
     toast.textContent = '✅ ' + o.ad + ' için ölçüm kaydedildi!';
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 3500);
-    olcumOgrIdx = ogrIdx;
+    olcumOgrIdx = ogrIdx; olcumSecildi = true;
     renderOlcum();
   } catch(e) {
     alert('❌ Kayıt hatası: ' + e.message);
@@ -3665,8 +3753,19 @@ async function pdfKaydet() {
   }
 }
 
+// Öğrenci seçimi: isme göre sıralı, "ölçümü olanlar" ve "henüz ölçümü olmayanlar" diye iki grupta (değer data içindeki sıradır)
+let _olcumSayilari={}, olcumSecildi=false;
+function olcumSecenekleri(){
+  const sirali=data.map((o,i)=>({o,i})).sort((a,b)=>adKarsilastir(a.o,b.o));
+  const sec=({o,i})=>{const n=_olcumSayilari[o._id]||0;return '<option value="'+i+'"'+(i===olcumOgrIdx?' selected':'')+'>'+o.ad+(n?' ('+n+' ölçüm)':'')+'</option>';};
+  const olan=sirali.filter(x=>_olcumSayilari[x.o._id]), olmayan=sirali.filter(x=>!_olcumSayilari[x.o._id]);
+  return (olan.length?'<optgroup label="Ölçümü olanlar ('+olan.length+')">'+olan.map(sec).join('')+'</optgroup>':'')
+    +(olmayan.length?'<optgroup label="Henüz ölçümü yok ('+olmayan.length+')">'+olmayan.map(sec).join('')+'</optgroup>':'');
+}
 async function olcumOzetHtml() {
   const { data: hepsi, error } = await sb.from('olcumler').select('ogrenci_id,tarih,kilo,yag_yuzdesi,kas_yuzdesi').order('tarih', { ascending: true });
+  _olcumSayilari = {};
+  (hepsi||[]).forEach(o => { _olcumSayilari[o.ogrenci_id] = (_olcumSayilari[o.ogrenci_id]||0) + 1; });
   if (error || !hepsi || !hepsi.length) return '';
   const gruplar = {};
   hepsi.forEach(o => { (gruplar[o.ogrenci_id] = gruplar[o.ogrenci_id] || []).push(o); });
@@ -3703,9 +3802,15 @@ async function olcumOzetHtml() {
 async function renderOlcum() {
   const el = document.getElementById('olcum-c');
   if (!data.length) { el.innerHTML='<div class="alert a-blue" style="margin:12px 16px">Önce öğrenci ekle.</div>'; return; }
-  const o = data[olcumOgrIdx];
   gosterYukleniyor();
   const ozetHtml = await olcumOzetHtml();
+  // Sayfa ilk açıldığında listede en üstteki (ölçümü olan, isme göre ilk) öğrenci seçilir
+  if (!olcumSecildi || !data[olcumOgrIdx]) {
+    olcumSecildi = true;
+    const ilkSecenek = olcumSecenekleri().match(/value="(\d+)"/);
+    olcumOgrIdx = ilkSecenek ? +ilkSecenek[1] : 0;
+  }
+  const o = data[olcumOgrIdx];
   try {
     const {data:d,error} = await sb.from('olcumler').select('*').eq('ogrenci_id',o._id).order('tarih',{ascending:true});
     if (!error) olcumler = d||[];
@@ -3715,8 +3820,8 @@ async function renderOlcum() {
   const ilk = olcumler.length > 1 ? olcumler[0] : null;
   let html = ozetHtml + `
   <div style="padding:12px 16px 8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;border-bottom:1px solid var(--border)">
-    <select style="flex:1;min-width:130px" onchange="olcumOgrIdx=parseInt(this.value);renderOlcum()">
-      ${data.map((d,i)=>'<option value="'+i+'"'+(i===olcumOgrIdx?' selected':'')+'>'+d.ad+'</option>').join('')}
+    <select style="flex:1;min-width:130px" onchange="olcumOgrIdx=parseInt(this.value);olcumSecildi=true;renderOlcum()">
+      ${olcumSecenekleri()}
     </select>
     <label id="pdf-yukle-btn" style="display:inline-flex;align-items:center;gap:6px;padding:7px 14px;background:linear-gradient(135deg,#975B09,#946C18);color:white;border-radius:8px;cursor:pointer;font-size:12px;font-weight:700;letter-spacing:.5px;box-shadow:0 2px 8px rgba(148,108,24,.25)">
       📄 PDF Yükle
@@ -3934,7 +4039,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 });
 
 async function kaydet(){
-  const ad=document.getElementById('f-ad')?.value?.trim();
+  const ad=adDuzelt(document.getElementById('f-ad')?.value);
   if(!ad){alert('Ad zorunlu!');return;}
   // Yeni öğrencinin telefonu arşivde varsa önce geri yükleme önerilir.
   if(duzenlemeIdx===-1 && await arsivEslesmesiSor(document.getElementById('f-tel')?.value)) return;
@@ -4002,7 +4107,7 @@ async function kaydet(){
 
 async function renderDiyet() {
   const el = document.getElementById('diyet-c');
-  const ogrenciOptions = (data||[]).map(o => `<option value="${o._id}">${o.ad}</option>`).join('');
+  const ogrenciOptions = [...(data||[])].sort(adKarsilastir).map(o =>`<option value="${o._id}">${o.ad}</option>`).join('');
   el.innerHTML = `
   <div class="section-title">📰 GÜNLÜK MENÜLER VE HABERLER</div>
   <div style="padding:0 16px">
@@ -4311,6 +4416,7 @@ if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.se
     smile:'<circle cx="12" cy="12" r="9.5"/><path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01"/>',
     ban:'<circle cx="12" cy="12" r="9.5"/><path d="m5.3 5.3 13.4 13.4"/>',
     search:'<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',
+    filter:'<path d="M3 5h18l-7 8.5V19l-4 2v-7.5z"/>',
     chev:'<path d="m9 6 6 6-6 6"/>',
     chevl:'<path d="m15 6-6 6 6 6"/>'
   };
