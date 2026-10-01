@@ -672,6 +672,16 @@ input:focus,select:focus,textarea:focus{border-color:var(--ds-gold6) !important;
 .ds-menu .snav-btn{padding:13px 12px !important;font-size:14.5px}
 .ds-menu .snav-section{padding:12px 12px 4px}
 .ds-menu-tutamac{width:40px;height:4px;border-radius:4px;background:var(--ds-line);margin:2px auto 8px}
+/* Üye paneli rehberi */
+.ds-rehber-kart{display:flex;gap:14px;align-items:center;padding:12px;border:1px solid var(--ds-goldline);background:var(--ds-goldbg);border-radius:14px}
+.ds-rehber-kart img{width:62px;height:96px;object-fit:cover;object-position:top;border-radius:8px;border:1px solid var(--ds-line);cursor:zoom-in;flex:none;background:#0a0a0a}
+.ds-rehber-kart b{display:block;font-size:13.5px;color:var(--ds-ink);margin-bottom:2px}
+.ds-rehber-kart small{display:block;font-size:11.5px;color:var(--ds-ink5);line-height:1.5;margin-bottom:8px}
+.ds-rehber-kart .btn{height:32px;padding:0 12px !important;font-size:12px !important}
+.ds-rehber-buyuk{max-width:460px;padding:0;overflow:hidden;display:flex;flex-direction:column}
+.ds-rehber-buyuk>div:first-child{overflow:auto;flex:1;min-height:0}
+.ds-rehber-buyuk img{width:100%;display:block}
+.ds-rehber-buyuk .ds-secim-btnlar{flex:none;padding:12px 14px;border-top:1px solid var(--ds-line);background:#fff}
 </style>
 </head>
 <body>
@@ -1665,25 +1675,107 @@ function ogrKarti(o,i) {
 
 // ── ÖĞRENCİ PANELİ ŞİFRELERİ ──
 function girisMesaji(ad, tel, sifre) {
-  return `Merhaba ${ad.split(' ')[0]}, DumansStudio üye paneline giriş bilgileriniz:\n\n🌐 ogrenci.dumansstudio.com\n📱 Telefon: ${tel}\n🔑 Şifre: ${sifre}\n\nŞifrenizi kimseyle paylaşmayın.`;
+  return `Merhaba ${ad.split(' ')[0]}, DumansStudio üye paneline giriş bilgileriniz:\n\n🌐 ogrenci.dumansstudio.com\n📱 Telefon: ${tel}\n🔑 Şifre: ${sifre}\n\n📘 Kullanım rehberi: ${REHBER_LINK}\n\nŞifrenizi kimseyle paylaşmayın.`;
 }
+
+// ── ÜYE PANELİ REHBERİ ──
+// Görsel iki yerde durur: bu sitede (telefondan WhatsApp'a dosya olarak paylaşmak için)
+// ve dumansstudio.com'da (mesajdaki bağlantı için). Kişisel veri içermez.
+const REHBER_DOSYA = 'uye-paneli-rehberi.png';
+const REHBER_LINK = 'https://dumansstudio.com/uye-paneli-rehberi.png';
+let rehberDosyasi = null;
+// Dosya önceden indirilir: iPhone, paylaşım penceresinin dokunuştan hemen sonra açılmasını ister.
+function rehberHazirla() {
+  if (rehberDosyasi || !window.fetch) return;
+  fetch(REHBER_DOSYA).then(r => r.ok ? r.blob() : null).then(b => {
+    if (b) rehberDosyasi = new File([b], 'DumansStudio-uye-paneli-rehberi.png', {type:'image/png'});
+  }).catch(() => {});
+}
+function rehberMesaji(o, linkli) {
+  const ad = (o && o.ad) ? ' ' + o.ad.split(' ')[0] : '';
+  return `Merhaba${ad}, DumansStudio üye panelini nasıl kullanacağınızı bu rehberde bulabilirsiniz.\n\n🌐 ogrenci.dumansstudio.com` + (linkli ? `\n📘 Rehber: ${REHBER_LINK}` : '') + `\n\nSorunuz olursa bize buradan yazabilirsiniz.`;
+}
+// Telefonda: görsel, paylaşım menüsünden doğrudan WhatsApp'a eklenir.
+// Bilgisayarda (veya paylaşım desteklenmezse): WhatsApp, rehber bağlantılı mesajla açılır.
+async function rehberPaylas(o) {
+  const dokunmatik = window.matchMedia && matchMedia('(pointer:coarse)').matches;
+  if (dokunmatik && rehberDosyasi && navigator.canShare && navigator.canShare({files:[rehberDosyasi]})) {
+    try { await navigator.share({files:[rehberDosyasi], text:rehberMesaji(o, false)}); return; }
+    catch (e) { if (e.name === 'AbortError') return; }
+  }
+  if (o && o.tel) waAcMetin(o.tel, rehberMesaji(o, true));
+  else window.open(REHBER_LINK, '_blank', 'noopener');
+}
+function rehberOnizle(o) {
+  rehberHazirla();
+  const ov = document.createElement('div'); ov.className = 'ds-secim-ov';
+  ov.innerHTML = `<div class="ds-secim ds-rehber-buyuk">
+      <div><img src="${REHBER_DOSYA}" alt="Üye paneli kullanım rehberi"></div>
+      <div class="ds-secim-btnlar ds-yan"><button class="btn btn-ghost" data-kapat="1">Kapat</button>${o && o.tel ? `<button class="btn btn-primary" data-gonder="1">${dsIc('msg')}WhatsApp ile gönder</button>` : ''}</div>
+    </div>`;
+  ov.addEventListener('click', e => {
+    if (e.target === ov || e.target.closest('[data-kapat]')) ov.remove();
+    else if (e.target.closest('[data-gonder]')) rehberPaylas(o);
+  });
+  document.body.appendChild(ov);
+}
+function rehberKartHtml(not) {
+  return `<div class="ds-rehber-kart">
+    <img src="${REHBER_DOSYA}" alt="Üye paneli rehberi" onclick="rehberOnizle()">
+    <div><b>Üye paneli rehberi</b><small>${not}</small>
+      <button type="button" class="btn btn-ghost" onclick="rehberOnizle()">Rehberi göster</button></div>
+  </div>`;
+}
+// Yeni öğrenci kaydedildikten sonra: şifre oluştur, giriş bilgilerini ve rehberi gönder.
+function kayitSonrasi(o, ilkOdemeAlindi) {
+  rehberHazirla();
+  const i = data.findIndex(x => x._id === o._id);
+  const telVar = (o.tel || '').replace(/\D/g, '').length >= 10;
+  const ov = document.createElement('div'); ov.className = 'ds-secim-ov';
+  ov.innerHTML = `<div class="ds-secim">
+      <div class="ds-eyebrow">Kayıt tamamlandı</div>
+      <div class="ds-secim-baslik">${htmlKac(o.ad)} eklendi</div>
+      <div class="ds-secim-metin">${ilkOdemeAlindi ? '' : 'İlk ödeme bekleniyor; Ana sayfada onaylayabilirsiniz.<br>'}${telVar
+        ? 'Öğrencinin üye paneline girebilmesi için şifre oluşturun. Açılan ekrandan giriş bilgilerini ve kullanım rehberini WhatsApp ile gönderebilirsiniz.'
+        : 'Telefon numarası kayıtlı olmadığı için panel şifresi oluşturulamaz. Numarayı ekledikten sonra öğrenci kartındaki anahtar düğmesini kullanın.'}</div>
+      ${rehberKartHtml('Öğrenciye panelin nasıl kullanılacağını anlatan görsel.')}
+      <div class="ds-secim-btnlar" style="margin-top:16px">
+        ${telVar && i > -1 ? `<button class="btn btn-primary" data-sifre="1">${dsIc('key')}Şifre oluştur ve gönder<small>Giriş bilgileri mesajına rehber bağlantısı da eklenir</small></button>` : ''}
+        ${telVar ? `<button class="btn btn-ghost" data-rehber="1">${dsIc('msg')}Yalnızca rehberi gönder</button>` : ''}
+        <button class="btn btn-ghost" data-kapat="1">Sonra</button>
+      </div>
+    </div>`;
+  ov.addEventListener('click', e => {
+    if (e.target === ov || e.target.closest('[data-kapat]')) ov.remove();
+    else if (e.target.closest('[data-sifre]')) { ov.remove(); sifreVer(i); }
+    else if (e.target.closest('[data-rehber]')) rehberPaylas(o);
+  });
+  document.body.appendChild(ov);
+}
+
 function sifreListesiGoster(liste, hatalar) {
-  const satir = (x) => `<div style="display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--border)">
-      <div style="flex:1"><div style="font-weight:600;font-size:13px">${x.ad}</div><div style="font-size:11px;color:var(--text3)">${x.tel||''}</div></div>
+  rehberHazirla();
+  const satir = (x, k) => `<div style="display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--border);flex-wrap:wrap">
+      <div style="flex:1;min-width:120px"><div style="font-weight:600;font-size:13px">${x.ad}</div><div style="font-size:11px;color:var(--text3)">${x.tel||''}</div></div>
       <div style="font-family:monospace;font-size:17px;font-weight:700;letter-spacing:2px;color:var(--gold-dark)">${x.sifre}</div>
       <a class="btn btn-ghost btn-sm" target="_blank" rel="noopener" href="https://wa.me/90${(x.tel||'').replace(/\D/g,'').slice(-10)}?text=${encodeURIComponent(girisMesaji(x.ad, x.tel, x.sifre))}">📱 Gönder</a>
+      <button class="btn btn-ghost btn-sm" data-rehber="${k}" title="Kullanım rehberi görselini gönder">${dsIc('file')}Rehber</button>
     </div>`;
   const ov = document.createElement('div');
   ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9000;display:flex;align-items:center;justify-content:center;padding:16px';
   ov.innerHTML = `<div style="background:var(--card,#fff);border-radius:14px;max-width:520px;width:100%;max-height:88vh;overflow:auto;padding:20px">
       <div style="font-size:16px;font-weight:700;margin-bottom:4px">🔑 Panel şifreleri</div>
-      <div style="font-size:12px;color:var(--text3);margin-bottom:12px">Bu şifreler yalnızca şimdi gösteriliyor. Öğrencilere iletin veya not alın; kaybolursa "🔑 Şifre" ile yenisini oluşturabilirsiniz.</div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:12px">Bu şifreler yalnızca şimdi gösteriliyor. Öğrencilere iletin veya not alın; kaybolursa "🔑 Şifre" ile yenisini oluşturabilirsiniz. Giriş mesajında rehber bağlantısı da bulunur; "Rehber" düğmesi telefondan görselin kendisini gönderir.</div>
       ${liste.length ? liste.map(satir).join('') : '<div class="alert a-blue">Şifre oluşturulacak öğrenci yok.</div>'}
       ${hatalar && hatalar.length ? `<div class="alert a-red" style="margin-top:12px;font-size:12px">${hatalar.join('<br>')}</div>` : ''}
       <div style="display:flex;gap:8px;margin-top:14px">
         <button class="btn btn-ghost" onclick="window.print()">🖨 Yazdır</button>
         <button class="btn btn-primary" style="margin-left:auto" onclick="this.closest('div[style*=fixed]').remove()">Kapat</button>
       </div></div>`;
+  ov.addEventListener('click', e => {
+    const b = e.target.closest('[data-rehber]');
+    if (b) rehberPaylas(liste[+b.dataset.rehber]);
+  });
   document.body.appendChild(ov);
 }
 async function sifreVer(i) {
@@ -2672,8 +2764,13 @@ function mesajSablonlari(o){
     dersIptal:['Ders iptali',`Merhaba ${ad} Hanım,\n\nBugünkü dersimizi maalesef yapamayacağız. Ders hakkınız korunur; telafi günü için sizinle iletişime geçeceğiz. Anlayışınız için teşekkür ederiz.\n\nDUMANSSTUDIO`],
     geriKazanim:['Sizi özledik',`Merhaba ${ad} Hanım,\n\nBir süredir sizi stüdyomuzda göremiyoruz ve özledik. Derslerinize yeniden başlamak isterseniz size uygun gün ve saati birlikte planlayalım.\n\nDUMANSSTUDIO`],
     davet:['Arkadaşını getir',`Merhaba ${ad} Hanım,\n\nDUMANSSTUDIO'ya bir arkadaşınızı davet etmek ister misiniz? Davet kodunuz: ${o.davetKodu||''}\nBu kodla kayıt olan arkadaşınız ilk paketinde %${DAVET_INDIRIMI*100} indirim kazanır.\n\nDUMANSSTUDIO`],
-    menuHatirlat:['Günün menüsü',`Merhaba ${ad} Hanım,\n\nBugünün beslenme önerisi üye panelinizde yayında. Afiyet olsun!\n\nDUMANSSTUDIO`]
+    menuHatirlat:['Günün menüsü',`Merhaba ${ad} Hanım,\n\nBugünün beslenme önerisi üye panelinizde yayında. Afiyet olsun!\n\nDUMANSSTUDIO`],
+    panelRehber:['Üye paneli rehberi',`Merhaba ${ad} Hanım,\n\nDUMANSSTUDIO üye paneliyle derslerinizi, ölçümlerinizi ve ödemelerinizi telefonunuzdan takip edebilirsiniz. Nasıl kullanacağınızı bu rehberde anlattık:\n${REHBER_LINK}\n\nPanel adresi: ogrenci.dumansstudio.com\nGiriş, telefon numaranız ve size özel şifrenizle yapılır. Şifreniz yoksa ya da unuttuysanız bu mesaja yanıt vermeniz yeterli.\n\nDUMANSSTUDIO`]
   };
+}
+// Telefonda görsel, paylaşım menüsüyle dosya olarak da gönderilebilir.
+function rehberDosyaPaylasilir(){
+  return !!(window.matchMedia && matchMedia('(pointer:coarse)').matches && rehberDosyasi && navigator.canShare && navigator.canShare({files:[rehberDosyasi]}));
 }
 function sablonGonder(ogrId,k){const o=data[ogrIdx(ogrId)];if(!o)return;waAcMetin(o.tel,mesajSablonlari(o)[k][1]);}
 const MESAJ_GRUPLARI={
@@ -2684,13 +2781,15 @@ const MESAJ_GRUPLARI={
   azkalan:['3 ve daha az dersi kalanlar',()=>data.filter(o=>efektifKalan(o)>0&&efektifKalan(o)<=3)],
   dogumgunu:['Bugün doğum günü olanlar',()=>data.filter(dogumGunuBugunMu)],
   kayip:['2 haftadır yenilemeyenler',()=>kayipOgrenciler()],
-  analizsiz:['Analiz paketi olmayanlar',()=>data.filter(o=>!o.analizPaketi)]
+  analizsiz:['Analiz paketi olmayanlar',()=>data.filter(o=>!o.analizPaketi)],
+  sifresiz:['Panel şifresi olmayanlar',()=>data.filter(o=>!o._authId)]
 };
 let topluMesajSecim={grup:'tumu',sablon:'paketTeklif'};
 function topluMesajAc(grup,sablon){topluMesajSecim={grup,sablon};sp('toplumesaj');}
 function renderTopluMesaj(){
   const el=document.getElementById('toplumesaj-c');
   const {grup,sablon}=topluMesajSecim;
+  if(sablon==='panelRehber') rehberHazirla();
   const liste=MESAJ_GRUPLARI[grup][1]().filter(o=>o.tel);
   const ornek=data[0]?mesajSablonlari(data[0]):mesajSablonlari({ad:'Ad',ucret:0});
   el.innerHTML=`<div class="ds-ay">
@@ -2701,6 +2800,8 @@ function renderTopluMesaj(){
       <label class="ds-form-alan"><span>Mesaj</span><select onchange="topluMesajSecim.sablon=this.value;renderTopluMesaj()">${Object.entries(ornek).map(([k,v])=>`<option value="${k}"${k===sablon?' selected':''}>${v[0]}</option>`).join('')}</select></label>
     </div>
     <div class="card" style="margin-top:12px"><div class="ds-eyebrow" style="margin-bottom:8px">Önizleme</div><div class="ds-not-metin">${htmlKac(liste[0]?mesajSablonlari(liste[0])[sablon][1]:ornek[sablon][1])}</div></div>
+    ${sablon==='panelRehber'?`<div style="margin-top:12px">${rehberKartHtml('Mesajdaki bağlantı rehber görselini açar. Telefondan gönderirken her kişi için görseli dosya olarak da paylaşabilirsiniz.')}</div>
+      ${grup!=='sifresiz'&&data.some(o=>!o._authId)?`<div class="alert a-gold" style="margin-top:10px;font-size:12.5px">${data.filter(o=>!o._authId).length} öğrencinin henüz panel şifresi yok. Önce Öğrenciler sayfasından şifre oluşturursanız giriş bilgileri mesajı rehber bağlantısını zaten içerir.</div>`:''}`:''}
     <div class="ds-baslik">${liste.length} kişi</div>
     ${liste.length?`<div class="card ds-liste">${liste.map(o=>`<label class="ds-secim-sat"><input type="checkbox" class="tm-sec" value="${o._id}" checked><span>${htmlKac(o.ad)}</span><span class="ds-kucuk">${htmlKac(o.tel)}</span></label>`).join('')}</div>
       <button class="btn btn-primary" style="width:100%;margin-top:12px" onclick="topluMesajBaslat()">${dsIc('msg')}Seçilenlere sırayla gönder</button>`:'<div class="ds-bos">Bu grupta telefonu kayıtlı öğrenci yok.</div>'}
@@ -2709,6 +2810,8 @@ function renderTopluMesaj(){
 function topluMesajBaslat(){
   const idler=[...document.querySelectorAll('.tm-sec:checked')].map(c=>c.value);
   if(!idler.length) return;
+  const rehber=topluMesajSecim.sablon==='panelRehber';
+  if(rehber) rehberHazirla();
   let k=0;
   const ov=document.createElement('div');ov.className='ds-secim-ov';
   const ciz=()=>{
@@ -2716,11 +2819,12 @@ function topluMesajBaslat(){
     const o=data[ogrIdx(idler[k])];
     ov.innerHTML=`<div class="ds-secim"><div class="ds-eyebrow">${k+1} / ${idler.length}</div><div class="ds-secim-baslik">${htmlKac(o.ad)}</div>
       <div class="ds-secim-metin" style="white-space:pre-wrap">${htmlKac(mesajSablonlari(o)[topluMesajSecim.sablon][1])}</div>
-      <div class="ds-secim-btnlar"><button class="btn btn-primary" data-gonder="1">${dsIc('msg')}WhatsApp'ta aç</button><button class="btn btn-ghost" data-atla="1">Bu kişiyi atla</button><button class="btn btn-ghost" data-kapat="1">Durdur</button></div></div>`;
+      <div class="ds-secim-btnlar">${rehber&&rehberDosyaPaylasilir()?`<button class="btn btn-ghost" data-gorsel="1">${dsIc('file')}Görseli paylaş<small>WhatsApp'ta ${htmlKac(o.ad.split(' ')[0])} adlı kişiyi seçin; ardından mesajı açın</small></button>`:''}<button class="btn btn-primary" data-gonder="1">${dsIc('msg')}WhatsApp'ta aç</button><button class="btn btn-ghost" data-atla="1">Bu kişiyi atla</button><button class="btn btn-ghost" data-kapat="1">Durdur</button></div></div>`;
   };
   ov.addEventListener('click',e=>{
     const b=e.target.closest('button');if(!b)return;
     if(b.dataset.kapat)return ov.remove();
+    if(b.dataset.gorsel){navigator.share({files:[rehberDosyasi]}).catch(()=>{});return;}
     if(b.dataset.gonder){const o=data[ogrIdx(idler[k])];waAcMetin(o.tel,mesajSablonlari(o)[topluMesajSecim.sablon][1]);}
     k++;ciz();
   });
@@ -3401,6 +3505,7 @@ function renderEkleForm(o={}){
     ${yeni?`<label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
       <input type="checkbox" id="f-ilkodeme" style="width:auto"> İlk ödeme henüz alınmadı
     </label>`:''}
+    ${yeni?rehberKartHtml('Kaydı tamamladıktan sonra panel şifresiyle birlikte öğrenciye WhatsApp ile gönderebilirsiniz.'):''}
     <button class="btn btn-primary" style="margin-top:4px" onclick="kaydet()">
       ${yeni?'Öğrenci Ekle':'Güncelle'}
     </button>
@@ -3461,17 +3566,15 @@ async function kaydet(){
   gosterYukleniyor();
   try{
     await ogrKaydet(o);
-    if(duzenlemeIdx>-1){data[duzenlemeIdx]=o;}
-    else{
-      data.push(o);
-      if(!ilkOdemeAlindi){alert(`✅ ${o.ad} eklendi!\nİlk ödeme bekleniyor — Ana sayfada onaylayabilirsiniz.`);}
-      else{alert(`✅ ${o.ad} eklendi!`);}
-    }
+    const yeniKayit=duzenlemeIdx===-1;
+    if(!yeniKayit){data[duzenlemeIdx]=o;}
+    else{data.push(o);}
     await veriYukle();
     duzenlemeIdx=-1;
     renderEkleForm();
     renderAna();
     sp('ogr');
+    if(yeniKayit) kayitSonrasi(o, ilkOdemeAlindi);
   }catch(e){alert('Hata: '+e.message);}
   finally{gizleYukleniyor();}
 }
