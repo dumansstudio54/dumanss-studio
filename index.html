@@ -1721,7 +1721,7 @@ function ogrKarti(o,i) {
       <button class="ds-rozet ds-rozet-btn" onclick="analizPaketiDegistir(${i})" title="Vücut Analizi ve Beslenme Paketi: açmak / kapatmak için dokunun" style="${o.analizPaketi?'color:var(--ds-gold7);border-color:var(--ds-goldline);background:var(--ds-goldbg)':''}">${dsIc('chart')}Analiz paketi ${o.analizPaketi?'açık':'kapalı'}</button>
       ${o.odemeBekliyor?'<span class="ds-rozet" style="color:var(--ds-gold7);border-color:var(--ds-goldline);background:var(--ds-goldbg)">Ödeme bildirdi</span>':''}
       ${o.borcTl>0?`<span class="ds-rozet" style="color:#8E3A30;border-color:#EBCFC9;background:#FBF1EF">Borç ${tlBicim(o.borcTl)}</span>`:''}
-      ${odulRozet(o)}
+      ${odulRozet(o)}${sozlesmeRozet(o)}
       ${dogumGunuBugunMu(o)?`<span class="ds-rozet" style="color:var(--ds-gold7)">${dsIc('sparkle')}Doğum günü</span>`:''}
     </div>
     <div class="ds-ilerleme"><span>${buPaket} / ${toplam} ders</span>${bit?`<span>Bitiş ${bit.toLocaleDateString('tr-TR')}</span>`:''}</div>
@@ -2467,7 +2467,7 @@ function aylikOzetKarti(){
 // ════════════════════════════════════════════════════════════════════
 // GELİŞTİRMELER (03_gelistirmeler.sql ile birlikte çalışır)
 // ════════════════════════════════════════════════════════════════════
-let yoklamaData = [], tatilMap = {}, dersTalepleri = [], yoneticiAyar = {}, davetOdulleri = [], davetGecmisi = [];
+let yoklamaData = [], tatilMap = {}, dersTalepleri = [], yoneticiAyar = {}, davetOdulleri = [], davetGecmisi = [], sozlesmeAktif = null, sozlesmeOnaylari = [];
 const YOKLAMA_ETIKET = {
   geldi:['Geldi','yesil'], gelmedi:['Gelmedi','kirmizi'], iptal:['İptal · hak kullanıldı','gri'],
   studyo_iptal:['Stüdyo iptali','gri'], ertelendi:['Ertelendi','altin'], telafi:['Telafi dersi','altin']
@@ -2490,13 +2490,15 @@ tatilMi = function(yil, ay, gun){ return tatilMap[`${yil}-${pad(ay+1)}-${pad(gun
 
 async function ekVeriYukle(){
   const bas = gunEkle(todayStr(), -120);
-  const [y, t, d, a, od, dg] = await Promise.all([
+  const [y, t, d, a, od, dg, sz, so] = await Promise.all([
     sb.from('yoklama').select('*').gte('tarih', bas),
     sb.from('tatiller').select('*'),
     sb.from('ders_talepleri').select('*').eq('durum','bekliyor').order('tarih'),
     sb.from('yonetici_ayarlar').select('anahtar,deger'),
     sb.from('davet_odulleri').select('*').order('verilis',{ascending:false}),
-    sb.from('davet_kod_gecmisi').select('*').order('tarih',{ascending:false})
+    sb.from('davet_kod_gecmisi').select('*').order('tarih',{ascending:false}),
+    sb.from('sozlesmeler').select('surum,baslik,metin,yayin').eq('aktif',true).maybeSingle(),
+    sb.from('sozlesme_onaylari').select('*').order('onay_zamani',{ascending:false})
   ]);
   if(!y.error) yoklamaData = y.data||[];
   if(!t.error){ tatilMap = {}; (t.data||[]).forEach(r=>tatilMap[r.tarih]=r.ad); }
@@ -2504,6 +2506,8 @@ async function ekVeriYukle(){
   if(!a.error){ yoneticiAyar = {}; (a.data||[]).forEach(r=>yoneticiAyar[r.anahtar]=r.deger); }
   if(!od.error) davetOdulleri = od.data||[];
   if(!dg.error) davetGecmisi = dg.data||[];
+  if(!sz.error) sozlesmeAktif = sz.data||null;
+  if(!so.error) sozlesmeOnaylari = so.data||[];
 }
 function aktifSayfa(){return document.querySelector('.page.active')?.id;}
 function sayfayiYenile(){
@@ -2692,6 +2696,8 @@ function sikGelmeyenler(){
 }
 function dikkatHtml(){
   let h='';
+  const szs=sozlesmeAktif?data.filter(o=>!sozlesmeOnayi(o)):[];
+  if(szs.length) h+=`<div class="alert a-gold ds-dikkat">${dsIc('file')}<span><b>${szs.length} üye</b> üyelik sözleşmesini henüz onaylamadı. Üye paneline ilk girişlerinde onay ekranı çıkar.</span><button class="btn btn-ghost btn-sm" onclick="topluMesajAc('sozlesmesiz','sozlesmeHatirlat')">Hatırlat</button></div>`;
   const dg=data.filter(dogumGunuBugunMu);
   if(dg.length) h+=dg.map(o=>`<div class="alert a-gold ds-dikkat">${dsIc('sparkle')}<span><b>${htmlKac(o.ad)}</b> bugün doğum gününü kutluyor.</span><button class="btn btn-ghost btn-sm" onclick="sablonGonder('${o._id}','dogumgunu')">Kutla</button></div>`).join('');
   const k=kayipOgrenciler();
@@ -2819,6 +2825,7 @@ function ogrDetay(ogrId){
       <div><div class="ds-baslik">Ödeme geçmişi</div>${odemeler.length?`<div class="ds-mini-liste">${odemeler.map(g=>`<div><span>${tarihTR(g.tarih)}</span><span>${htmlKac((g.acik||'').replace(o.ad+' — ',''))}</span><b>${tlBicim(g.tutar)}</b></div>`).join('')}</div>`:'<div class="ds-bos">Kayıtlı ödeme yok.</div>'}</div>
       <div><div class="ds-baslik">Yoklama</div>${yk.length?`<div class="ds-mini-liste">${yk.map(y=>`<div class="ds-tik" onclick="yoklamaDiger('${o._id}','${y.tarih}')"><span>${tarihTR(y.tarih)} ${gunAdi(new Date(y.tarih+'T12:00').getDay())}</span><span class="ds-durum ds-${YOKLAMA_ETIKET[y.durum][1]}">${YOKLAMA_ETIKET[y.durum][0]}</span><span class="ds-kucuk">${htmlKac(y.aciklama||'')}</span></div>`).join('')}</div>`:'<div class="ds-bos">Henüz yoklama kaydı yok.</div>'}</div>
     </div>
+    ${sozlesmeDetayHtml(o)}
     <div class="ds-baslik">Davet</div>
     <div class="ds-kucuk" style="line-height:1.7">Davet kodu: <b style="color:var(--ds-ink);letter-spacing:.08em">${o.davetKodu||'—'}</b>${davetEden?` · ${htmlKac(davetEden.ad)} tarafından davet edildi`:''}${davetEttikleri.length?`<br>Davet ettikleri: ${davetEttikleri.map(x=>htmlKac(x.ad)).join(', ')}`:''}${odulDetayHtml(o)}</div>
     <div class="ds-secim-btnlar ds-yan" style="margin-top:18px">
@@ -2948,6 +2955,7 @@ function mesajSablonlari(o){
     geriKazanim:['Sizi özledik',`Merhaba ${ad} Hanım,\n\nBir süredir sizi stüdyomuzda göremiyoruz ve özledik. Derslerinize yeniden başlamak isterseniz size uygun gün ve saati birlikte planlayalım.\n\nDUMANSSTUDIO`],
     davet:['Arkadaşını getir',`Merhaba ${ad} Hanım,\n\nDUMANSSTUDIO'ya bir arkadaşınızı davet etmek ister misiniz? Davet kodunuz: ${o.davetKodu||''} (tek kullanımlıktır; kullanılınca üye panelinizde yeni kodunuz görünür)\nBu kodla kayıt olan arkadaşınız ilk paketinde %${DAVET_INDIRIMI*100} indirim kazanır; arkadaşınız ilk ödemesini yaptığında siz de 30 gün geçerli %${DAVET_INDIRIMI*100} indirim hakkı kazanırsınız.\n\nDUMANSSTUDIO`],
     menuHatirlat:['Günün menüsü',`Merhaba ${ad} Hanım,\n\nBugünün beslenme önerisi üye panelinizde yayında. Afiyet olsun!\n\nDUMANSSTUDIO`],
+    sozlesmeHatirlat:['Sözleşme onayı',`Merhaba ${ad} Hanım,\n\nDUMANSSTUDIO üyelik sözleşmemiz artık üye panelinden elektronik olarak onaylanıyor. ogrenci.dumansstudio.com adresinden telefon numaranız ve şifrenizle giriş yaptığınızda sözleşme ekranı açılır; okuyup onaylamanız birkaç dakika sürer.\n\nŞifreniz yoksa ya da unuttuysanız bu mesaja yanıt vermeniz yeterli.\n\nDUMANSSTUDIO`],
     panelRehber:['Üye paneli rehberi',`Merhaba ${ad} Hanım,\n\nDUMANSSTUDIO üye paneliyle derslerinizi, ölçümlerinizi ve ödemelerinizi telefonunuzdan takip edebilirsiniz. Nasıl kullanacağınızı bu rehberde anlattık:\n${REHBER_LINK}\n\nPanel adresi: ogrenci.dumansstudio.com\nGiriş, telefon numaranız ve size özel şifrenizle yapılır. Şifreniz yoksa ya da unuttuysanız bu mesaja yanıt vermeniz yeterli.\n\nDUMANSSTUDIO`]
   };
 }
@@ -2965,7 +2973,8 @@ const MESAJ_GRUPLARI={
   dogumgunu:['Bugün doğum günü olanlar',()=>data.filter(dogumGunuBugunMu)],
   kayip:['2 haftadır yenilemeyenler',()=>kayipOgrenciler()],
   analizsiz:['Analiz paketi olmayanlar',()=>data.filter(o=>!o.analizPaketi)],
-  sifresiz:['Panel şifresi olmayanlar',()=>data.filter(o=>!o._authId)]
+  sifresiz:['Panel şifresi olmayanlar',()=>data.filter(o=>!o._authId)],
+  sozlesmesiz:['Sözleşmeyi onaylamayanlar',()=>data.filter(o=>sozlesmeAktif&&!sozlesmeOnayi(o))]
 };
 let topluMesajSecim={grup:'tumu',sablon:'paketTeklif'};
 function topluMesajAc(grup,sablon){topluMesajSecim={grup,sablon};sp('toplumesaj');}
@@ -3022,6 +3031,52 @@ function topluMesajBaslat(){
     k++;ciz();
   });
   ciz();document.body.appendChild(ov);
+}
+
+// ── ÜYELİK SÖZLEŞMESİ (08_uyelik_sozlesmesi.sql) ──
+// Öğrenci, üye paneline girişte aktif sözleşmeyi elektronik olarak onaylar; burada durumu görülür ve belge yazdırılır.
+function sozlesmeOnayi(o){
+  if(!sozlesmeAktif) return null;
+  return sozlesmeOnaylari.find(x=>x.ogrenci_id===o._id&&x.surum===sozlesmeAktif.surum)||null;
+}
+function sozlesmeRozet(o){
+  if(!sozlesmeAktif) return '';
+  const on=sozlesmeOnayi(o);
+  return on?`<span class="ds-rozet" title="${new Date(on.onay_zamani).toLocaleString('tr-TR')} tarihinde onayladı">${dsIc('file')}Sözleşme onaylı</span>`
+    :`<span class="ds-rozet" style="color:#8E3A30;border-color:#EBCFC9;background:#FBF1EF" title="Üye panelinde ilk girişte onaylar">${dsIc('file')}Sözleşme bekliyor</span>`;
+}
+const STUDYO_TARAF='<b>DUMANS STUDIO</b><br><b>ADRES:</b> Cumhuriyet .NO:10 Serpil Sokak 54100 Kat:3 Duman Studio Sakarya/Adapazarı – Çark İnşaat İş Merkezi<br><b>TELEFON:</b> 0 534 523 99 63';
+function sozlesmeBelgesi(s,on){
+  const e=x=>htmlKac(x==null?'':String(x));
+  const p=String(on.ad_soyad||'').trim().split(/\s+/);const ad=p.length>1?p.slice(0,-1).join(' '):p[0]||'';const soyad=p.length>1?p[p.length-1]:'';
+  const t=new Date(on.onay_zamani);
+  return '<!doctype html><html lang="tr"><head><meta charset="utf-8"><title>'+e(s.baslik)+' — '+e(on.ad_soyad)+'</title><style>@page{size:A4;margin:16mm}body{font-family:Georgia,"Times New Roman",serif;color:#1a1714;font-size:10.5pt;line-height:1.5;font-variant-numeric:lining-nums}'
+    +'h1{text-align:center;font-size:15pt;border-bottom:2px solid #1a1714;padding-bottom:6px}h3{font-size:11pt;margin:14px 0 6px}table{width:100%;border-collapse:collapse;margin:6px 0 10px}td{border:1px solid #333;padding:5px 8px;vertical-align:top}td:first-child{width:34%;font-weight:bold}'
+    +'ol{padding-left:22px}li{margin-bottom:4px;text-align:justify}p{text-align:justify}.onay{margin-top:18px;padding:10px 12px;border:1px solid #946C18;background:#FBF5E2;font-family:Arial,sans-serif;font-size:9pt;line-height:1.6}</style></head><body>'
+    +'<h1>'+e(s.baslik)+'</h1><h3>MADDE – 1 TARAFLAR:</h3><p>'+STUDYO_TARAF+'</p><p><b>ÜYE:</b></p><table>'
+    +[['ADI',ad],['SOYADI',soyad],['TC KİMLİK NUMARASI',on.tc_kimlik],['ADRES',on.adres],['TELEFON',on.telefon],['E POSTA',on.eposta||'—']].concat(on.veli_ad_soyad?[['VELİ / VASİ',on.veli_ad_soyad]]:[]).map(r=>'<tr><td>'+r[0]+':</td><td>'+e(r[1])+'</td></tr>').join('')
+    +'</table>'+s.metin
+    +'<div class="onay"><b>ELEKTRONİK ONAY KAYDI</b><br>Sözleşme tarihi / onay zamanı: '+t.toLocaleString('tr-TR')+'<br>Sözleşme sürümü: '+e(on.surum)+'<br>Onaylayan: '+e(on.ad_soyad)+(on.veli_ad_soyad?' (veli/vasi: '+e(on.veli_ad_soyad)+')':'')+' · Telefon: '+e(on.telefon)
+    +'<br>IP adresi: '+e(on.ip||'—')+' · Cihaz: '+e(on.cihaz||'—')+'<br>Metin özeti (SHA-256): '+e(on.metin_ozeti)+'<br>Bu sözleşme DumansStudio üye panelinde (ogrenci.dumansstudio.com) telefon numarası ve şifre ile giriş yapılarak elektronik ortamda onaylanmıştır.</div>'
+    +'<script>setTimeout(function(){window.focus();window.print();},400)<\/script></body></html>';
+}
+async function sozlesmeYazdir(onayId){
+  const on=sozlesmeOnaylari.find(x=>x.id===onayId);if(!on)return;
+  let s=sozlesmeAktif&&sozlesmeAktif.surum===on.surum?sozlesmeAktif:null;
+  if(!s){const r=await sb.from('sozlesmeler').select('surum,baslik,metin').eq('surum',on.surum).maybeSingle();s=r.data;}
+  if(!s){alert('Sözleşme metni bulunamadı.');return;}
+  const w=window.open('','_blank');if(!w){alert('Açılır pencereye izin verin.');return;}
+  w.document.write(sozlesmeBelgesi(s,on));w.document.close();
+}
+function sozlesmeDetayHtml(o){
+  if(!sozlesmeAktif) return '';
+  const l=sozlesmeOnaylari.filter(x=>x.ogrenci_id===o._id);
+  const on=sozlesmeOnayi(o);
+  return `<div class="ds-baslik">Üyelik sözleşmesi</div><div class="ds-kucuk" style="line-height:1.7">`
+    +(on?`<b style="color:#4A6645">Onaylandı</b> · ${new Date(on.onay_zamani).toLocaleString('tr-TR')} · sürüm ${htmlKac(on.surum)}${on.ip?' · IP '+htmlKac(on.ip):''} <button class="ds-link" onclick="sozlesmeYazdir('${on.id}')">Görüntüle / yazdır</button>`
+      :`<b style="color:#8E3A30">Henüz onaylamadı.</b> ${o._authId?'Üye paneline ilk girişinde onay ekranı çıkar.':'Önce panel şifresi oluşturun; üye ilk girişinde sözleşmeyi onaylar.'}`
+      +(l.length?`<br>Önceki sürüm onayı: ${l.map(x=>`${htmlKac(x.surum)} (${new Date(x.onay_zamani).toLocaleDateString('tr-TR')}) <button class="ds-link" onclick="sozlesmeYazdir('${x.id}')">yazdır</button>`).join(', ')}`:''))
+    +`</div>`;
 }
 
 // ── QR İLE DERSE GİRİŞ (07_qr_giris.sql) ──
@@ -3192,7 +3247,7 @@ function renderDavetler(){
 
 // ── TAM YEDEK (tüm tablolar) ──
 async function yedekle(){
-  const tablolar=['ogrenciler','gelir_gider','olcumler','saglik_formlari','bultenler','kalori_kayitlari','yoklama','ders_talepleri','yonetici_notlar','ogrenci_arsivi','hesap_silme_talepleri','etkinlik_katilim','tatiller','yonetici_ayarlar'];
+  const tablolar=['ogrenciler','gelir_gider','olcumler','saglik_formlari','bultenler','kalori_kayitlari','yoklama','ders_talepleri','yonetici_notlar','ogrenci_arsivi','hesap_silme_talepleri','etkinlik_katilim','tatiller','yonetici_ayarlar','davet_odulleri','davet_kod_gecmisi','qr_girisler','sozlesmeler','sozlesme_onaylari'];
   gosterYukleniyor();
   try{
     const yedek={olusturma:new Date().toISOString(),not:'DumansStudio tam yedek. Kişisel ve sağlık verisi içerir; güvenli bir yerde saklayın.'};
