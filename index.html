@@ -7,12 +7,12 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="DS Yönetici">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="theme-color" content="#946C18">
+<meta name="theme-color" content="#FFFFFF">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="icon" href="icon-192.png">
 <title>DUMANSSTUDIO</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
 :root{
@@ -397,7 +397,7 @@ select:focus,input:focus{border-color:var(--gold)}
   .ogr-card{margin:0 24px 12px}
   .ders-item{margin:0 24px 10px}
   .alert{margin:8px 24px}
-  #ana-c,#ogr-c,#ekle-c,#takvim-c,#gelir-c,#olcum-c,#bildirimler-c,#mesajlar-c,#diyet-c,#kaloritakip-c{
+  #ana-c,#ogr-c,#ekle-c,#takvim-c,#gelir-c,#aylik-c,#toplumesaj-c,#notlar-c,#olcum-c,#bildirimler-c,#mesajlar-c,#diyet-c,#kaloritakip-c{
     max-width:1000px;
     margin:0 auto;
     padding:0 0 24px;
@@ -408,8 +408,271 @@ select:focus,input:focus{border-color:var(--gold)}
   0%,100%{transform:translateX(0)}
   25%{transform:translateX(-8px)}
   75%{transform:translateX(8px)}
-}</style>
+}
+/* Takvim: geniş ekranda kutular aşırı büyümesin */
+#takvim-c{max-width:760px;margin:0 auto}
+</style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<!-- ── DS TEMA (ortak görünüm katmanı; iki panelde aynı) ── -->
+<style id="ds-tema">
+:root{
+  --ds-ink:#1A1714;--ds-ink7:#3A342E;--ds-ink5:#6E655B;--ds-ink3:#A89E92;
+  --ds-gold:#D4AF37;--ds-gold6:#B8942A;--ds-gold7:#8F7120;--ds-goldbg:#FBF5E2;--ds-goldline:#EFDFA8;
+  --ds-line:#E6DED0;--ds-stone:#F5F1EA;--ds-paper:#FAF8F4;
+  --bg:#FAF8F4;--bg2:#F5F1EA;--bg3:#EAE3D7;--card:#FFFFFF;--card2:#FAF8F4;
+  --border:#E6DED0;--border2:#D9CFBE;
+  --text:#1A1714;--text2:#6E655B;--text3:#A89E92;
+  --gold:#D4AF37;--gold-light:#E8D48A;--gold-dark:#8F7120;--gold-deep:#6F5818;--gold-bg:#FBF5E2;
+  --green:#5F7F5A;--red:#A2463B;
+}
+body{font-family:'Jost',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif !important;font-variant-numeric:lining-nums;color:var(--ds-ink);-webkit-font-smoothing:antialiased}
+[style*="Georgia"]{font-family:'Cormorant Garamond',Georgia,serif !important;font-variant-numeric:lining-nums}
+input,select,textarea,button{font-family:inherit}
+
+/* Simgeler */
+.ds-ic{width:1.15em;height:1.15em;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;vertical-align:-.22em;flex:none;display:inline-block}
+.ds-nokta{display:inline-block;width:.6em;height:.6em;border-radius:50%;vertical-align:.05em}
+
+/* Kartlar */
+.card,.metric,.metric-card,.ogr-card,.card2{border-radius:16px !important;border:1px solid var(--ds-line) !important;box-shadow:0 1px 2px rgba(26,23,20,.04) !important}
+.card,.metric,.metric-card,.ogr-card{background:#fff}
+.metric-label,.metric-lbl,.section-title,.snav-section,.snav-sec{font-family:'Jost',sans-serif !important;font-size:10.5px !important;font-weight:500 !important;letter-spacing:.2em !important;text-transform:uppercase;color:var(--ds-ink5) !important}
+.metric-value,.metric-val{font-family:'Cormorant Garamond',Georgia,serif !important;font-weight:500 !important;letter-spacing:0 !important}
+
+/* Düğmeler */
+.btn{border-radius:11px !important;font-weight:500 !important;letter-spacing:.01em;transition:background .15s,border-color .15s}
+.btn-primary{background:var(--ds-ink) !important;border:1px solid var(--ds-ink) !important;color:#fff !important;box-shadow:none !important}
+.btn-primary .ds-ic{color:var(--gold-light)}
+.btn-primary:hover{background:#2C2621 !important}
+.btn-ghost,.btn-sm{background:#fff;border:1px solid var(--ds-line);color:var(--ds-ink7)}
+.btn-ghost:hover{border-color:var(--border2)}
+.btn-sm{border-radius:10px !important}
+.btn-wa{background:#fff !important;color:#1F7A45 !important;border:1px solid #BFE0CB !important}
+
+/* Uyarılar */
+.alert{border-radius:12px !important;font-size:13px;line-height:1.55}
+.a-gold,.a-yellow{background:var(--ds-goldbg) !important;border:1px solid var(--ds-goldline) !important;color:#5E4B14 !important;font-weight:400 !important}
+.a-red{background:#FBF1EF !important;border:1px solid #EBCFC9 !important;color:#8E3A30 !important}
+.a-green{background:#F2F6F0 !important;border:1px solid #D3E0CF !important;color:#4A6645 !important}
+.a-blue{background:#F1F4F7 !important;border:1px solid #D5DEE7 !important;color:#4A6076 !important}
+.alert .ds-ic{margin-right:4px}
+
+/* Alanlar */
+input,select,textarea,.field-input{border-radius:11px !important;border-color:var(--ds-line)}
+input:focus,select:focus,textarea:focus{border-color:var(--ds-gold6) !important;box-shadow:0 0 0 3px rgba(212,175,55,.15);outline:none}
+.field-label{font-size:10.5px !important;letter-spacing:.18em !important;font-weight:500 !important;color:var(--ds-ink5) !important}
+
+/* Üst çubuk */
+.top-bar,.topbar{background:#fff !important;border-bottom:1px solid var(--ds-line) !important}
+.top-bar-title{background:none !important;-webkit-text-fill-color:var(--ds-ink) !important;color:var(--ds-ink) !important;font-family:'Cormorant Garamond',Georgia,serif !important;font-size:17px !important;font-weight:600 !important;letter-spacing:.14em !important}
+.top-bar-date{letter-spacing:.14em;text-transform:uppercase;font-size:9.5px !important}
+.icon-btn{width:38px !important;height:38px !important;border-radius:12px !important;background:#fff !important;border:1px solid var(--ds-line) !important;color:var(--ds-ink5);font-size:17px !important}
+.icon-btn:hover{color:var(--ds-ink)}
+
+/* Alt menü (telefon) */
+.bottom-nav{background:#fff !important;border-top:1px solid var(--ds-line) !important;box-shadow:none !important}
+.nav-btn{position:relative;color:var(--ds-ink3) !important;font-weight:400 !important;letter-spacing:.03em}
+.nav-btn.active{color:var(--ds-ink) !important;font-weight:500 !important}
+.nav-btn.active .ds-ic{color:var(--ds-gold6)}
+.nav-btn.active::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:22px;height:2px;border-radius:2px;background:var(--ds-gold)}
+.nav-icon{font-size:20px !important}
+
+/* Yan menü (tablet/bilgisayar) */
+.side-nav-desktop,.sidebar{background:#fff !important;border-right:1px solid var(--ds-line) !important}
+.snav-btn{color:var(--ds-ink7) !important;border-radius:10px !important;border-left:0 !important;padding-left:12px !important;font-weight:400 !important}
+.snav-btn .ds-ic{color:var(--ds-ink3);font-size:17px}
+.snav-btn:hover{background:var(--ds-paper) !important}
+.snav-btn.active,.snav-btn.act{background:var(--ds-stone) !important;color:var(--ds-ink) !important;font-weight:500 !important;box-shadow:inset 2px 0 0 var(--ds-gold)}
+.snav-btn.active .ds-ic,.snav-btn.act .ds-ic{color:var(--ds-gold6)}
+
+/* Rozetler */
+.b-pilates,.b-ems{background:#FDF9EC !important;color:var(--ds-gold7) !important;border:1px solid var(--gold-light) !important;font-size:10px !important;font-weight:500 !important;letter-spacing:.1em;text-transform:uppercase;padding:3px 9px !important}
+.ders-badge{background:var(--ds-stone) !important;border-color:var(--ds-line) !important;color:var(--ds-ink5) !important}
+.ders-item{border-left:0 !important;border:1px solid var(--ds-line);border-radius:14px !important;box-shadow:none !important}
+.ders-saat{font-family:'Cormorant Garamond',Georgia,serif !important;font-weight:500 !important;font-size:20px !important;color:var(--ds-ink) !important}
+.progress-bar,.pbar{height:4px !important;background:var(--bg3) !important}
+.progress-fill{background:linear-gradient(90deg,var(--ds-gold6),var(--ds-gold)) !important}
+</style>
+<style id="ds-yonetici">
+/* Ortak küçük parçalar */
+.ds-eyebrow{font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;font-weight:500;color:var(--ds-ink5);display:flex;align-items:center;gap:6px}
+.ds-eyebrow .ds-ic{color:var(--ds-gold6)}
+.ds-buyuk{font-family:'Cormorant Garamond',Georgia,serif;font-size:38px;font-weight:500;line-height:1.1;margin-top:6px;color:var(--ds-ink)}
+.ds-orta{font-family:'Cormorant Garamond',Georgia,serif;font-size:26px;font-weight:500;line-height:1.15;margin-top:4px;color:var(--ds-ink)}
+.ds-kucuk{font-size:11.5px;color:var(--ds-ink5);margin-top:3px}
+.ds-tik{cursor:pointer;transition:border-color .15s}
+.ds-tik:hover{border-color:var(--border2) !important}
+.ds-baslik{font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;font-weight:500;color:var(--ds-ink5);margin:22px 2px 10px}
+.ds-bos{font-size:13px;color:var(--ds-ink3);padding:18px;border:1px dashed var(--ds-line);border-radius:14px;text-align:center}
+.ds-not{display:flex;gap:8px;align-items:flex-start;font-size:12px;color:var(--ds-ink5);margin-top:10px;line-height:1.5}
+.ds-not .ds-ic{color:var(--ds-gold6);margin-top:1px}
+.ds-kare-btn{width:40px;height:40px;border-radius:12px;border:1px solid var(--ds-line);background:#fff;color:var(--ds-ink5);display:grid;place-items:center;cursor:pointer;font-size:18px}
+.ds-kare-btn:hover{color:var(--ds-ink)}
+
+/* Öğrenci listesi */
+.ds-ogr-ust{padding:14px 16px 6px;display:flex;flex-direction:column;gap:10px}
+.ds-arama{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid var(--ds-line);border-radius:14px;padding:0 14px;color:var(--ds-ink3);font-size:17px}
+.ds-arama input{border:0 !important;box-shadow:none !important;padding:12px 0;font-size:14px;background:transparent}
+.ds-serit{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:11px 14px;border-radius:14px;background:var(--ds-goldbg);border:1px solid var(--ds-goldline);color:var(--ds-gold7);font-size:13px;cursor:pointer;font-family:inherit}
+.ds-serit b{font-weight:500;color:var(--ds-ink)}
+.ds-serit span:nth-child(2){color:var(--ds-ink7)}
+.ds-serit-ok{margin-left:auto;display:flex;align-items:center;gap:2px;font-weight:500}
+.ds-ogr{padding:16px !important}
+.ds-ogr-bas{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.ds-ogr-ad{font-family:'Cormorant Garamond',Georgia,serif;font-size:22px;font-weight:600;line-height:1.15;color:var(--ds-ink)}
+.ds-ogr-tel{font-size:12.5px;color:var(--ds-ink5);margin-top:2px}
+.ds-kalan{text-align:right;flex:none}
+.ds-kalan b{display:block;font-family:'Cormorant Garamond',Georgia,serif;font-size:34px;font-weight:500;line-height:1}
+.ds-kalan small{font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ds-ink3)}
+.ds-rozetler{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;align-items:center}
+.ds-rozet{display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:3px 9px;border-radius:999px;border:1px solid var(--ds-line);color:var(--ds-ink5);background:#fff}
+.ds-ilerleme{display:flex;justify-content:space-between;font-size:11px;color:var(--ds-ink5);margin:12px 0 6px}
+.ds-eylem{display:flex;gap:7px;margin-top:14px;align-items:center;flex-wrap:wrap}
+.ds-eylem .btn{height:38px;padding:0 13px !important;font-size:13px !important}
+.ds-eylem .ds-kare{width:38px;padding:0 !important;color:var(--ds-ink5);font-size:16px !important}
+.ds-eylem .ds-kare:hover{color:var(--ds-ink)}
+.ds-eylem .ds-sil{margin-left:auto;color:var(--ds-ink3)}
+.ds-eylem .ds-sil:hover{color:var(--red);border-color:#EBCFC9}
+@media(min-width:900px){.ds-ogr-liste{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 24px}.ds-ogr-liste .ogr-card{margin:0 !important}.ds-ogr-ust{flex-direction:row;padding:20px 24px 12px}.ds-ogr-ust .ds-arama{flex:1}.ds-ogr-ust .ds-serit{width:auto}}
+
+/* Aylık özet */
+.ds-ay{padding:14px 16px 24px}
+.ds-ay-bas{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.ds-ay-bas .ds-eyebrow{justify-content:center}
+.ds-ay-ad{font-family:'Cormorant Garamond',Georgia,serif;font-size:28px;font-weight:500;color:var(--ds-ink)}
+.ds-ay-hero{padding:20px !important}
+.ds-ay-iki{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.ds-cift-cubuk{height:6px;border-radius:6px;background:var(--ds-goldbg);border:1px solid var(--ds-goldline);overflow:hidden;margin-top:16px}
+.ds-cift-cubuk i{display:block;height:100%;background:linear-gradient(90deg,var(--ds-gold6),var(--ds-gold))}
+.ds-ay-alt{display:flex;justify-content:space-between;gap:10px;font-size:12px;color:var(--ds-ink5);margin-top:8px;flex-wrap:wrap}
+.ds-ay-alt b{font-weight:500;color:var(--ds-ink)}
+.ds-ay-uc{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.ds-ay-uc .card{padding:14px !important;margin:0}
+.ds-ay-uc .card:last-child{grid-column:1/-1}
+.ds-liste{padding:0 !important;overflow:hidden}
+.ds-sat{display:grid;grid-template-columns:44px 1fr auto;gap:12px;align-items:center;padding:12px 14px;border-top:1px solid var(--ds-stone)}
+.ds-sat:first-child{border-top:0}
+.ds-sat-tarih{text-align:center;line-height:1}
+.ds-sat-tarih b{display:block;font-family:'Cormorant Garamond',Georgia,serif;font-size:24px;font-weight:500;color:var(--ds-ink)}
+.ds-sat-tarih small{font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ds-ink3)}
+.ds-sat-orta{min-width:0}
+.ds-sat-ad{font-size:14px;font-weight:500;color:var(--ds-ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ds-sat-sag{text-align:right}
+.ds-tutar{font-family:'Cormorant Garamond',Georgia,serif;font-size:19px;font-weight:600;color:var(--ds-ink)}
+.ds-durum{display:inline-block;margin-top:3px;font-size:10px;letter-spacing:.06em;padding:2px 8px;border-radius:999px;border:1px solid var(--ds-line);color:var(--ds-ink5)}
+.ds-kirmizi{color:#8E3A30;background:#FBF1EF;border-color:#EBCFC9}
+.ds-altin{color:var(--ds-gold7);background:var(--ds-goldbg);border-color:var(--ds-goldline)}
+.ds-sat-eylem{grid-column:2/-1;display:flex;gap:6px;flex-wrap:wrap}
+.ds-sat-eylem .btn{height:32px;padding:0 11px !important;font-size:12px !important}
+.ds-ana-ozet-wrap{padding:6px 20px 4px}
+@media(min-width:768px){
+  .ds-ay{padding:20px 24px 32px}
+  .ds-ay-uc{grid-template-columns:repeat(3,1fr)}
+  .ds-ay-uc .card:last-child{grid-column:auto}
+  .ds-ana-ozet-wrap{padding:8px 24px 4px}
+}
+@media(min-width:1100px){.ds-ay-kolonlar{display:grid;grid-template-columns:1.25fr 1fr;gap:20px;align-items:start}}
+.ds-rozet-btn{cursor:pointer;font-family:inherit}
+@media(max-width:767px){.ds-ogr{margin:0 12px 10px !important;padding:14px !important}.ds-eylem{gap:6px}.ds-eylem .ds-kare{width:36px}}
+@media(max-width:380px){.ds-etk{display:none}.ds-eylem .ds-b{padding:0 11px !important}}
+/* Seçim penceresi ve arşiv */
+.ds-secim-ov{position:fixed;inset:0;background:rgba(20,14,6,.5);z-index:9600;display:flex;align-items:center;justify-content:center;padding:16px}
+.ds-secim{background:#fff;border-radius:18px;max-width:440px;width:100%;max-height:90vh;overflow:auto;padding:22px;box-shadow:0 24px 60px rgba(0,0,0,.25)}
+.ds-secim-baslik{font-family:'Cormorant Garamond',Georgia,serif;font-size:26px;font-weight:500;margin:6px 0;color:var(--ds-ink)}
+.ds-secim-metin{font-size:13px;color:var(--ds-ink5);line-height:1.6;margin-bottom:16px}
+.ds-secim-btnlar{display:flex;flex-direction:column;gap:8px}
+.ds-secim-btnlar .btn{width:100%;flex-wrap:wrap;padding:12px 14px !important;height:auto}
+.ds-secim-btnlar .btn small{flex-basis:100%;font-size:11px;font-weight:400;opacity:.75;margin-top:2px}
+.ds-tehlike{color:var(--red) !important;border-color:#EBCFC9 !important}
+.ds-arama-sat{display:flex;gap:8px;align-items:stretch}
+.ds-arama-sat .ds-arama{flex:1}
+.ds-arsiv-btn{display:inline-flex;align-items:center;gap:6px;padding:0 14px;border-radius:14px;border:1px solid var(--ds-line);background:#fff;color:var(--ds-ink7);font:500 13px 'Jost',sans-serif;cursor:pointer}
+.ds-arsiv-btn .ds-ic{color:var(--ds-gold6);font-size:16px}
+.ds-talep{margin:12px 16px 0 !important}
+.ds-talep-sat{display:flex;align-items:center;gap:10px;padding:8px 0;font-size:12.5px;border-top:1px solid #EBCFC9}
+.ds-talep-sat small{font-size:11px;opacity:.85}
+.ds-arsiv-liste{display:flex;flex-direction:column}
+.ds-arsiv-sat{display:flex;align-items:center;gap:8px;padding:12px 0;border-top:1px solid var(--ds-stone)}
+.ds-arsiv-sat .btn{height:34px;padding:0 11px !important;font-size:12px !important;flex:none}
+.ds-arsiv-sat .ds-kare{width:34px;padding:0 !important}
+@media(min-width:900px){.ds-ogr-ust .ds-arama-sat{flex:1}}
+/* Form penceresi */
+.ds-form-alan{display:flex;flex-direction:column;gap:5px;margin-bottom:12px;font-size:12px;color:var(--ds-ink5)}
+.ds-form-alan>span{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;font-weight:500}
+.ds-form-alan small{font-size:11px;color:var(--ds-ink3)}
+.ds-form-hata{color:var(--red);font-size:12.5px;margin:-4px 0 10px}
+.ds-secim-btnlar.ds-yan{flex-direction:row;justify-content:flex-end;flex-wrap:wrap}
+.ds-secim-btnlar.ds-yan .btn{width:auto}
+.ds-yesil{color:#4A6645;background:#F2F6F0;border-color:#D3E0CF}
+.ds-gri{color:var(--ds-ink5);background:var(--ds-stone);border-color:var(--ds-line)}
+.ds-link{background:none;border:0;padding:0;color:var(--ds-gold7);font:inherit;font-weight:500;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+/* Yoklama */
+.ds-ana-blok{padding:0 20px}
+.ds-yk{padding:0 !important}
+.ds-yk-grup{display:flex;gap:12px;padding:12px 14px;border-top:1px solid var(--ds-stone)}
+.ds-yk-grup:first-child{border-top:0}
+.ds-yk-saat{width:58px;flex:none;line-height:1.1}
+.ds-yk-saat b{display:block;font-family:'Cormorant Garamond',Georgia,serif;font-size:22px;font-weight:500}
+.ds-yk-saat small{font-size:10px;letter-spacing:.08em;color:var(--ds-ink3);text-transform:uppercase}
+.ds-yk-sat{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:5px 0}
+.ds-yk-ad{font-size:14px;font-weight:500;cursor:pointer;min-width:0;flex:1 1 120px}
+.ds-yk-ad:hover{color:var(--ds-gold7)}
+.ds-yk-sat .ds-durum{margin:0}
+.ds-yk-btn{display:flex;gap:5px;margin-left:auto}
+.ds-mini{height:30px;padding:0 10px;border-radius:9px;border:1px solid var(--ds-line);background:#fff;color:var(--ds-ink7);font:500 12px 'Jost',sans-serif;cursor:pointer;display:inline-flex;align-items:center;gap:4px}
+.ds-mini:hover{border-color:var(--border2)}
+.ds-mini.sec{background:var(--ds-ink);border-color:var(--ds-ink);color:#fff}
+.ds-dikkat{display:flex !important;align-items:center;gap:10px;margin:0 0 8px !important}
+.ds-dikkat>span{flex:1;min-width:0}
+.ds-dikkat .btn{flex:none}
+/* Öğrenci detayı */
+.ds-detay{max-width:720px !important}
+.ds-detay-bas{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.ds-detay-izgara{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:16px}
+.ds-kutu{border:1px solid var(--ds-line);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:2px}
+.ds-kutu small{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--ds-ink5)}
+.ds-kutu b{font-family:'Cormorant Garamond',Georgia,serif;font-size:26px;font-weight:500;line-height:1.1}
+.ds-kutu span{font-size:11.5px;color:var(--ds-ink5)}
+.ds-kutu-kirmizi{background:#FBF1EF;border-color:#EBCFC9}
+.ds-kutu-kirmizi b{color:#8E3A30}
+.ds-mini-liste{border:1px solid var(--ds-line);border-radius:12px;max-height:260px;overflow:auto}
+.ds-mini-liste>div{display:flex;gap:10px;align-items:center;padding:8px 12px;border-top:1px solid var(--ds-stone);font-size:12.5px}
+.ds-mini-liste>div:first-child{border-top:0}
+.ds-mini-liste>div>span:first-child{color:var(--ds-ink5);flex:none;min-width:84px}
+.ds-mini-liste>div>span:nth-child(2){flex:1;min-width:0}
+.ds-mini-liste .ds-durum{flex:none !important}
+@media(min-width:700px){.ds-detay-izgara{grid-template-columns:repeat(4,1fr)}.ds-detay-kolon{display:grid;grid-template-columns:1fr 1fr;gap:16px}}
+/* Doluluk */
+.ds-doluluk-kap{overflow-x:auto;padding:12px !important}
+.ds-doluluk{border-collapse:separate;border-spacing:4px;width:100%;min-width:520px;font-size:11px}
+.ds-doluluk th{font-weight:500;color:var(--ds-ink5);font-size:10.5px;letter-spacing:.06em}
+.ds-doluluk tbody th{text-align:left;font-family:'Cormorant Garamond',Georgia,serif;font-size:16px;color:var(--ds-ink);padding-right:4px}
+.ds-doluluk td{border-radius:8px;text-align:center;padding:6px 2px;line-height:1.35}
+.ds-doluluk td span{display:block}
+.ds-doluluk td.bos{color:var(--ds-ink3);background:var(--ds-paper)}
+.ds-doluluk td.kismi{background:var(--ds-goldbg);color:var(--ds-gold7);border:1px solid var(--ds-goldline)}
+.ds-doluluk td.dolu{background:var(--ds-ink);color:var(--gold-light)}
+/* Notlar ve toplu mesaj */
+.ds-renkler{display:flex;gap:6px}
+.ds-renkler input{display:none}
+.ds-renkler i{display:block;width:24px;height:24px;border-radius:50%;border:1px solid var(--border2);cursor:pointer}
+.ds-renkler input:checked+i{box-shadow:0 0 0 2px #fff,0 0 0 3.5px var(--ds-gold6)}
+.ds-notlar{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.ds-not-kart{position:relative;border:1px solid var(--ds-line);border-radius:14px;padding:16px}
+.ds-not-sil{position:absolute;top:10px;right:10px;background:none;border:0;color:var(--ds-ink3);cursor:pointer;font-size:15px}
+.ds-not-sil:hover{color:var(--red)}
+.ds-not-metin{font-size:13.5px;color:var(--ds-ink7);line-height:1.6;white-space:pre-wrap;padding-right:18px}
+.ds-secim-sat{display:flex;align-items:center;gap:10px;padding:10px 14px;border-top:1px solid var(--ds-stone);cursor:pointer;font-size:14px}
+.ds-secim-sat:first-child{border-top:0}
+.ds-secim-sat input{width:18px !important;height:18px;flex:none;accent-color:#1A1714}
+.ds-secim-sat span:nth-child(2){flex:1}
+/* Telefon menüsü */
+.ds-menu-ov{position:fixed;inset:0;background:rgba(20,14,6,.45);z-index:9500;display:flex;align-items:flex-end}
+.ds-menu{background:#fff;width:100%;border-radius:20px 20px 0 0;padding:10px 12px calc(16px + env(safe-area-inset-bottom));max-height:80vh;overflow:auto}
+.ds-menu .snav-btn{padding:13px 12px !important;font-size:14.5px}
+.ds-menu .snav-section{padding:12px 12px 4px}
+.ds-menu-tutamac{width:40px;height:4px;border-radius:4px;background:var(--ds-line);margin:2px auto 8px}
+</style>
 </head>
 <body>
 <script type="application/json" id="dssPoses">{"n":1400,"count":5,"scaleHint":190,"poses":[[-18,32,-47,-3,21,-88,36,80,66,-25,-28,11,24,43,38,16,-35,38,-38,1,-59,-37,43,-13,70,-36,-41,37,88,82,64,-36,94,83,41,45,-44,19,47,-7,39,50,19,35,-17,-18,-19,-25,-40,28,-11,-39,-24,15,24,-79,32,59,45,5,-45,38,3,-60,44,-8,44,20,35,44,56,-43,49,-8,-20,-5,-35,39,54,-53,3,-62,-20,-10,27,64,21,16,-27,-20,30,26,14,34,52,79,-77,59,-1,26,-42,-5,31,39,83,82,48,-2,54,-51,-40,83,42,-55,-1,18,35,12,-2,5,-6,6,-33,18,-33,22,24,42,-14,-12,84,83,67,90,26,1,19,-93,-38,52,63,-41,-41,17,51,3,-38,22,-16,21,69,58,43,-52,47,-11,5,32,36,11,12,-76,43,14,48,-55,60,-48,-62,-36,23,27,24,59,48,86,46,4,28,61,36,14,32,39,-58,-33,-58,-18,34,-73,-13,26,37,-62,-33,9,59,-8,28,36,-15,33,-20,-7,-12,-36,8,-59,-6,-54,-28,8,71,89,-4,14,7,18,-42,10,46,6,55,-3,16,-75,-65,-24,-21,31,4,20,16,34,35,56,52,80,-3,5,22,67,-15,-21,59,-49,50,-60,56,-38,7,27,71,86,30,7,27,48,30,4,-5,21,45,-1,34,-3,-37,9,-46,-1,27,7,71,81,16,14,38,29,87,80,81,86,40,-73,22,-92,48,7,56,-15,-30,4,-40,33,-22,-15,-17,0,38,-64,54,-12,27,47,-28,9,50,85,22,15,-41,-3,-24,-27,49,-12,-2,35,24,-82,-35,-4,35,-68,34,43,13,-78,36,-62,-1,26,27,23,50,-59,-14,4,-80,60,-13,12,37,0,6,23,-32,12,0,18,-65,-38,59,-45,-29,12,-21,7,70,85,-18,-15,38,17,68,-28,45,19,13,32,-34,3,-38,44,20,28,5,19,50,-7,48,-45,66,83,50,-53,11,24,-15,31,-37,3,-39,9,22,-82,16,29,16,18,-37,56,35,31,-31,1,-44,42,50,-11,37,49,37,81,-10,8,12,31,49,86,-47,92,-45,25,64,-20,42,29,60,-22,27,82,-39,14,-36,71,68,86,-4,-45,-22,-7,-7,-36,41,-60,32,59,-85,66,-41,82,-19,-12,32,18,-43,53,-17,-21,68,81,36,-78,32,49,57,-16,43,11,12,9,-27,-20,41,-57,26,31,-36,-12,-44,15,25,28,71,-32,63,-15,22,-87,-39,91,-17,0,41,4,2,36,-18,24,-36,8,53,-25,35,95,-4,12,-93,66,33,-77,59,-12,-15,22,-38,84,-50,66,-5,38,-20,61,14,65,51,-12,2,12,52,-12,44,94,84,79,25,29,21,-85,-65,-34,36,80,-3,36,-27,-12,37,27,32,71,-40,8,-42,52,34,59,55,-7,24,36,35,22,4,-58,28,64,-31,-5,-40,45,-8,32,23,62,42,82,-15,12,74,81,-21,8,37,90,-15,35,-14,-35,-23,-16,54,-2,-24,13,-33,-14,29,62,37,18,63,89,26,13,-41,92,50,-50,19,41,-67,-38,83,80,29,-86,-31,17,48,-15,59,-20,5,-59,2,36,32,-70,-11,13,38,40,-13,-9,20,44,33,33,44,-50,32,-72,13,40,22,7,30,94,36,65,68,-40,-38,66,-17,29,32,20,-35,21,3,25,-32,11,-53,59,24,73,-38,-2,48,-61,44,-6,59,-37,15,17,-41,62,29,54,62,81,21,-86,51,5,46,-55,0,-55,49,-41,-24,-25,36,73,-27,16,-40,83,23,0,-42,9,41,0,9,37,36,83,33,82,-40,34,33,67,12,22,21,29,48,-13,-19,-8,40,3,-36,11,16,24,35,23,1,11,1,25,26,8,-18,-15,27,45,6,-60,43,-1,-47,18,55,-17,92,81,62,82,51,-40,7,19,21,61,-61,-27,-36,-2,39,19,86,81,-31,-19,-13,-33,55,-5,-42,17,13,31,-18,31,1,8,47,-49,35,64,60,78,-46,15,-36,8,-39,17,33,15,12,18,9,22,-20,1,27,47,-7,22,-35,24,28,80,-11,21,-22,-10,71,-33,22,30,32,81,41,16,36,45,20,33,19,-89,56,-36,-19,-8,-38,88,63,-24,29,65,48,-50,9,26,-36,52,38,14,-45,54,23,67,39,87,59,-38,-18,-4,-39,46,20,47,-12,-35,29,91,37,85,29,59,-17,-4,35,58,37,82,52,-28,-12,36,-27,10,23,66,51,-24,-10,-42,58,-44,-50,59,-28,-3,59,-14,39,59,47,12,21,-84,54,-12,32,-3,0,-53,-3,27,-43,81,-35,-11,43,12,45,2,-39,64,57,-51,70,83,51,-42,-37,68,73,83,34,16,-3,35,-24,-3,55,-49,59,-23,37,34,62,-14,77,64,48,-10,34,-81,-21,12,51,-9,-12,16,-39,10,-41,47,42,-53,-11,31,-23,22,-41,46,-20,-16,64,-26,35,83,25,-87,35,93,35,-6,45,-62,21,41,46,93,35,43,1,-64,28,77,9,37,48,88,-30,25,61,-45,-25,15,71,81,-12,16,55,-34,33,-81,-43,66,94,83,60,-54,35,4,51,86,28,9,65,79,40,48,91,84,-39,73,-4,31,55,77,-32,26,56,-18,-47,25,-53,64,17,19,26,-80,26,61,-35,34,-33,-12,-73,63,61,-23,-61,-31,60,87,-10,28,44,84,-23,-11,39,85,44,-12,-21,-18,52,-39,-39,22,69,-37,46,84,55,-34,-7,13,30,12,47,89,22,13,11,-74,-4,26,45,12,-2,23,3,19,-15,7,48,0,40,82,-68,-11,45,-55,40,84,-15,-39,-60,-39,-40,59,-43,43,-35,1,33,14,41,-59,63,-34,48,9,40,33,9,-70,40,95,-25,-17,-22,25,-12,9,47,-2,38,18,-14,-31,-35,39,57,-11,32,-68,35,-67,24,53,25,83,-90,59,30,65,-39,-11,-40,30,47,-67,31,24,65,-40,-42,85,13,18,-67,66,-39,-11,61,85,-1,29,-42,38,-39,19,-60,-23,40,50,-18,-33,71,-32,39,1,-38,51,-5,33,-49,-24,-35,32,32,62,-42,3,-16,23,32,26,-44,70,-7,20,63,-31,36,53,50,3,-21,27,42,72,-5,-46,-19,26,27,75,82,75,40,17,7,20,-43,55,-7,6,-23,24,62,79,31,52,-8,-36,-15,27,-42,20,37,73,-63,61,43,44,47,-59,-7,22,-38,37,56,85,44,-58,52,-22,-12,22,49,-52,-23,7,42,-66,-24,3,-5,38,34,-70,42,-65,29,77,26,54,79,87,7,-69,42,41,56,84,-21,28,-48,-21,27,19,-20,32,33,-83,-8,-46,-37,39,54,-8,61,78,38,44,38,-65,76,78,55,76,-36,8,51,82,44,-54,71,89,-2,31,68,-39,-60,-34,54,80,39,83,41,18,13,-78,50,8,-43,35,37,36,75,89,-65,61,32,68,45,88,29,77,-16,19,-18,28,33,37,23,41,35,31,-67,-38,-58,-33,37,54,3,32,-16,-29,60,-41,42,-66,-10,8,9,24,20,10,20,34,32,40,-35,61,-32,29,10,26,-6,36,-39,-8,27,69,37,-4,10,-71,-68,-30,61,-46,60,-12,56,80,71,58,-39,16,19,16,20,-88,-42,18,-15,27,22,25,33,76,7,-59,-21,-26,-40,75,34,85,-43,-3,36,80,-32,10,-50,-22,-30,25,-43,85,-33,2,23,-88,-13,10,-12,22,-12,-30,60,-18,-16,27,95,83,-23,7,-5,-38,-38,0,-23,-12,86,80,-16,-10,-3,-54,57,-15,32,19,66,-43,-19,12,35,-75,-41,11,49,-13,-18,5,-43,37,26,-80,12,19,64,-38,40,8,38,73,-13,21,-12,-29,-25,1,37,40,24,73,-24,-21,-50,60,-45,28,22,52,75,79,24,30,-14,-18,-37,23,-45,32,-41,7,59,-7,-21,-24,12,30,12,36,27,-79,-21,13,-12,-43,43,35,33,66,8,-72,63,-32,39,35,62,-28,63,86,89,87,6,12,31,24,15,9,64,83,-59,-27,-34,13,9,24,32,78,86,82,24,80,0,-56,58,77,49,-21,32,-76,65,-41,-18,-17,24,66,-63,66,-86,61,57,-4,-30,25,-19,5,-2,-51,46,0,-82,62,-4,-57,55,-36,52,90,5,26,50,58,1,-64,48,-23,-27,25,41,87,-5,37,43,-13,62,-36,14,26,-16,5,41,-60,-16,12,23,16,87,83,22,20,33,38,-8,19,-24,19,36,11,-18,-26,23,62,2,20,-73,-20,-73,60,-53,-27,40,57,36,43,-34,4,46,84,30,91,81,77,-57,-22,36,-70,-34,10,63,-24,21,-92,40,90,55,-32,35,-6,76,86,-38,59,-30,-19,-37,22,-11,9,-8,15,63,-45,33,2,48,-45,20,34,49,85,-10,-40,41,3,10,22,47,78,45,-55,-73,59,28,7,24,51,4,17,-24,-18,-40,-5,29,26,21,19,32,10,65,58,-9,-35,-12,-42,70,58,46,-49,37,72,41,93,-32,-18,82,75,-20,-7,-16,-11,70,-42,29,55,-1,-50,27,35,7,19,-44,59,35,62,57,-24,42,16,60,83,-51,61,36,-72,-23,-6,32,4,-5,-46,27,-82,39,65,8,29,-8,27,-46,59,52,-4,-24,23,24,67,60,84,34,86,-50,-22,-59,0,27,34,47,-17,-3,26,-45,20,-47,-19,33,47,41,46,21,55,-10,36,31,39,-17,19,58,-11,25,70,65,-43,-8,27,55,-50,-59,-36,-61,-36,82,79,53,-46,25,74,45,-2,54,-58,-19,32,-11,-36,-5,-55,57,-22,-31,12,41,-63,-12,-22,-37,32,-21,33,52,-42,22,34,-36,67,-43,59,6,19,-21,10,24,36,24,4,-19,31,62,-20,-6,25,39,-74,36,80,24,76,-38,2,13,19,-85,62,29,72,-27,-10,63,58,48,81,29,36,44,-11,-35,-10,16,36,-53,66,20,10,-37,29,25,83,71,81,-42,79,47,-57,-16,29,2,16,3,27,-36,66,-42,46,51,-40,21,12,-41,33,25,-81,28,92,24,72,48,-49,20,26,52,-15,-23,33,29,63,17,32,-16,-36,-31,25,-19,34,75,83,54,2,46,-4,71,86,-27,10,3,-55,34,87,-63,-24,14,-75,-38,50,64,-48,50,90,39,22,48,90,16,18,56,-26,-15,-22,-7,15,50,76,-12,31,51,-13,0,-57,41,39,38,94,59,-8,55,-38,15,21,83,85,-30,-5,44,-68,55,-18,-8,-35,24,17,42,36,-77,61,59,87,32,63,36,-71,41,53,72,84,-14,32,59,-9,3,27,29,-75,-44,19,-17,-1,51,89,-41,46,4,38,89,82,26,19,-18,-30,-35,8,23,35,-9,28,45,-53,38,17,58,-17,38,14,27,-77,53,-15,25,54,35,35,-9,23,10,-69,31,91,-24,-3,-17,-34,-3,3,55,-41,54,88,-48,-24,71,-41,67,-24,23,11,-23,26,41,-68,-11,15,28,60,26,54,-28,-22,-23,-2,33,47,-15,7,8,20,-39,-1,29,68,-8,-36,-46,23,-14,-20,43,-5,23,-80,42,73,-46,26,25,46,-25,33,-3,19,35,-71,-62,-24,4,-58,81,77,-41,66,-11,29,15,27,-8,13,0,8,25,83,-38,53,22,2,-25,-12,26,20,-55,-30,51,86,62,-21,25,70,23,37,-79,61,-20,-23,23,14,-18,-5,83,76,49,-12,1,37,60,-46,46,-60,-13,11,-31,-4,65,86,-43,56,41,-54,-62,-35,14,36,-30,-5,0,15,-7,-43,-59,-1,37,61,24,38,-33,61,30,3,70,-40,2,28,22,1,22,66,-7,-33,32,66,38,-63,33,-4,57,-39,89,84,55,89,66,-30,59,-47,19,41,-30,22,-36,27,-17,0,39,41,-31,-8,-43,60,-26,21,63,-31,32,47,47,-1,25,46,95,83,-38,79,32,70,-49,66,-39,56,-32,23,76,78,48,12,-26,-13,-24,-24,32,47,70,-31,0,31,28,79,-27,3,-10,18,-18,-31,47,-45,-9,-45,-65,-26,4,35,60,79,26,61,0,10,31,55,12,34,-40,84,-31,31,41,10,-18,21,10,31,-41,64,74,82,24,73,-24,15,57,92,22,-79,-18,31,-3,-39,34,43,-59,-19,-77,66,69,-26,-32,9,84,81,-17,26,39,-75,37,65,-2,20,-35,60,-41,50,55,-27,-14,25,75,78,-15,12,-28,17,-15,17,38,21,54,82,30,68,-36,16,56,-2,9,-62,-37,14,43,16,-47,2,-43,29,-17,-36,-44,18,17,35,43,77,-80,66,-38,28,-11,-45,-22,29,76,78,-38,75,45,-59,69,-32,70,83,29,9,37,93,-42,70,28,-73,-34,-12,16,-72,77,83,-41,-2,0,14,-11,-1,41,45,-41,29,22,-76,61,-44,34,92,-14,-28,-40,79,36,66,22,24,17,27,-13,0,45,-12,40,22,0,-60,53,-2,35,17,8,11,33,10,18,21,-45,58,38,15,-73,66,50,-19,-14,25,35,31,-84,66,-8,-2,-43,25,38,28,25,78,65,87,24,77,-16,-24,23,49,53,-44,56,-22,34,93,-45,93,41,-11,-37,8,41,78,-11,-42,22,-81,-11,-6,-8,23,15,7,-21,-3,-35,-3,41,91,48,2,60,-20,33,81,2,19,-47,11,29,63,-15,36,2,24,-29,25,-45,7,14,26,-12,33,47,9,50,-64,91,88,-42,6,-15,-39,10,36,-3,27,29,33,30,75,-60,-19,-68,-30,-65,-6,17,-89,-11,-4,39,26,30,51,19,37,-8,20,18,65,16,3,64,89,62,-50,-42,-9,8,-68,64,84,32,-71,31,-82,-10,-36,-26,-11,-46,20,-14,34,26,-88,23,21,38,59,66,-44,24,18,39,22,54,-13,37,62,-15,-28,27,48,53,-15,-68,61,35,6,-8,36,-19,15,32,85,37,66,9,-67,-16,-27,17,32,-25,-6,-34,-3,70,90,-34,-18,24,21,-41,57,30,72,-26,19,-1,13,47,-68,21,43,-38,-3,-30,24,-45,6,35,72,-21,13,-36,35,-39,63,48,-19,94,83,-18,27,-37,55,6,29,-30,9,36,85,33,9,50,80],[41,87,62,73,40,88,65,21,26,-12,68,45,59,86,-25,54,-21,32,-2,31,61,75,-2,32,-31,71,30,17,66,45,63,48,-24,68,48,80,42,15,59,85,53,71,83,68,21,18,18,-40,54,39,18,17,0,-74,-11,30,26,93,-25,38,37,62,14,-25,34,92,53,27,-6,-80,19,-21,48,85,50,50,2,23,10,2,65,58,42,28,21,-6,31,64,65,59,16,-47,12,-56,31,16,36,68,19,-39,-45,87,48,48,15,19,-2,22,65,49,-19,52,-15,68,35,15,0,-75,-7,32,27,-12,21,-23,58,21,66,59,19,13,16,-36,-5,-76,31,14,-54,86,39,15,47,72,50,28,69,45,-13,33,-60,62,46,80,25,-7,53,18,42,93,46,62,-27,50,2,-74,47,31,-33,70,61,41,0,-64,-1,-65,-14,26,55,51,62,33,53,82,66,58,43,91,21,-4,50,45,55,67,6,-42,-72,62,61,46,68,56,1,-58,4,-58,-1,21,48,27,68,30,-43,62,33,9,29,2,65,63,-53,84,64,50,-42,82,31,68,59,36,-36,87,1,31,22,9,-66,62,51,39,25,-12,-65,62,33,62,52,62,26,-23,33,68,-24,38,-4,29,11,-51,52,29,48,91,9,-65,59,68,47,38,46,86,-29,64,12,-48,42,89,51,44,64,57,49,22,57,30,64,81,44,24,58,89,33,11,-60,65,-34,77,26,-21,-36,73,61,33,49,74,15,3,27,26,33,69,49,67,-53,65,63,80,48,35,14,-10,-26,36,-44,83,12,-19,65,68,0,-61,-46,68,43,71,40,76,19,-27,53,85,45,77,49,87,26,66,-21,41,0,-86,67,58,53,18,-17,45,49,84,54,19,17,4,6,14,8,-50,36,7,29,18,-31,73,14,-53,14,-15,53,63,-24,52,36,8,-27,49,-19,54,27,-24,-13,26,70,40,67,26,63,29,-36,80,-18,50,50,31,-21,45,33,15,-75,65,18,-21,54,35,-14,29,13,-21,-29,67,-1,21,49,56,22,30,63,61,-36,72,61,36,39,21,61,31,-23,39,-30,63,24,-3,11,-39,-47,66,19,-6,61,19,29,3,16,-18,69,52,48,71,60,41,66,70,57,44,38,4,37,21,30,-13,-30,60,19,-18,59,41,6,-64,-45,84,62,81,63,79,40,59,60,27,12,-46,15,4,53,16,68,44,-69,62,49,57,-29,52,60,45,21,30,-3,23,17,11,66,25,42,16,26,-18,64,73,51,22,60,29,26,15,-24,39,-17,41,21,-13,-3,-87,22,-13,16,24,66,73,-47,83,18,18,21,-7,23,29,15,-23,65,84,17,6,61,71,30,-3,55,84,69,49,11,0,68,52,10,27,36,4,34,23,30,-15,53,84,17,10,-29,57,67,25,63,39,30,6,11,-45,-35,74,61,39,-1,-72,49,52,13,-21,18,-33,33,0,30,-15,62,71,39,79,26,68,21,-33,44,13,-23,49,37,17,48,78,62,58,-13,34,12,-5,2,-74,61,22,44,28,54,61,60,22,54,17,13,-21,42,30,36,4,-21,28,-38,80,48,23,23,31,60,48,19,22,-3,68,-35,85,58,37,-43,67,65,81,19,-21,65,21,64,74,32,68,43,27,55,39,41,81,52,52,53,63,23,-32,63,45,53,49,1,-62,13,-33,3,18,12,-55,47,69,47,70,36,90,59,95,64,92,-10,68,30,66,42,78,28,8,-27,54,53,84,18,-13,60,43,17,-45,24,89,-30,68,53,81,27,29,65,74,66,72,47,9,59,15,0,-84,-35,64,30,24,49,25,5,-62,50,59,26,69,23,-4,48,57,70,39,-17,35,33,14,14,1,44,24,42,71,14,-19,12,-19,32,93,-6,34,58,55,49,82,48,24,9,11,12,12,67,53,60,61,57,92,45,81,64,48,32,0,63,22,0,-75,59,46,-25,45,62,59,65,51,58,36,43,19,27,-1,27,-10,23,-29,59,23,47,27,44,73,19,-39,26,-21,-4,28,-23,32,-24,40,-30,58,51,45,12,23,62,90,11,7,52,29,48,88,48,68,26,-24,19,-27,48,45,21,-33,54,33,-26,53,-3,-86,-26,53,46,58,61,59,57,56,50,49,-19,34,10,1,61,77,62,32,-18,50,12,-20,9,-37,-6,34,49,15,44,81,12,10,17,7,26,2,15,-29,-2,-83,42,59,20,-38,-1,27,28,2,36,70,14,-47,59,95,22,27,55,78,6,-45,29,90,57,71,28,63,12,-14,49,30,67,35,-21,57,-22,34,21,-2,9,20,27,-21,64,84,24,-24,-26,57,24,3,6,-62,18,21,24,-16,-19,52,66,44,12,-39,51,24,28,27,0,15,3,24,56,45,42,22,2,-79,5,-45,59,70,20,0,-25,43,59,80,33,11,42,7,29,28,49,41,19,-34,54,74,59,23,60,68,48,9,18,-41,56,72,62,44,-31,79,38,89,72,51,34,13,60,92,22,19,-6,-87,-2,-93,56,95,49,45,-2,21,-30,79,52,67,42,13,-73,65,36,84,53,64,25,29,59,40,13,-19,-21,39,48,90,45,70,29,-16,53,56,-13,39,68,57,59,86,50,88,49,72,38,95,59,34,12,20,47,74,33,70,0,-79,5,18,-18,52,3,19,19,-30,27,21,-6,31,64,35,35,8,66,26,31,68,44,15,-23,30,13,-21,51,92,59,67,2,-84,23,15,-26,67,62,52,16,-10,53,28,11,-50,42,72,-30,74,40,18,-69,62,47,69,59,21,65,57,10,-46,28,73,62,18,-29,63,2,-51,36,25,28,12,40,72,-24,41,49,11,53,60,3,22,21,11,18,-14,51,94,41,6,59,87,65,89,65,52,64,74,21,-27,48,58,65,23,14,7,61,51,24,92,-13,25,12,-4,49,56,47,94,11,-57,34,24,50,43,50,79,24,-15,38,6,-24,42,31,16,28,89,-18,30,-20,35,51,77,65,74,1,-66,32,6,0,27,-21,57,-24,39,42,27,19,12,-25,39,0,-74,11,-40,42,21,34,73,47,58,54,17,19,0,-14,33,-6,18,24,25,46,84,25,27,12,-45,-26,59,48,43,12,-34,-35,78,28,73,-54,87,4,-70,44,80,38,60,-11,33,-36,86,1,-56,41,92,60,86,49,61,19,14,18,-15,51,88,50,65,39,67,12,-12,26,27,-19,27,6,15,-36,86,-61,62,57,90,50,54,-26,60,24,-22,65,68,18,20,12,-27,47,75,47,27,67,58,-80,65,30,-14,39,21,-22,35,27,-22,59,74,-53,84,64,34,56,14,52,56,71,41,12,-3,56,15,6,-63,60,92,49,83,-39,78,13,27,29,63,49,46,48,71,30,62,-6,27,62,55,21,23,-17,39,42,27,49,21,-32,70,13,-34,40,5,40,13,24,-24,16,-33,42,69,50,55,38,65,34,0,2,17,62,88,-24,50,-1,22,12,-9,53,15,16,-48,27,72,63,76,-27,45,42,66,51,85,42,78,53,64,59,90,48,19,53,66,12,-56,36,84,27,-16,57,50,66,75,40,89,-28,62,-50,82,-4,-82,58,17,59,62,22,-9,-36,81,-16,33,31,63,48,19,46,69,47,64,28,-16,0,28,71,50,22,-24,53,42,45,15,74,45,58,33,67,30,51,21,42,84,-3,-73,66,58,-24,50,-4,18,23,22,0,33,-2,-90,40,85,7,29,48,18,24,90,-22,65,10,-63,28,69,7,-69,15,-5,24,62,52,92,33,4,-22,55,71,38,47,37,59,62,8,-64,26,62,66,24,-41,68,-24,58,17,-8,8,25,37,88,30,-4,54,47,-17,27,34,95,55,52,26,-9,6,-59,54,81,65,68,58,68,42,88,55,94,70,34,-45,83,0,-67,-80,65,17,10,-26,50,8,-63,37,23,79,68,-22,36,35,92,24,69,49,27,35,7,-13,33,57,45,48,68,-15,32,-54,85,23,24,71,45,14,-5,15,-8,27,91,11,-26,4,12,-23,55,13,20,53,32,0,68,-4,34,16,-31,18,5,42,64,57,68,-30,77,6,-53,17,-30,47,73,24,-3,-33,65,-54,85,38,63,-32,84,17,15,6,15,24,-18,48,56,40,14,17,19,36,22,53,81,26,66,37,86,48,42,63,42,63,38,13,28,0,25,50,76,12,-27,50,94,6,-64,-25,65,48,74,52,60,59,78,43,89,48,74,59,62,43,17,-3,22,54,61,53,66,21,-25,53,51,43,76,-44,62,-49,68,-31,67,1,-74,63,64,61,60,-12,24,14,14,59,16,6,-41,0,15,59,61,72,42,50,39,16,-15,15,26,-15,33,7,16,-6,31,15,-1,26,-22,66,40,64,76,3,-75,39,85,17,-9,53,40,15,27,51,21,15,-13,24,9,18,3,38,78,7,-43,-35,69,3,-59,-47,82,-8,24,16,23,42,28,46,62,59,39,30,66,9,-40,10,28,63,23,50,53,40,10,27,92,-67,65,-34,76,30,15,3,22,57,35,57,69,43,68,65,80,-19,27,30,-8,67,50,61,69,12,-29,49,26,-8,-80,30,7,18,3,0,-72,52,21,63,35,42,83,6,-67,26,27,59,72,-6,20,16,-27,32,92,60,70,8,-38,-27,47,53,86,49,73,49,52,65,57,59,90,-7,34,25,-7,65,76,-23,48,69,27,54,76,54,33,-25,43,59,52,51,69,11,12,15,22,9,-58,60,45,48,85,10,-56,-7,29,-7,27,20,-21,60,56,-27,64,49,20,-22,49,10,-61,-20,32,7,-43,-8,-81,32,66,71,53,27,-22,9,-41,38,23,-25,63,28,73,63,80,24,17,-11,28,58,22,42,22,21,7,11,2,58,74,1,25,7,-53,-3,-93,-25,35,-38,68,48,21,-32,65,30,91,11,3,71,35,-23,68,58,86,-27,54,48,83,41,84,52,64,0,30,7,13,61,74,62,74,62,94,9,16,-12,37,-30,76,-6,34,64,68,25,27,40,60,55,87,27,29,29,3,8,-48,-82,65,23,-15,25,91,60,56,34,15,34,11,-4,18,28,89,-43,83,12,-27,54,18,20,27,-72,62,13,-45,-75,64,-32,64,61,74,3,-57,17,-37,32,3,15,-9,37,15,57,87,0,33,44,20,13,-21,48,39,-9,68,14,-45,19,22,17,-8,61,95,32,94,-69,62,60,89,12,-57,31,10,-18,35,31,26,10,21,23,-14,26,4,28,28,65,84,74,43,12,22,9,-56,51,59,8,-51,12,-9,59,92,-68,65,24,-27,33,24,55,48,-13,27,-23,61,33,15,63,51,47,11,-4,27,19,-27,18,4,21,-35,19,-28,-25,36,-43,68,47,87,-24,65,18,-12,13,-18,-25,61,-20,45,37,64,-7,-84,63,66,16,1,53,21,-2,-71,-4,-86,50,31,18,18,-35,84,-24,33,52,25,24,2,36,64,56,59,14,-40,48,33,56,80,16,-17,15,-9,10,68,59,27,31,93,16,-45,2,-54,30,72,53,94,-66,62,18,23,56,13,0,-75,70,68,52,92,-62,62,49,78,58,83,60,39,48,64,57,28,21,-17,50,30,61,16,19,-21,24,88,40,95,16,27,11,-56,23,92,41,71,-9,30,65,82,40,19,13,14,-5,20,51,43,12,-53,2,-57,24,-22,-38,84,37,4,19,0,43,86,50,91,0,30,66,46,1,-54,12,-9,36,24,20,11,58,80,14,-54,-8,33,4,-71,-20,50,54,80,3,-54,48,68,-82,64,-36,82,-25,52,39,25,-6,21,29,12,53,44,65,73,54,20,-33,70,64,62,-25,42,30,67,49,48,12,-40,31,8,60,56,60,16,-47,81,12,-50,32,15,-34,73,-36,88,-36,81,14,-39,15,-6,30,19,46,92,-38,68,5,19,-43,86,71,45,51,19,53,39,-8,35,-7,20,52,13,51,26,12,-21,62,41,-21,65,18,30,35,75,21,-15,23,9,4,22,12,-30,38,84,14,-50,-6,30,-30,74,19,-20,43,29,-67,62,67,40,63,92,38,15,-26,65,64,94,40,23,-26,46,12,-41,4,-76,29,3,41,22,15,8,16,-18,53,89,56,87,16,18,-40,88,-23,43,-33,87,59,21,25,10,49,42,15,-23,-26,43,46,22,42,25,0,23,50,57,29,28,50,80,56,39,58,39,60,93,22,-38,0,27,30,6,68,33,-6,-77,71,53,-31,68,-1,-68,-32,80,58,32,47,86,62,86,58,76,67,39,53,72,40,5,-25,66,24,-5,24,13,-42,89,9,22,39,62,-4,30,-26,35,52,16,18,-16,54,41,57,47,24,-16,49,28,58,16,55,83,-14,23,-28,51,71,45,-19,43,-71,64,-1,33,70,42,55,27,50,14,15,-40,57,38,24,-33,37,69,24,68,65,61,59,71,-50,68,41,16,7,-68,12,-23,52,82,54,32,-24,63,66,52,-41,89,4,16,47,35,56,39,62,67,3,-77,11,-4,42,70,-24,58,29,-3,0,-81,19,-21,-34,63,-5,-86,63,78,59,48,40,62,7,19,36,67,11,22,25,18,-36,80,-18,33,25,9,13,21,32,8,-32,89,2,-64,26,-10,56,57,-25,55,-13,31,24,17,35,20,8,14,25,-17,13,6,-27,45,14,-33,35,8,-29,50,13,3,2,21,53,52,28,28,42,77,3,-67,27,-16,51,74,-7,27,46,62,45,57,28,70,10,1,56,94,29,7,42,91,-4,-82,53,28,-9,22,1,31,49,82,55,46,73,49,2,-66,6,-51,71,33,63,40,-30,71,31,15,29,29,6,23,-50,84],[-49,-35,-73,-22,81,-61,66,46,46,3,33,-57,52,-67,3,-34,49,14,15,-45,31,5,31,-57,82,42,25,21,39,-47,-12,52,53,22,-76,-25,-22,-52,26,73,98,42,51,2,35,49,38,11,53,36,-96,-1,9,-47,7,-22,57,26,-52,-37,37,-43,35,36,-35,-33,-95,-2,58,-44,27,-79,33,-53,58,-2,41,46,-41,-44,36,-6,-17,-41,39,43,58,-62,-37,-33,54,78,33,58,29,-17,48,71,41,82,-48,-23,-104,-4,56,48,21,57,28,-39,31,-53,17,74,46,72,42,9,46,-6,29,84,54,35,12,-44,56,69,85,49,12,-48,35,13,-26,-51,71,-64,77,47,65,-59,34,68,67,-58,-83,-9,-69,-28,61,-54,57,19,-14,-39,31,57,48,81,14,79,-92,-9,87,48,45,-13,29,-41,57,85,-67,-15,51,73,32,-85,49,68,-42,-28,59,-64,55,68,56,5,63,-68,-17,-46,58,-5,-62,-17,31,42,-79,49,38,23,18,64,2,-45,34,18,72,46,-52,-44,47,-74,15,66,53,-22,41,79,69,-59,47,74,36,-25,-44,49,24,-39,42,5,-41,-36,37,2,-46,-44,56,85,26,21,41,33,44,11,-49,-46,-61,54,53,-11,45,57,25,32,17,59,35,-8,104,42,14,-89,37,77,-42,49,37,-57,86,49,42,-23,106,46,36,-22,27,79,41,-71,54,22,51,-63,24,43,37,89,-82,-18,48,-4,27,87,35,54,41,72,28,-42,37,56,-34,-51,27,28,28,17,-65,-26,41,-25,26,53,27,-47,71,-58,12,-95,-69,-16,32,-3,52,22,43,77,34,-77,-102,-12,42,25,73,-65,53,-8,26,42,31,79,45,46,45,55,73,-71,37,54,38,-75,-61,-17,-16,-52,-79,-22,34,-24,51,-59,33,-24,71,95,-46,46,22,68,-4,-51,-16,-38,23,27,47,-32,23,32,36,74,-38,-45,-43,-45,46,13,25,-91,58,-74,46,-39,-28,-35,-16,49,14,52,15,-88,59,83,-95,-2,2,-42,-54,-19,29,49,-94,-1,-46,-25,55,46,38,22,35,57,9,-48,26,-19,101,43,-7,-34,11,-43,15,-27,52,-9,-19,-32,39,83,42,33,31,-46,31,-48,57,17,45,85,-68,-16,3,-31,-85,54,14,59,-52,45,32,64,43,87,-81,-17,69,49,-82,-14,-87,-18,33,28,45,-32,-75,-15,26,39,39,6,27,34,44,4,44,24,31,38,8,-44,25,32,26,87,37,22,-21,-47,-49,53,-65,46,42,68,29,-21,38,-52,93,46,-53,49,14,-94,55,4,49,55,25,66,-18,-32,-108,53,28,79,52,-67,32,52,26,19,25,-33,-49,-39,44,-38,48,8,28,-27,39,61,54,-52,83,43,45,52,3,-51,-18,-48,-39,49,-57,-27,44,-39,104,42,-102,1,65,-56,12,-22,28,58,22,-49,35,-19,31,-53,39,69,3,-47,58,51,39,-55,109,42,-25,-37,42,-12,34,-8,66,-56,-53,-22,44,-31,49,28,-66,49,7,-28,31,-57,25,-39,9,84,-12,46,69,-63,24,84,15,-51,37,-5,25,-51,33,-76,3,-34,29,-56,22,47,24,34,64,47,35,85,-102,54,36,-21,28,-77,-74,53,-101,54,24,-22,53,77,31,9,26,68,46,-81,25,-53,5,-26,72,-57,108,43,74,-69,-2,-48,17,-85,54,28,28,-15,4,-28,41,19,26,-28,79,-65,-18,-32,41,-49,41,73,103,42,23,-54,12,-19,-54,-19,41,-18,6,-93,58,25,-99,-7,43,16,63,-65,-78,46,68,-52,35,-79,-111,54,62,-51,56,26,6,-29,21,-18,29,36,-19,-44,38,14,31,34,18,55,44,-55,-74,-15,-46,-46,15,82,46,-6,-101,-1,17,61,19,77,44,12,17,62,51,81,106,43,32,16,52,47,49,79,23,72,-41,-46,58,1,59,-5,15,-87,47,75,75,48,34,-86,76,-61,47,-41,36,51,53,22,63,-67,6,-39,26,-75,27,33,38,67,-27,-31,37,32,18,85,25,86,52,-48,19,-92,67,-48,46,-15,37,35,101,48,59,17,33,-43,-6,-29,42,75,48,64,23,-41,28,-24,44,68,19,-29,5,83,44,19,64,-73,36,85,-61,-22,57,-4,45,-77,-92,-4,53,74,53,-15,39,-16,44,-14,17,-82,-54,-33,39,63,58,84,-93,-6,22,45,-108,52,49,-28,23,72,3,-33,16,69,54,3,46,-19,31,-82,-93,54,55,84,26,64,-56,49,-35,-34,-27,-49,48,48,-46,-33,23,-48,33,24,-9,-39,-56,-17,26,-55,59,4,-91,-12,49,11,31,9,-16,-33,-4,-33,61,-51,52,13,41,-22,69,-58,-24,-47,43,85,41,-9,-14,-33,5,46,-48,-38,14,79,24,-47,-33,-51,-51,45,-108,49,39,83,13,-44,35,-36,-109,-2,53,-45,21,68,78,47,48,-48,8,-27,44,35,7,-48,-19,-52,54,47,14,77,42,-18,67,-52,33,-76,23,-27,32,-1,-107,-5,-11,-45,41,-12,54,77,14,-24,-36,-47,-77,46,-67,-18,77,-65,41,-31,35,17,67,-66,-81,-21,17,67,29,51,38,55,-7,-31,12,-19,16,-29,56,-55,25,-39,-46,-41,53,21,-82,-17,33,36,49,5,22,85,49,32,-19,49,-86,-6,-25,-46,61,-58,29,-86,-18,-49,38,14,-3,-31,29,49,24,-35,61,-69,17,-89,-88,-16,39,45,55,77,-82,-9,-77,54,55,-8,19,-16,78,95,31,72,16,-88,-8,-46,-36,-34,34,9,-42,-38,7,-46,53,-67,-104,-4,33,-4,42,53,26,-55,19,85,15,-27,-23,-41,18,86,54,83,35,68,13,-88,38,16,36,26,13,-23,37,-27,-24,-46,61,-47,84,49,14,-35,45,57,51,-78,99,48,-61,-26,-56,-17,52,43,-43,-37,25,-47,-105,-6,-51,53,43,38,9,-29,26,42,38,73,65,-51,-102,-11,-51,-35,25,27,47,-59,-35,46,38,51,37,-23,-29,-37,-19,-42,3,-42,19,58,-52,-26,32,53,77,46,-23,-33,-15,46,54,5,36,12,56,8,-36,-42,26,-49,103,48,-78,-12,27,41,25,38,-16,-29,26,-81,8,-24,44,-18,68,-72,-12,-51,17,-17,-61,-32,19,49,9,-27,45,-8,46,-48,53,29,33,-55,21,-32,-68,-21,-84,54,44,-77,48,-7,67,46,32,66,-33,-41,-23,-41,39,18,46,-59,-16,-38,-72,-15,-78,49,51,-11,-78,-9,47,-55,51,87,39,63,46,9,46,75,-17,49,53,11,63,-63,28,57,35,31,-75,-27,56,-65,-77,-16,-76,-11,-11,-52,46,-29,24,82,-65,-16,41,-55,48,14,48,-16,38,-41,-8,-45,-77,-14,-76,53,19,-48,-101,53,29,19,52,28,96,47,44,-61,53,33,51,-21,-33,-47,6,-45,4,-38,-92,-14,-19,-45,41,-29,38,-8,47,-28,42,71,-89,49,19,-78,31,1,14,-36,43,24,-68,-13,-15,48,-8,-29,49,-9,33,-24,51,13,-33,46,41,36,-97,49,36,71,25,36,-103,-2,-19,-35,59,-2,58,1,-34,46,-1,-36,51,68,-78,49,51,-1,39,-19,-54,-35,48,-73,-63,-16,58,75,49,15,59,3,24,77,38,42,14,82,61,-45,46,28,57,17,-91,-13,46,69,38,-59,48,-65,27,-52,33,-36,-49,-28,-63,-28,-88,46,45,-66,-78,-21,-22,-47,-58,-28,103,48,52,73,28,-34,-3,-29,24,-75,53,79,-109,-3,48,78,-71,-16,13,-49,53,35,31,4,53,68,-81,-24,12,63,33,19,44,-14,-29,-32,25,-31,29,-57,14,-42,43,-13,51,-42,27,-47,42,35,18,-48,33,-26,35,17,48,27,31,-51,29,-83,-64,-18,23,-26,-18,-47,53,-21,55,4,23,87,35,-84,46,66,-24,-49,33,27,26,-82,35,42,12,-45,-102,-6,38,24,55,-59,48,8,71,-57,41,8,21,85,32,18,53,-51,37,-44,24,-34,38,85,39,-17,66,-72,38,-11,37,-31,-48,-36,21,-22,45,-52,-17,-49,54,-58,42,39,-97,-4,-26,-31,39,56,45,-18,55,13,57,11,47,83,-69,53,-2,-52,45,-33,28,-51,39,-8,53,31,33,-44,-49,-41,57,-68,36,-49,31,56,17,65,28,-43,-71,46,74,-66,13,-16,21,-41,55,-63,43,-35,54,-9,39,63,-43,-29,28,-45,79,-64,-96,-9,27,-76,45,-58,29,-29,-9,-31,58,-65,35,-11,45,-18,31,67,9,-31,-109,48,-36,-41,-104,47,49,73,51,-66,-35,-39,29,86,23,27,24,-31,31,-37,54,29,-72,-15,21,64,-5,-52,-78,46,-86,-6,39,-53,11,-28,38,-5,49,61,-8,46,53,65,-16,-34,35,-38,31,82,42,81,45,87,-91,-7,35,27,-13,53,44,-52,24,51,58,9,-23,-46,71,-54,27,88,-109,-6,22,52,41,-33,51,-19,18,-22,-98,-6,39,69,107,42,63,-53,41,-59,68,-59,-105,49,-13,-33,39,33,57,79,66,51,56,1,2,-43,55,-5,51,-57,66,-68,51,48,36,-29,-23,-41,34,-78,39,84,92,42,26,-25,-4,-51,25,-83,54,-15,22,-31,42,-36,29,69,-35,-45,8,-33,25,36,37,44,2,-36,28,28,52,-62,49,-19,2,-35,-107,49,31,79,64,-48,-89,-14,-56,-32,-83,-14,34,-33,43,-21,38,63,55,-45,46,34,57,-53,38,36,25,-78,26,33,-104,55,25,65,35,-6,33,26,-84,-19,52,46,39,39,22,73,63,-48,43,-82,52,71,48,22,46,-32,-55,-29,47,78,25,-27,38,-18,28,74,-45,-48,16,-41,26,-76,42,-8,32,-84,39,5,58,-53,-93,-5,-34,-39,36,-22,42,85,-89,-17,65,-47,45,-81,57,-72,42,63,-65,-32,-76,-22,12,-49,42,-6,43,78,-6,-45,-16,-45,25,25,46,-53,53,65,-22,-45,-38,-38,49,-43,59,18,53,82,28,-44,29,-79,-65,-25,27,78,35,64,-92,-5,32,-6,19,-86,25,-24,-67,-27,39,-74,57,17,5,82,-38,49,8,-32,51,4,35,57,-73,-25,55,13,21,85,46,73,-69,-18,36,38,24,47,-35,-34,-51,46,49,82,-81,-9,85,42,-69,49,36,75,55,75,19,-92,34,-14,58,-68,23,78,42,-49,34,16,-11,-44,51,-42,54,78,53,13,35,-35,64,-62,12,-34,67,49,-51,-44,32,-57,22,-86,31,9,26,-51,14,-94,55,6,-105,-1,-51,-22,16,69,-47,-31,32,-75,-82,53,65,-72,-21,-45,-8,-49,18,-38,67,-71,42,89,-57,53,29,83,-105,-9,38,43,24,-42,24,-91,-32,-51,78,48,31,-31,-36,-47,33,-13,28,87,49,-11,-77,-11,32,37,22,58,14,-32,13,-44,-53,-22,-44,-33,-8,-52,58,-52,43,64,41,-57,67,-57,43,19,-31,-43,-18,-41,-34,49,-111,54,32,-76,34,-83,43,47,53,32,28,-54,-104,-5,72,-58,36,-15,-2,-45,41,-42,-34,-49,72,-52,61,-56,54,-4,-5,-38,59,82,41,17,33,-38,-56,-21,-16,53,49,-59,51,3,2,-28,81,46,-56,-34,34,-55,49,-56,63,-57,-63,-27,-39,-39,-77,54,33,-3,51,-74,51,-8,15,-37,48,79,-13,-48,-33,-41,39,41,-108,2,42,-34,35,57,47,-55,31,-25,18,-46,36,5,34,46,12,-36,-45,-42,43,18,69,-56,44,-1,-45,-47,48,27,-12,-45,54,71,62,-49,35,-12,49,-44,12,-36,45,-33,62,46,-1,-44,-38,-48,44,33,44,-34,44,-43,68,-63,58,85,47,-9,3,-35,41,-1,32,-9,21,82,-39,-41,39,-35,32,22,-4,-49,34,-16,-104,-2,-34,-43,-46,-32,-68,53,24,-47,46,51,23,35,-75,-19,-49,-39,26,-39,66,-59,39,-2,52,62,5,-47,53,-48,-89,-15,-11,-49,-61,-17,46,-33,-27,49,27,-32,58,87,48,-41,21,56,36,76,-17,-48,34,-48,26,-54,44,69,32,-41,-25,-31,76,48,47,33,-32,-43,28,84,35,46,45,58,29,66,46,81,29,-53,6,-46,37,84,-23,-48,39,79,22,69,56,-6,-4,-29,53,15,16,78,41,8,-13,-31,-56,-33,34,-41,45,-75,47,-66,74,47,58,6,24,-22,41,8,-29,-37,34,27,74,-65,23,-45,4,-33,68,-62,-48,-41,5,-34,14,-19,65,-59,-108,3,34,-45,51,2,45,3,23,69,41,-33,-4,-45,-17,-44,29,-81,27,65,41,56,68,-64,31,28,-101,-1,41,57,18,85,49,-4,-88,-13,-33,-49,52,-18,-37,-31,17,-84,27,76,31,-55,25,-15,36,8,33,75,-17,-52,-51,-31,37,-25,-62,-28,47,26,-111,-2,17,-23,51,-59,14,67,27,-37,47,76,-34,-44,17,-33,-13,-33,-47,-41,56,-14,-26,-36,-5,-45,75,-61,55,4,34,9,-7,-33,24,85,55,-66,56,-69,51,-57,42,26,52,-74,51,13,2,-46,32,42,49,28,11,-34,-59,-19,-46,-38,17,-31,4,-51,42,-19,46,-47,47,18,15,81,46,16,-45,-41,47,-51,27,-16,69,95,-78,-25,25,46,-102,-9,24,23,51,61,34,-8,16,85,-107,53,-34,-46,-75,-21,27,73,37,-46,35,76,53,-2,33,-48,52,-47,23,79,35,15,-29,-34,-1,-47,66,-51,-71,-27,96,42,53,-45,25,-29,46,48,78,95,25,-83,-61,-36,-53,-21,55,43,2,-47,-61,53,-8,-37,43,-51,-37,-34,25,-26,34,-56,27,73,34,33,53,-9,72,-71,38,4,52,43,104,94,3,-44,24,74,26,31,-6,-49,14,77,-9,-34,51,43,-9,-35,25,19,34,63,29,32,35,53,-11,-29,-3,-35,31,68,85,48,48,9,108,42,22,-32,44,-61,22,63,19,-32,54,35,37,67,45,39,24,22,-8,47,24,71,14,-26,51,-7,19,67,26,37,-63,-21,52,23,107,47,46,-1,26,84,-82,-21,51,-78,-48,-33,34,58,-97,-4,61,-58,13,49,-45,-36,48,-11,57,24,36,-58,35,46,1,-51,44,35,-1,-46],[-37,-6,-83,-43,-74,-1,-11,12,-83,66,-83,92,23,1,33,10,60,-31,23,3,62,22,54,29,-49,-20,-87,-65,-125,-18,-52,-2,49,-31,35,54,2,-1,-10,-5,15,48,49,-18,15,26,-95,-82,58,-6,62,50,39,60,70,86,-53,1,60,66,-120,1,-7,45,32,-5,-78,20,20,27,-88,-49,-50,-10,-121,88,79,87,-88,-41,-102,-81,85,82,-36,-6,23,-3,3,39,-16,28,6,54,-88,-29,-75,-24,-58,15,44,7,28,56,-70,20,67,-37,-73,-18,53,26,-50,-14,-6,12,-90,-43,-129,-5,-33,-2,3,7,-47,-19,-54,-5,-5,14,-71,39,11,43,23,61,-69,-3,65,-16,-19,20,-62,10,-33,11,-79,85,-31,1,22,27,-102,-91,86,87,-86,27,56,74,40,69,-49,-14,-18,40,-28,-5,3,-2,60,3,-95,-62,-15,14,-61,16,-60,18,66,-9,-92,-64,-36,-2,37,-15,-81,-50,-71,47,-14,18,60,41,44,-9,-86,-7,10,6,-41,88,-58,-7,86,78,7,14,64,73,31,-15,43,64,-88,6,-56,28,-77,61,18,45,-35,5,-124,-23,-58,16,-43,18,20,10,-33,10,-99,-85,54,15,-27,22,20,57,47,-3,-19,36,-47,15,-50,18,-3,40,-39,24,54,-32,23,28,50,77,-78,57,26,47,6,-5,-2,43,-70,37,47,74,-77,81,-82,-40,-67,31,-70,-15,15,29,-67,29,-27,19,-15,43,40,-18,-83,-1,-7,5,64,37,-28,-2,12,36,-57,1,62,49,-6,26,-65,9,-33,-14,-16,20,-16,3,49,62,60,20,40,5,58,24,35,49,-45,1,24,57,41,6,41,-3,-82,67,67,-27,77,83,27,7,-91,-57,-75,67,-62,-24,14,15,56,54,24,10,19,60,3,3,10,16,-83,-23,-14,-1,27,-12,-43,26,14,48,77,82,19,50,49,83,28,-1,-50,15,-88,-36,54,41,31,43,53,-22,40,11,14,26,-43,9,-77,-37,3,19,-78,53,16,22,50,-3,64,14,14,53,67,-1,67,-24,-85,83,50,85,26,61,71,-28,50,32,28,2,69,-9,65,3,-99,12,-83,-33,41,62,-125,-22,-75,64,45,5,10,6,37,58,-81,3,62,75,50,-24,66,-6,-82,40,-58,27,-81,50,-64,-12,-120,-27,60,69,26,7,-102,-15,61,7,-82,54,-91,-66,61,26,-48,-18,-82,36,-95,-62,60,-28,-83,-43,-82,31,5,26,-16,24,-19,29,-31,2,67,-7,10,15,39,9,96,92,-104,-92,-82,-54,54,3,65,69,-1,-5,-16,16,-12,-3,41,-20,-99,-73,22,47,2,15,-73,41,-26,-9,-2,49,-58,-15,-87,-26,-82,57,-69,-19,-77,86,-78,-26,-75,88,7,20,-82,44,-67,88,6,5,61,-33,66,-37,39,78,-74,70,7,28,61,32,-43,-12,57,-5,-77,6,-6,39,-6,7,-95,-65,73,-33,56,-20,48,1,-49,18,35,48,-70,53,19,-1,49,79,57,49,45,60,-71,58,-86,-53,71,92,-74,-3,14,16,37,61,22,3,-16,14,-44,-19,70,85,-48,-14,-23,18,-73,18,-29,-5,58,-20,-64,16,-64,23,-125,-12,-81,-14,57,87,67,3,-74,2,35,61,12,-1,58,-31,-73,66,-9,11,-82,-56,-67,24,14,35,-35,3,71,-24,69,-19,-20,32,19,50,-112,-14,-78,70,-40,5,78,78,7,43,64,41,24,15,-65,-15,33,47,6,5,40,-9,-62,23,62,-33,50,31,-70,2,16,2,-2,16,64,85,-15,7,37,-22,61,24,15,62,-56,-14,67,-14,-73,18,-48,-6,-39,26,58,-5,-54,-16,-86,88,-37,7,-18,27,-92,88,49,79,15,44,-79,3,36,70,2,29,57,78,-62,28,-39,2,44,60,-73,-6,32,20,-33,-1,41,7,-20,26,-54,-14,62,-6,-96,-78,-73,-12,67,14,-18,29,57,77,61,44,23,18,-58,1,-65,22,74,81,113,78,50,-27,18,54,10,33,11,33,-10,37,-52,11,32,64,2,36,-82,54,69,78,37,-12,54,58,-44,-5,-12,28,62,-16,23,1,-62,-1,-74,27,43,-20,-73,41,-12,24,-96,-70,11,49,15,1,65,35,60,29,-9,7,-96,-61,-95,-58,54,24,56,10,78,92,6,-1,1,44,-71,16,-15,43,-49,5,28,16,-75,54,-77,74,12,1,64,3,74,83,-45,-2,-20,5,45,5,43,-22,-70,-23,-81,-36,62,33,44,75,31,54,-54,-6,-12,33,7,10,78,91,56,1,-31,16,-43,12,50,-12,11,18,-83,73,-48,1,43,-27,18,37,-40,-18,-83,-36,-35,16,24,50,-57,15,9,50,60,-15,35,57,-29,26,61,86,14,23,24,58,-81,22,-81,10,-73,88,-33,-15,-77,-19,-15,-5,-33,28,62,33,6,39,-29,20,11,33,16,22,6,18,58,73,-61,22,11,19,12,23,2,44,70,81,47,62,-119,-19,-129,88,36,11,-9,29,20,20,27,49,39,11,-81,16,-77,5,9,58,9,53,-100,88,19,54,-22,6,-74,16,73,-23,62,-10,70,-19,73,-33,-83,95,-75,-20,-22,-1,-70,16,88,94,-54,14,53,-33,20,64,-87,-29,-120,-28,62,1,90,88,-98,-85,-54,5,26,-9,60,86,47,-15,-65,-1,-85,-5,-129,-5,-74,-22,69,74,14,-1,36,-18,-82,86,-14,-3,-23,-5,-70,12,-88,-2,-31,18,-100,-75,-83,-49,-87,-6,7,44,-79,6,19,15,-1,15,-71,31,57,82,-74,65,-67,16,-75,57,-61,15,-88,-57,61,50,-24,20,-74,23,-95,-85,-78,-29,-78,-44,65,-35,71,88,26,58,-14,35,-27,32,-74,69,69,-24,-35,-14,-57,2,-67,3,2,22,-82,95,24,43,-26,-3,-19,-10,-2,37,-85,-28,-71,52,-117,-18,-27,16,-9,2,-7,2,-99,-78,-75,75,-98,-90,-83,-40,62,-14,-74,-12,-22,29,85,79,14,52,-57,19,-82,-6,14,47,56,-6,-78,-10,-81,61,43,2,-79,91,-103,79,20,24,27,23,-75,66,-78,18,-18,29,-130,-1,-85,1,29,9,-2,22,57,50,-19,16,66,75,-71,15,62,85,56,-36,5,41,9,29,-15,-1,14,-1,60,48,1,16,77,83,-56,14,-69,-18,-37,-16,61,-22,-39,-7,37,67,53,-5,29,3,-82,-15,-6,47,43,-20,-10,14,-98,-73,14,2,-81,71,-65,28,53,87,96,88,14,62,-43,-14,-57,19,54,10,107,95,-128,83,-50,12,16,12,-3,-2,37,-11,-83,78,-82,44,67,-12,-20,39,-14,-6,1,22,37,-15,-3,18,-75,52,-11,5,-12,20,52,-29,-90,-33,-78,82,20,50,-81,-29,28,58,-90,5,62,-29,49,86,-44,-12,-57,20,-47,19,-83,24,-88,-43,-82,44,-64,-20,15,47,52,32,-121,-19,-60,-5,88,95,-28,-3,64,-3,56,-6,60,50,-31,3,-24,19,-33,1,-36,10,7,28,-92,-58,-83,-37,1,14,-83,62,53,-6,-44,-1,7,12,1,-3,1,10,-53,19,12,12,28,22,-62,23,-7,28,-10,41,58,58,-129,-5,29,2,2,56,52,82,19,-3,-20,15,-123,-16,43,64,16,7,-71,-19,-61,-12,104,94,64,20,-5,7,66,82,-124,-16,90,81,-130,-3,58,78,7,-5,-36,-5,94,87,56,-28,44,-19,57,27,15,52,-85,-65,-1,43,66,75,28,41,35,-9,41,-6,-73,53,58,-1,-47,3,3,23,26,7,-1,20,-90,-45,67,-15,79,85,-77,9,-45,19,-79,19,-75,52,-74,-22,20,9,60,-15,9,2,15,57,19,-1,-81,-43,-78,27,-125,-24,-12,1,41,2,105,78,-73,57,-82,-44,90,87,91,90,-79,40,-7,11,-52,-15,6,11,43,57,64,19,62,-14,-86,-31,-87,-26,48,1,103,78,-94,-74,-82,2,-14,7,65,81,-75,44,-79,35,-85,27,-49,24,-78,-39,-23,-11,44,67,-83,3,14,18,-54,27,20,19,-24,31,3,33,-73,-5,-83,90,-88,88,16,45,67,-6,60,-35,64,-23,62,41,88,90,57,69,67,1,-71,36,62,-23,27,47,-33,14,-82,-49,-81,1,-67,-23,73,90,53,-27,28,20,-83,78,62,-3,-67,7,75,91,-74,60,-62,-9,88,95,-82,53,-54,-15,-37,11,-121,-24,-111,-14,-98,-78,-73,32,-7,14,-78,-1,60,75,-9,-2,50,-9,50,-28,-56,-16,-126,83,-81,-14,14,1,54,1,85,90,-49,-7,-53,-20,-99,14,-85,-16,-70,49,-40,1,44,-10,33,47,-1,2,5,11,-50,11,-53,14,50,75,29,-3,70,-32,31,-15,49,31,47,60,31,-5,58,47,-64,-7,18,-2,-29,3,-28,-9,-69,-1,-31,15,53,35,60,71,43,-10,53,65,50,58,29,78,60,58,-28,88,18,29,43,-23,-43,24,35,18,53,85,67,-24,12,44,43,-14,-119,-26,-58,-20,61,-33,-35,27,-64,24,-1,35,-32,24,60,32,35,53,12,23,16,18,-29,19,-10,10,58,39,95,85,90,82,22,64,-128,-7,-20,-2,-56,-5,-19,9,-40,16,-82,-41,85,85,-23,9,-12,23,-82,36,49,60,-28,18,18,7,-79,-39,-14,14,-35,-7,-87,-64,-32,-6,-69,-28,-77,9,-32,7,50,66,11,1,-100,-85,57,-33,-10,2,64,33,27,10,-81,-47,-88,-56,1,53,31,22,-85,-27,-87,-24,64,-1,-71,37,-31,10,-54,-5,-11,27,70,-14,58,81,-52,-1,31,60,1,44,-16,-5,48,-6,32,-10,61,39,-37,-18,-71,-6,-64,28,66,-28,-6,26,-85,-6,-85,-58,58,32,61,-14,56,-1,-82,14,58,11,53,69,-73,88,-70,-14,57,-27,-62,11,-1,22,26,11,-99,-95,28,56,79,91,64,-33,44,-22,62,70,66,-29,6,-5,18,19,64,6,52,36,-75,-10,-57,19,-6,36,61,-20,50,-22,-121,83,-32,3,70,-12,-88,-3,19,-1,62,-18,-82,-48,-90,-6,-39,1,19,-5,14,56,31,66,43,-22,16,15,81,81,-75,1,40,61,71,-7,83,92,71,-33,-94,-64,33,65,-20,2,-61,-2,-6,37,-60,22,-79,31,-53,-7,33,65,40,6,-83,73,91,91,50,81,52,-26,-86,-37,-15,18,-16,18,50,81,22,32,-129,-10,11,60,54,-14,-92,-78,-24,19,-22,7,71,-28,23,7,-90,79,-24,6,-3,39,-81,-37,-2,36,1,43,56,85,-83,81,12,54,10,11,62,-22,65,-16,-57,-18,44,60,10,58,-92,-54,71,-16,-62,88,56,-32,16,12,-37,9,47,-9,-90,-58,58,7,-96,-87,-74,73,7,3,-79,95,-82,-18,16,-2,35,5,60,67,18,19,12,5,45,-19,-69,88,-49,-14,-58,-9,-43,19,-75,79,-61,23,58,87,-90,-64,-75,15,-83,-16,-77,60,56,-19,-24,31,-67,-16,-12,37,-32,24,-71,-12,10,10,-11,14,91,88,-69,-15,60,-2,-40,26,62,3,-28,-10,-32,24,-61,3,-64,88,-1,12,66,75,-78,-37,-71,11,31,1,53,74,31,67,-61,20,-88,-36,65,77,19,10,-67,79,86,86,60,11,-24,19,53,-9,-29,15,44,73,-27,-3,-7,23,74,86,-39,-9,-47,1,57,62,31,7,81,87,95,91,-61,-10,6,54,-65,-19,3,5,-39,-6,-79,5,16,45,37,7,-57,1,-60,14,28,16,6,36,-69,18,58,26,-48,-19,49,66,5,27,-77,47,47,58,3,32,-53,-20,60,-14,36,53,27,-10,56,-3,-75,65,-73,48,32,12,35,52,41,-2,39,-22,96,90,-53,88,-65,-18,-18,6,56,69,60,-7,41,64,23,45,-85,6,27,16,66,-2,65,7,-87,-44,-82,71,6,24,-44,7,3,47,14,3,39,7,-57,10,61,-9,23,-6,-50,-15,-90,-43,31,52,60,39,56,79,99,92,47,86,54,48,-82,-35,61,75,60,65,-94,-70,10,12,-87,-64,-77,65,-6,22,3,33,40,-19,7,54,29,49,10,41,-10,20,37,12,-19,-5,62,22,-86,-47,73,-24,27,64,56,58,-24,16,-44,18,-1,1,92,79,-73,-29,-79,29,-23,31,-22,15,-117,3,24,54,-85,5,71,-23,36,-9,7,14,-75,18,37,71,-81,-39,40,54,-1,5,-23,-5,-10,27,-44,9,-83,-54,-73,12,-75,14,61,15,-35,20,62,73,-37,19,57,-31,-56,-11,-81,-43,-85,-6,23,40,-82,-7,-9,-2,-19,2,-15,14,-61,23,79,79,37,62,10,56,58,74,64,-32,-86,-23,-53,11,40,-16,-61,-19,18,16,49,-5,-77,-28,61,48,-79,57,-82,75,15,-3,43,7,-73,37,19,58,66,16,57,9,52,61,50,-23,28,43,60,47,9,7,66,70,-74,47,-103,-86,-62,14,92,78,-78,7,-75,81,95,88,58,87,43,-10,20,14,-7,41,69,77,-32,10,28,23,-73,-14,-90,-71,33,12,2,11,6,6,-45,16,5,-5,-50,22,-26,14,-85,85,61,-11,-37,-18,-15,28,-12,-6,-3,35,-11,-6,7,23,19,11,-61,-15,-16,11,22,12,-83,-50,-10,-5,-58,-2,40,3,15,23,-35,15,53,1,62,82,39,64,-36,-3,-94,88,66,-12,48,67,-6,14,-40,3,71,79,12,18,49,67,-31,24,78,81,22,-2,67,90,15,52,23,54,-27,7,6,47,-16,-2,66,27,-26,-6,-94,-81,5,57,1,-1,41,-10,-73,50,-129,-3,2,6,91,90,53,28,91,90,-31,28,16,36,31,-14,-81,22,-74,56,-12,11,-99,-75,-27,6,22,16,-74,19,64,-32,104,95,7,60,112,78,52,-14,-57,12,-81,83,3,-2,40,-11,66,-29,6,1,-74,39,2,41,-16,-5,26,7,44,-19,-56,20,-74,3,15,53,-5,40,70,86,64,-10,64,-24,-1,18,-5,6,-78,44,49,-5,67,-20,-36,11,-7,33,48,86,-75,79,10,9,-81,-31,6,15,62,-39,-19,39,-43,11,26,54,-56,14,73,86,1,48,28,14,49,85,78,91,-123,-19],[24,90,35,-3,18,-52,31,27,36,50,35,55,42,-1,43,0,27,89,70,19,21,24,61,21,36,75,44,86,24,16,30,39,21,-9,34,15,42,21,36,21,47,8,28,4,12,89,19,21,15,-10,12,27,15,-26,19,-47,26,62,46,15,26,24,53,8,24,29,13,27,25,39,75,27,23,86,30,-15,31,41,14,75,14,-64,21,-38,36,-13,24,64,41,22,18,-1,18,3,27,-4,30,72,66,32,30,33,25,-9,-57,82,10,-36,17,22,41,26,12,-67,59,21,21,-88,26,51,27,27,18,83,31,41,70,33,28,3,36,86,32,8,39,16,23,36,28,74,15,63,15,27,58,19,18,80,13,-13,51,15,18,-21,26,-1,30,46,26,4,24,-9,18,73,57,28,35,86,45,-3,71,21,81,85,16,5,20,47,17,65,30,64,14,3,48,9,-1,85,18,-9,36,48,24,-18,17,-13,15,11,64,17,60,15,13,-28,30,8,14,65,7,92,25,28,53,26,33,79,24,11,40,27,18,-79,24,-17,36,16,12,4,16,-4,32,37,-62,85,65,23,36,45,20,37,28,62,67,21,17,-76,48,20,30,85,18,-27,19,-50,15,-5,18,2,65,86,22,90,19,-51,67,31,16,-62,20,77,12,68,13,-68,18,-25,79,86,73,27,18,95,21,-90,14,-67,17,-23,18,-48,26,-10,73,23,29,48,17,13,25,84,24,86,43,-2,19,-75,12,-48,42,20,38,10,28,19,33,5,13,-24,23,39,30,37,36,44,32,38,73,21,18,-26,18,30,24,95,21,-25,37,85,17,93,24,65,20,89,48,27,10,17,35,71,12,14,36,87,25,-3,58,6,16,-38,27,-12,60,21,13,-9,18,-85,28,0,36,52,28,26,57,21,22,30,25,0,25,36,72,29,18,39,12,24,18,-54,29,49,33,87,31,14,6,95,20,-11,19,-59,71,21,70,28,48,-4,23,91,36,-3,37,13,49,30,40,-7,32,26,24,67,18,7,44,-2,71,24,18,72,28,14,18,85,15,-58,22,11,27,67,21,50,28,39,24,24,30,37,19,-92,23,-12,42,18,53,24,23,69,18,68,49,27,15,0,64,23,19,-53,37,25,63,85,25,18,50,3,37,25,26,12,55,6,21,3,13,-68,24,-28,28,-5,24,15,18,-18,12,4,26,47,17,-58,51,87,57,27,38,21,14,-50,53,9,22,-86,18,76,-68,85,29,45,23,50,36,18,48,24,21,-36,11,-31,10,88,18,-1,20,-70,18,63,24,-30,17,-73,15,80,22,63,33,-9,29,67,55,14,34,41,19,-26,17,54,24,33,16,-60,23,84,21,95,28,27,24,45,14,-56,11,77,30,68,23,88,16,23,14,-15,31,40,64,13,38,27,48,-1,27,82,34,21,-25,85,22,40,22,64,28,68,42,13,21,-75,19,-1,71,27,28,86,26,79,26,91,17,21,78,86,22,-34,24,18,17,62,21,21,37,16,17,21,15,74,24,9,39,9,36,-10,9,92,36,25,15,-5,30,64,12,30,19,53,22,15,12,-45,20,14,36,-9,30,52,14,-40,36,24,36,11,12,2,16,2,24,46,60,21,21,-86,20,63,15,52,9,15,24,60,23,42,24,57,72,21,71,86,11,16,59,13,49,7,35,58,17,-35,46,-3,19,-71,19,25,18,-25,66,15,48,2,32,-19,60,17,28,58,52,21,67,27,24,32,18,63,12,-56,71,25,34,-10,45,15,22,-33,32,60,32,35,10,92,31,64,30,11,31,95,15,-34,28,90,59,15,31,68,31,11,12,-79,30,54,81,86,54,87,65,16,36,68,36,-9,81,87,42,-5,71,19,19,34,23,15,33,63,24,-28,56,87,36,68,34,-15,65,27,20,-46,64,85,51,2,-5,85,13,69,32,13,14,57,52,6,16,6,42,25,20,34,10,78,12,66,33,12,56,15,53,26,24,3,24,-8,26,84,21,-34,25,30,16,92,30,20,69,25,47,85,9,92,27,60,48,25,36,62,72,21,20,-74,16,-25,42,15,35,39,13,-42,11,7,25,-7,21,91,70,24,8,21,18,-32,67,26,10,-53,21,88,29,-18,12,-78,50,3,21,5,24,27,17,-12,32,74,25,32,12,19,13,2,21,40,24,52,25,54,36,87,29,-17,21,-3,22,68,15,-69,39,87,6,92,46,-3,15,-11,63,15,28,18,38,-3,36,71,59,32,12,-60,33,-20,70,20,13,60,33,-18,20,63,65,89,30,77,17,92,28,85,44,28,13,-62,42,-8,27,80,19,-85,24,94,24,52,21,-15,15,-72,33,-20,29,16,7,19,18,-72,26,27,17,-64,55,87,29,74,22,75,35,60,26,87,18,7,24,-23,24,94,25,51,21,68,18,47,15,-18,21,74,20,-6,19,-3,42,3,12,8,24,68,30,54,22,88,29,30,19,46,22,56,28,75,61,11,14,-56,29,46,6,93,20,-39,65,27,29,93,33,86,74,27,18,91,20,3,48,21,36,61,33,76,28,39,61,29,14,89,36,62,38,47,18,-29,24,-21,58,28,27,8,78,85,18,-21,53,5,26,92,35,43,31,77,24,59,45,-3,22,43,18,65,13,28,24,-21,13,-19,18,5,12,80,58,27,33,50,34,66,12,-46,36,43,25,61,36,6,12,-8,39,89,22,15,20,-21,33,21,29,6,30,-17,30,74,54,3,12,-27,13,21,36,68,18,-92,15,3,60,8,9,24,16,19,18,27,23,74,36,-8,36,74,18,-84,36,21,16,39,40,86,28,91,34,39,66,26,24,-17,28,39,47,-5,34,54,71,87,33,25,62,19,17,87,11,91,23,53,22,56,61,83,16,92,30,20,16,-66,24,29,20,-39,58,7,30,13,35,-11,24,1,15,71,12,-25,49,5,21,-8,77,87,45,-2,41,85,14,-50,23,76,19,28,24,74,27,68,14,12,19,54,16,-27,13,-83,44,22,53,29,11,79,47,-3,20,-78,32,-21,22,-6,15,95,71,89,55,7,21,33,14,-25,45,27,18,-21,70,22,12,81,13,8,31,-19,26,23,37,-9,19,-71,37,22,12,27,59,19,49,4,36,8,23,37,47,30,43,12,59,27,24,-2,17,-58,56,28,10,27,67,15,53,19,62,14,67,21,28,-21,14,-82,28,80,35,61,19,-12,13,15,19,8,17,55,6,94,-19,85,18,17,58,24,42,16,30,15,18,69,12,-67,65,32,30,45,77,86,60,14,45,19,19,-44,28,77,14,-3,12,27,12,88,14,73,17,11,12,-82,19,76,46,23,16,17,61,25,19,-6,35,45,68,31,56,29,24,83,21,75,48,22,31,10,49,3,30,11,18,-41,31,46,26,68,16,36,24,86,24,-6,28,14,59,21,72,33,22,56,12,-42,18,6,19,10,12,-60,48,30,71,21,13,-1,22,-80,71,21,24,4,36,53,-30,85,24,65,12,6,60,19,16,-39,26,-12,11,80,18,5,29,89,32,8,49,8,24,58,19,-42,24,5,55,89,59,86,40,85,12,-9,45,-7,33,16,78,89,28,21,11,-32,35,-4,16,-73,30,11,31,30,48,86,18,32,40,27,17,81,21,-38,59,21,18,85,64,29,17,54,20,39,7,16,22,52,59,31,13,27,57,24,24,47,39,23,19,58,19,-40,28,74,46,2,19,43,59,18,63,26,10,18,10,16,31,-17,61,9,42,26,24,-15,22,85,69,33,26,-3,26,-17,21,-25,48,29,59,24,21,74,49,19,13,-70,10,25,23,85,13,8,21,-4,75,28,23,55,27,67,57,14,43,29,51,6,18,-29,36,-3,17,-50,52,27,-51,85,13,-64,16,56,50,86,72,26,60,85,35,-5,14,15,18,82,60,7,21,1,17,-38,35,65,27,49,48,2,14,19,72,25,18,52,18,-32,32,24,42,-2,12,22,12,-33,14,25,47,21,20,81,20,74,15,-50,11,23,59,11,43,15,-58,85,31,72,45,12,11,12,43,20,69,27,18,31,14,-12,23,-5,15,62,18,15,23,3,12,-6,18,-39,11,26,37,-15,14,82,37,17,48,21,21,9,36,57,62,33,34,86,12,4,15,-46,20,-71,48,15,27,-3,24,80,19,-30,32,22,24,18,12,-4,19,5,18,66,30,87,18,87,13,-69,36,74,13,-42,19,-94,30,15,33,57,13,-76,15,-8,18,-53,51,2,43,85,19,-88,31,94,14,-15,18,83,28,54,72,23,52,0,15,-13,33,27,58,22,25,40,8,14,9,17,55,21,12,-34,21,7,29,60,30,72,29,86,34,25,28,56,60,14,23,76,18,34,30,78,57,14,27,-6,48,22,23,63,15,93,15,-5,25,86,55,21,12,-79,12,70,26,-10,31,19,31,65,44,25,18,-11,52,14,40,24,19,-78,18,13,27,-2,27,9,17,12,53,16,18,82,55,89,26,82,20,18,9,-44,23,57,34,-14,29,22,15,8,28,41,20,32,24,39,9,23,63,13,56,13,65,21,58,16,52,2,16,-79,20,-33,19,-61,65,13,60,86,64,16,20,-14,20,40,59,7,35,62,57,21,13,-74,23,71,13,-62,27,81,36,-11,20,49,34,49,24,37,67,23,31,68,21,11,22,9,25,33,32,68,48,30,14,-74,24,3,36,11,13,-33,10,10,21,-21,27,86,13,-3,19,-90,17,-29,25,27,14,-40,-59,82,10,22,45,86,33,86,12,-57,12,85,42,25,34,11,46,27,54,21,27,19,35,87,23,-13,18,82,15,16,77,86,49,26,58,9,25,27,66,85,8,23,20,-85,48,24,29,15,23,10,24,85,35,62,53,16,27,78,36,15,30,84,13,74,70,27,42,11,-73,85,46,19,18,-31,43,21,27,20,35,9,24,-15,26,-1,22,85,16,-63,59,16,26,4,52,18,9,-48,18,-91,20,-25,18,-21,21,-30,38,10,23,21,58,85,53,27,18,73,44,-5,32,57,15,-47,33,74,50,86,19,2,51,8,42,15,29,18,18,56,29,82,15,-26,26,1,16,9,-68,82,14,0,22,-2,28,15,23,33,65,21,23,54,39,-6,18,-79,14,68,29,92,66,21,15,-10,24,2,18,-57,34,10,36,8,9,27,10,-39,42,15,38,68,19,-92,16,-84,27,-21,59,27,25,-15,10,14,28,93,30,28,34,61,25,56,17,88,48,8,15,60,59,87,74,21,18,-74,29,-17,40,24,12,-52,33,56,11,-80,57,16,21,49,18,-92,71,20,26,23,46,28,50,6,12,25,57,9,20,-39,14,78,25,-3,32,76,15,-28,24,-27,36,72,17,-82,62,89,77,83,60,9,48,85,46,-4,48,89,16,-74,71,32,17,34,17,39,32,46,32,38,12,-5,19,5,43,20,82,83,37,-14,15,-39,20,-89,58,15,14,-15,29,21,31,-15,32,-9,14,-38,30,86,26,80,59,19,24,52,30,45,17,-47,61,28,18,-29,13,-21,12,-64,38,-2,15,68,41,-5,56,5,18,3,26,0,62,21,57,33,55,17,53,27,-74,82,37,61,19,84,17,5,22,-25,35,23,12,-4,19,68,16,1,22,42,58,10,75,24,17,48,37,66,31,67,13,28,18,-84,72,27,41,25,49,6,40,9,18,8,76,85,19,22,21,36,59,86,24,70,20,5,23,32,76,89,44,-8,43,28,32,79,19,-36,18,-25,21,50,28,50,12,-25,17,80,19,52,12,24,24,13,12,-81,14,-20,8,15,9,-41,24,14,16,65,30,7,31,31,17,15,13,-47,47,5,28,41,18,80,23,46,22,93,13,92,28,0,16,-20,27,71,35,52,24,-5,21,86,35,72,49,31,16,-17,18,-5,49,86,43,10,27,57,27,87,12,-21,29,17,61,26,5,93,39,-3,85,85,24,66,24,62,42,11,18,45,14,-10,31,51,23,91,18,2,58,15,21,-92,13,-39,7,16,19,16,25,52,18,-75,22,38,57,33,30,5,38,86,13,-51,47,16,56,21,10,21,22,80,13,-49,46,30,16,0,16,50,13,-21,83,85,71,20,24,59,24,57,26,3,23,-29,18,50,0,89,11,-58,28,13,28,5,10,-45,18,54,22,33,26,43,25,79,35,-10,32,57,18,8,42,1,75,27,30,95,61,23,38,9,-65,82,30,9,11,73,67,29,14,30,11,15,57,5,48,10,59,86,32,-9,19,-94,12,90,62,27,22,95,15,-75,54,32,12,66,19,-93,15,75,9,21,16,-59,20,-19,17,-42,12,-17,24,33,16,-81,15,-86,13,-26,54,27,19,70,21,81,36,49,28,80,65,23,42,18,15,-17,24,-6,51,29,36,68,19,-43,18,2,36,18,11,76,30,15,15,-50,31,80,53,14,36,50,29,37,26,68,19,-59,20,32,52,16,37,62,72,85,65,24,29,26,21,23,67,15,35,56,31,50,63,21,20,60,16,-88,24,37,29,79,36,57,44,15,30,37,11,-30,41,19,53,15,10,-47,66,13,16,-28,36,7,21,87,65,83,43,86,48,27,42,87,48,1,12,-32,35,64,41,-1,27,58,18,82,24,17,27,10,68,86,49,16,27,69,49,26,36,-11,19,76,39,11,57,15,23,-12,12,67,33,56]]}</script>
@@ -422,15 +685,23 @@ select:focus,input:focus{border-color:var(--gold)}
     <div style="font-size:9px;letter-spacing:3px;color:#D4AF37;margin-top:6px;margin-bottom:8px;text-transform:uppercase;">yönetici paneli</div>
     <div style="font-size:11px;letter-spacing:1px;color:rgba(243,241,234,0.45);margin-bottom:26px;">pilates · ems · yoga</div>
     <div style="width:100%;text-align:left;margin-bottom:14px;">
-      <div style="font-size:9px;letter-spacing:2px;color:#D4AF37;font-weight:600;margin-bottom:8px;text-transform:uppercase;">Yönetici Şifresi</div>
-      <input type="password" id="login-sifre"
+      <div style="font-size:9px;letter-spacing:2px;color:#D4AF37;font-weight:600;margin-bottom:8px;text-transform:uppercase;">E-posta</div>
+      <input type="email" id="login-eposta" autocomplete="username"
+        style="width:100%;padding:14px 16px;background:rgba(255,255,255,0.04);border:1px solid rgba(212,175,55,0.28);border-radius:11px;font-size:15px;color:#f3f1ea;outline:none;transition:border-color .2s;margin-bottom:14px"
+        placeholder="ornek@gmail.com"
+        onkeydown="if(event.key==='Enter')document.getElementById('login-sifre').focus()"
+        onfocus="this.style.borderColor='#D4AF37'"
+        onblur="this.style.borderColor='rgba(212,175,55,0.28)'">
+      <div style="font-size:9px;letter-spacing:2px;color:#D4AF37;font-weight:600;margin-bottom:8px;text-transform:uppercase;">Şifre</div>
+      <input type="password" id="login-sifre" autocomplete="current-password"
         style="width:100%;padding:14px 16px;background:rgba(255,255,255,0.04);border:1px solid rgba(212,175,55,0.28);border-radius:11px;font-size:15px;color:#f3f1ea;outline:none;letter-spacing:2px;transition:border-color .2s;"
         placeholder="Şifrenizi girin"
         onkeydown="if(event.key==='Enter')girisYap()"
         onfocus="this.style.borderColor='#D4AF37'"
         onblur="this.style.borderColor='rgba(212,175,55,0.28)'">
+      <div id="login-hata" style="display:none;color:#ff8a7a;font-size:12px;margin-top:8px;padding:8px 11px;background:rgba(192,48,44,0.14);border-radius:9px;border:0.5px solid rgba(244,184,168,0.4)"></div>
     </div>
-    <button onclick="girisYap()"
+    <button onclick="girisYap()" id="login-btn"
       style="width:100%;padding:14px;background:linear-gradient(135deg,#B8901F,#946C18,#D4AF37);color:#1a1206;border:none;border-radius:11px;font-size:13px;font-weight:700;letter-spacing:2px;cursor:pointer;box-shadow:0 4px 18px rgba(212,175,55,.28);transition:opacity .2s;"
       onmouseover="this.style.opacity='.9'" onmouseout="this.style.opacity='1'">
       GİRİŞ YAP →
@@ -451,6 +722,7 @@ select:focus,input:focus{border-color:var(--gold)}
     <div class="top-bar-actions">
       <div class="icon-btn" onclick="sp('bildirimler')" title="Bildirimler">🔔</div>
       <div class="icon-btn" onclick="yedekle()" title="Yedekle">💾</div>
+      <div class="icon-btn" onclick="cikisYap()" title="Çıkış yap">🚪</div>
     </div>
   </div>
 
@@ -468,19 +740,21 @@ select:focus,input:focus{border-color:var(--gold)}
   <button class="snav-btn" id="snav-ekle" onclick="sp('ekle')"><span>➕</span> Yeni Ekle</button>
   <div class="snav-section">TAKVİM & FİNANS</div>
   <button class="snav-btn" id="snav-takvim" onclick="sp('takvim')"><span>📅</span> Takvim</button>
-  <button class="snav-btn" id="snav-gelir" onclick="sp('gelir')"><span>📊</span> Gelir / Gider</button>
+  <button class="snav-btn" id="snav-aylik" onclick="sp('aylik')"><span>💰</span> Aylık Özet</button>
+  <button class="snav-btn" id="snav-gelir" onclick="sp('gelir')"><span>📈</span> Gelir / Gider</button>
   <div class="snav-section">ARAÇLAR</div>
   <button class="snav-btn" id="snav-olcum" onclick="sp('olcum')"><span>📏</span> Vücut Ölçümleri</button>
   <button class="snav-btn" id="snav-kaloritakip" onclick="sp('kaloritakip')"><span>🔥</span> Öğrenci Kalorileri</button>
   <button class="snav-btn" id="snav-saglikform" onclick="sp('saglikform')"><span>🩺</span> Sağlık Formları</button>
   <button class="snav-btn" id="snav-diyet" onclick="sp('diyet')"><span>📰</span> Günlük Menüler ve Haberler</button>
+  <button class="snav-btn" id="snav-toplumesaj" onclick="sp('toplumesaj')"><span>📣</span> Toplu Mesaj</button>
   <button class="snav-btn" id="snav-notlar" onclick="sp('notlar')"><span>📝</span> Notlar</button>
   <button class="snav-btn" id="snav-rapor" onclick="sp('rapor')"><span>📊</span> Raporlama</button>
   <div style="flex:1"></div>
   <div style="padding:12px;background:var(--card2);border-radius:var(--radius-sm);border:1px solid var(--border);margin-top:8px">
     <div style="font-size:12px;font-weight:600;color:var(--text)">Merve Duman</div>
     <div style="font-size:10px;color:var(--text3);margin-top:2px">Stüdyo Yöneticisi</div>
-    <button onclick="localStorage.removeItem('ds_giris');location.reload()" style="margin-top:8px;font-size:11px;color:var(--red);background:transparent;border:none;cursor:pointer;padding:0">Çıkış Yap →</button>
+    <button onclick="cikisYap()" style="margin-top:8px;font-size:11px;color:var(--red);background:transparent;border:none;cursor:pointer;padding:0">Çıkış Yap →</button>
   </div>
 </nav>
   <div id="ana" class="page active"><div id="ana-c"></div></div>
@@ -488,6 +762,7 @@ select:focus,input:focus{border-color:var(--gold)}
   <div id="ekle" class="page"><div id="ekle-c"></div></div>
   <div id="takvim" class="page"><div id="takvim-c"></div></div>
   <div id="gelir" class="page"><div id="gelir-c"></div></div>
+  <div id="aylik" class="page"><div id="aylik-c"></div></div>
   <div id="olcum" class="page"><div id="olcum-c"></div></div>
   <div id="kaloritakip" class="page"><div id="kaloritakip-c"></div></div>
   <div id="saglikform" class="page"><div id="saglikform-c"></div></div>
@@ -496,15 +771,16 @@ select:focus,input:focus{border-color:var(--gold)}
 <div id="rapor" class="page"><div id="rapor-c"></div></div>
   <div id="bildirimler" class="page"><div id="bildirimler-c"></div></div>
   <div id="mesajlar" class="page"><div id="mesajlar-c"></div></div>
+  <div id="toplumesaj" class="page"><div id="toplumesaj-c"></div></div>
 
   <nav class="bottom-nav">
     <button class="nav-btn active" onclick="sp('ana')" id="nav-ana"><div class="nav-icon">🏠</div><div class="nav-label">Ana</div></button>
     <button class="nav-btn" onclick="sp('ogr')" id="nav-ogr"><div class="nav-icon">👥</div><div class="nav-label">Öğrenci</div></button>
     <button class="nav-btn" onclick="sp('ekle')" id="nav-ekle"><div class="nav-icon">➕</div><div class="nav-label">Ekle</div></button>
     <button class="nav-btn" onclick="sp('takvim')" id="nav-takvim"><div class="nav-icon">📅</div><div class="nav-label">Takvim</div></button>
-    <button class="nav-btn" onclick="sp('gelir')" id="nav-gelir"><div class="nav-icon">📊</div><div class="nav-label">Gelir</div></button>
+    <button class="nav-btn" onclick="sp('aylik')" id="nav-aylik"><div class="nav-icon">💰</div><div class="nav-label">Özet</div></button>
     <button class="nav-btn" onclick="sp('olcum')" id="nav-olcum"><div class="nav-icon">📏</div><div class="nav-label">Ölçüm</div></button>
-    <button class="nav-btn" onclick="sp('diyet')" id="nav-diyet"><div class="nav-icon">🥗</div><div class="nav-label">Diyet</div></button>
+    <button class="nav-btn" onclick="menuAc()" id="nav-menu"><div class="nav-icon"><svg class="ds-ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></div><div class="nav-label">Menü</div></button>
   </nav>
 </div>
 
@@ -517,38 +793,74 @@ window.sb = sb;
 
 // ── STATE ──
 let data=[], gelirData=[], mesajOgr=0, mesajTab='wa', olcumOgrIdx=0, olcumler=[];
-const SIFRE = 'dumanss2024';
-
 // ── SPLASH & GİRİŞ ──
-window.addEventListener('load', () => {
-  // Direkt giriş kontrolü - splash yok
-  const kaydedildi = localStorage.getItem('ds_giris');
-  if(kaydedildi === 'ok') {
-    gosterApp();
-  } else {
-    const ls = document.getElementById('login-screen');
-    ls.style.display = 'flex';
-    ls.style.opacity = '1';
-  }
+// Giriş Supabase hesabıyla yapılır; yalnızca "yoneticiler" tablosundaki hesap panele girebilir.
+// Veritabanı kuralları da aynı kontrolü yaptığı için sayfa kodu değiştirilse bile veri açılmaz.
+localStorage.removeItem('ds_giris'); // eski (güvensiz) giriş kaydını temizle
+
+function girisEkraniGoster(){
+  const ls = document.getElementById('login-screen');
+  ls.style.display = 'flex';
+  ls.style.opacity = '1';
+}
+
+window.addEventListener('load', async () => {
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (session) {
+      const { data: yonetici } = await sb.rpc('is_admin');
+      if (yonetici === true) { gosterApp(); return; }
+      await sb.auth.signOut();
+    }
+  } catch (e) { console.error('Oturum kontrolü:', e); }
+  girisEkraniGoster();
 });
 
-function girisYap() {
-  const sifre = document.getElementById('login-sifre').value.trim();
-  if(sifre === SIFRE) {
-    localStorage.setItem('ds_giris','ok');
-    const ls = document.getElementById('login-screen');
-    ls.style.opacity = '0';
-    setTimeout(() => { 
-      ls.style.display = 'none';
-      gosterApp(); 
-    }, 450);
-  } else {
+async function girisYap() {
+  const eposta = document.getElementById('login-eposta').value.trim();
+  const sifre = document.getElementById('login-sifre').value;
+  const hataEl = document.getElementById('login-hata');
+  const btn = document.getElementById('login-btn');
+  const hata = (mesaj) => {
+    hataEl.textContent = mesaj; hataEl.style.display = 'block';
     const input = document.getElementById('login-sifre');
     input.style.borderColor='var(--red)';
     input.style.animation='shake .3s ease';
     setTimeout(()=>{ input.style.borderColor=''; input.style.animation=''; },1200);
-    alert('❌ Hatalı şifre! Doğru şifre: dumanss2024');
+  };
+  hataEl.style.display = 'none';
+  if (!eposta || !sifre) { hata('E-posta ve şifrenizi girin.'); return; }
+  btn.disabled = true; btn.style.opacity = '.6';
+  try {
+    const { error } = await sb.auth.signInWithPassword({ email: eposta, password: sifre });
+    if (error) { hata('E-posta veya şifre hatalı.'); return; }
+    const { data: yonetici } = await sb.rpc('is_admin');
+    if (yonetici !== true) { await sb.auth.signOut(); hata('Bu hesabın yönetici yetkisi yok.'); return; }
+    const ls = document.getElementById('login-screen');
+    ls.style.opacity = '0';
+    setTimeout(() => { ls.style.display = 'none'; gosterApp(); }, 450);
+  } catch (e) {
+    hata('Bağlantı hatası: ' + e.message);
+  } finally {
+    btn.disabled = false; btn.style.opacity = '1';
   }
+}
+
+async function cikisYap() {
+  try { await sb.auth.signOut(); } catch (e) {}
+  location.reload();
+}
+
+// Öğrenci giriş hesaplarını yöneten sunucu fonksiyonu (yalnızca yönetici çağırabilir).
+async function hesapFonksiyonu(govde) {
+  const { data, error } = await sb.functions.invoke('ogrenci-hesap', { body: govde });
+  if (error) {
+    let mesaj = error.message;
+    try { const j = await error.context.json(); if (j && j.hata) mesaj = j.hata; } catch (e) {}
+    throw new Error(mesaj);
+  }
+  if (data && data.hata) throw new Error(data.hata);
+  return data;
 }
 
 function gosterApp() {
@@ -566,7 +878,7 @@ function sp(page) {
   if(nb) nb.classList.add('active');
   const sb = document.getElementById('snav-'+page);
   if(sb) sb.classList.add('active');
-  const renders = {ana:renderAna,ogr:renderOgr,takvim:renderTakvim,gelir:renderGelir,bildirimler:renderBildirimler,mesajlar:renderMesajlar,olcum:renderOlcum,diyet:renderDiyet,kaloritakip:renderKaloriTakip,saglikform:renderSaglikFormlari,notlar:renderNotlar,rapor:renderRapor};
+  const renders = {ana:renderAna,ogr:renderOgr,aylik:renderAylik,toplumesaj:renderTopluMesaj,takvim:renderTakvim,gelir:renderGelir,bildirimler:renderBildirimler,mesajlar:renderMesajlar,olcum:renderOlcum,diyet:renderDiyet,kaloritakip:renderKaloriTakip,saglikform:renderSaglikFormlari,notlar:renderNotlar,rapor:renderRapor};
   if(renders[page]) renders[page]();
   window.scrollTo(0,0);
 }
@@ -768,78 +1080,8 @@ async function saglikFormuKaydetDuzenleme(id, cevapAnahtarlari) {
 }
 
 
-function renderNotlar() {
-  const el = document.getElementById('notlar-c');
-  const notlar = JSON.parse(localStorage.getItem('ds_notlar') || '[]');
-  
-  let html = `<div style="padding:20px 24px">
-    <div style="font-size:20px;font-weight:700;color:var(--text);margin-bottom:16px">📝 Notlar</div>
-    
-    <!-- Yeni Not Ekle -->
-    <div class="card" style="margin-bottom:20px">
-      <div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:12px">Yeni Not</div>
-      <div style="margin-bottom:10px">
-        <input id="not-baslik" type="text" placeholder="Başlık (isteğe bağlı)" 
-          style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--card2);color:var(--text);font-size:13px;margin-bottom:8px;outline:none">
-        <textarea id="not-icerik" placeholder="Notunuzu yazın..." rows="4"
-          style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--card2);color:var(--text);font-size:13px;resize:vertical;outline:none;font-family:inherit"></textarea>
-      </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <select id="not-renk" style="padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:var(--card2);color:var(--text);font-size:13px">
-          <option value="#FFFAEE">🟡 Sarı</option>
-          <option value="#F0FFF0">🟢 Yeşil</option>
-          <option value="#FFF0EC">🔴 Kırmızı</option>
-          <option value="#F0F4FF">🔵 Mavi</option>
-          <option value="#FFF0F5">🩷 Pembe</option>
-          <option value="#FAF7F0">⬜ Krem</option>
-        </select>
-        <button onclick="notEkle()" class="btn btn-primary" style="padding:8px 18px">+ Not Ekle</button>
-      </div>
-    </div>
-    
-    <!-- Not Listesi -->
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px">`;
 
-  if (!notlar.length) {
-    html += `<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text3)">
-      Henüz not eklenmedi. Yukarıdan ilk notunuzu ekleyin!
-    </div>`;
-  } else {
-    notlar.slice().reverse().forEach((n, ri) => {
-      const i = notlar.length - 1 - ri;
-      const tarih = new Date(n.tarih).toLocaleDateString('tr-TR', {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
-      html += `<div style="background:${n.renk||'#FFFAEE'};border:1px solid var(--border);border-radius:12px;padding:16px;position:relative;box-shadow:0 1px 6px rgba(0,0,0,.04)">
-        <button onclick="notSil(${i})" style="position:absolute;top:10px;right:10px;background:transparent;border:none;color:var(--text3);cursor:pointer;font-size:16px;line-height:1" title="Sil">✕</button>
-        ${n.baslik?`<div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px;padding-right:20px">${n.baslik}</div>`:''}
-        <div style="font-size:13px;color:var(--text2);line-height:1.6;white-space:pre-wrap">${n.icerik}</div>
-        <div style="font-size:10px;color:var(--text3);margin-top:10px;text-align:right">${tarih}</div>
-      </div>`;
-    });
-  }
-  
-  html += `</div></div>`;
-  el.innerHTML = html;
-}
 
-function notEkle() {
-  const baslik = document.getElementById('not-baslik').value.trim();
-  const icerik = document.getElementById('not-icerik').value.trim();
-  const renk = document.getElementById('not-renk').value;
-  if (!icerik) { alert('Not içeriği boş olamaz!'); return; }
-  
-  const notlar = JSON.parse(localStorage.getItem('ds_notlar') || '[]');
-  notlar.push({ baslik, icerik, renk, tarih: new Date().toISOString() });
-  localStorage.setItem('ds_notlar', JSON.stringify(notlar));
-  renderNotlar();
-}
-
-function notSil(i) {
-  if (!confirm('Bu not silinsin mi?')) return;
-  const notlar = JSON.parse(localStorage.getItem('ds_notlar') || '[]');
-  notlar.splice(i, 1);
-  localStorage.setItem('ds_notlar', JSON.stringify(notlar));
-  renderNotlar();
-}
 
 // ── RAPORLAMA ──
 function renderRapor() {
@@ -1102,7 +1344,7 @@ function raporPdfIndir() {
     <html><head>
     <meta charset="UTF-8">
     <title>DUMANSSTUDIO Raporu</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
       body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;margin:20px;color:#2A2015}
       @media print{body{margin:0}}
@@ -1138,7 +1380,8 @@ function ogrToRow(o) {
     baslangic:o.baslangic||null, yapilan:o.yapilan||0, borc:o.borc||0,
     saat:o.saat||'', gunler:o.gunler||[], iptal_hakki:o.iptalHakki??1,
     iptal_gecmisi:o.iptalGecmisi||[], odeme_bekliyor:o.odemeBekliyor||false,
-    ilk_odeme_alindi:o.ilkOdemeAlindi??true
+    ilk_odeme_alindi:o.ilkOdemeAlindi??true,
+    borc_tl:o.borcTl||0, dogum_tarihi:o.dogumTarihi||null, davet_eden:o.davetEden||null
   };
 }
 function rowToOgr(r) {
@@ -1149,16 +1392,20 @@ function rowToOgr(r) {
     baslangic:r.baslangic||null, yapilan:r.yapilan||0, borc:r.borc||0,
     saat:r.saat||'', gunler:r.gunler||[], iptalHakki:r.iptal_hakki??1,
     iptalGecmisi:r.iptal_gecmisi||[], odemeBekliyor:r.odeme_bekliyor||false,
-    ilkOdemeAlindi:r.ilk_odeme_alindi??true
+    ilkOdemeAlindi:r.ilk_odeme_alindi??true,
+    borcTl:+r.borc_tl||0, dogumTarihi:r.dogum_tarihi||null, davetKodu:r.davet_kodu||'', davetEden:r.davet_eden||null,
+    // Giriş hesabı ve analiz paketi yalnızca kendi düğmeleriyle değişir (ogrToRow'a bilerek eklenmedi).
+    _authId:r.auth_id||null, analizPaketi:r.analiz_paketi===true, _telKayitli:r.tel||''
   };
 }
-function gelirToRow(g) { return {id:g._id||undefined,tip:g.tip,tutar:g.tutar,acik:g.acik||'',tarih:g.tarih}; }
-function rowToGelir(r) { return {_id:r.id,tip:r.tip,tutar:r.tutar,acik:r.acik||'',tarih:r.tarih}; }
+function gelirToRow(g) { return {id:g._id||undefined,tip:g.tip,tutar:g.tutar,acik:g.acik||'',tarih:g.tarih,ogrenci_id:g.ogrenciId||null}; }
+function rowToGelir(r) { return {_id:r.id,tip:r.tip,tutar:+r.tutar||0,acik:r.acik||'',tarih:r.tarih,ogrenciId:r.ogrenci_id||null}; }
 
 async function veriYukle() {
   const [{data:ogrs,error:e1},{data:gelirs,error:e2}] = await Promise.all([
     sb.from('ogrenciler').select('*').order('created_at',{ascending:true}),
-    sb.from('gelir_gider').select('*').order('tarih',{ascending:false})
+    sb.from('gelir_gider').select('*').order('tarih',{ascending:false}),
+    ekVeriYukle()
   ]);
   if(!e1 && ogrs) data = ogrs.map(rowToOgr);
   if(!e2 && gelirs) gelirData = gelirs.map(rowToGelir);
@@ -1166,8 +1413,15 @@ async function veriYukle() {
 async function ogrKaydet(o) {
   const row = ogrToRow(o);
   if(o._id) {
+    // Ders sayacı ve iptal geçmişi yalnızca yoklama üzerinden değişir; eski ekrandaki değer gece işlenen dersin üzerine yazılmasın.
+    delete row.yapilan; delete row.iptal_gecmisi;
     const {error} = await sb.from('ogrenciler').update(row).eq('id',o._id);
     if(error) throw error;
+    // Telefon değiştiyse öğrencinin giriş bilgisi de yeni numaraya taşınır (şifresi aynı kalır).
+    if(o._authId && (o.tel||'') !== (o._telKayitli||'')) {
+      try { await hesapFonksiyonu({islem:'eposta_guncelle', ogrenci_id:o._id}); o._telKayitli = o.tel||''; }
+      catch(e) { alert('⚠️ Telefon kaydedildi ama giriş bilgisi güncellenemedi: '+e.message); }
+    }
   } else {
     const {data:d,error} = await sb.from('ogrenciler').insert(row).select().single();
     if(error) throw error;
@@ -1185,10 +1439,6 @@ async function saglikFormuEslestir(ogrenciId, tel) {
       await sb.from('saglik_formlari').update({ ogrenci_id: ogrenciId }).in('id', ids);
     }
   } catch (e) { console.error('Sağlık formu eşleştirme hatası:', e); }
-}
-async function ogrSilDB(id) {
-  const {error} = await sb.from('ogrenciler').delete().eq('id',id);
-  if(error) throw error;
 }
 async function gelirKaydet(g) {
   const {error} = await sb.from('gelir_gider').insert(gelirToRow(g));
@@ -1256,6 +1506,9 @@ function renderAna() {
     </div>
   </div>`;
 
+  // Bu ayın ödeme özeti (dokununca Aylık Özet açılır)
+  html += `<div class="ds-ana-ozet-wrap">${aylikOzetKarti()}</div>`;
+
   // Uyarılar
   const sonDers = data.filter(o=>efektifKalan(o)<=3&&efektifKalan(o)>0);
   const bitti = data.filter(o=>kalanDers(o)===0&&o.baslangic);
@@ -1269,33 +1522,8 @@ function renderAna() {
   if(sonDers.length) html+=`<div style="font-size:11px;font-weight:600;color:#7A6000;letter-spacing:1px;padding:14px 16px 6px">⚠️ SON DERSLER</div>`+sonDers.map(o=>`<div class="alert a-gold">⚠️ ${o.ad} — ${efektifKalan(o)} ders kaldı</div>`).join('');
   if(bitti.length) html+=bitti.map(o=>`<div class="alert a-red" style="margin:4px 16px">🔴 ${o.ad} paketi bitti!</div>`).join('');
 
-  // Bugünkü dersler
-  if(bugunDersler.length) {
-    html += `<div class="section-title" style="padding:16px 20px 8px;font-size:11px;font-weight:600;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase">📅 BUGÜNKÜ DERSLER</div>`;
-    const saatGruplari = {};
-    bugunDersler.forEach(o=>{const s=o.saat||'--:--';if(!saatGruplari[s])saatGruplari[s]=[];saatGruplari[s].push(o);});
-    Object.keys(saatGruplari).sort().forEach(saat=>{
-      const ogrs=saatGruplari[saat];
-      const tur=ogrs[0].tur;
-      const max=tur==='ems'?2:3;
-      const buSaat=new Date().getHours();
-      const dersGecti=buSaat>=parseInt(saat);
-      const dersIdleri=ogrs.map(o=>data.indexOf(o)).join(',');
-      html+=`<div class="ders-item" style="flex-wrap:wrap;gap:8px">
-        <div class="ders-saat">${saat}</div>
-        <div class="ders-divider"></div>
-        <div class="ders-info">
-          <div class="ders-ad">${tur==='ems'?'⚡ EMS':'🧘 Pilates'}</div>
-          <div class="ders-alt">${ogrs.map(o=>o.ad).join(', ')} · ${ogrs.length}/${max}</div>
-        </div>
-        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-          <div class="ders-badge">${!dersGecti?'⏳ Bekliyor':'✅ İşlendi'}</div>
-          <button onclick="dersIptalEt('${dersIdleri}','${saat}')" style="font-size:10px;padding:3px 8px;border-radius:99px;background:#FFF0EC;border:1px solid #F4B8A8;color:#C03010;cursor:pointer">❌ İptal</button>
-          <button onclick="dersErtele('${dersIdleri}','${saat}')" style="font-size:10px;padding:3px 8px;border-radius:99px;background:#F0F4FF;border:1px solid #A0B8F0;color:#3060C0;cursor:pointer">📅 Ertele</button>
-        </div>
-      </div>`;
-    });
-  }
+  // Ders talepleri, dikkat listeleri ve bugünün yoklaması
+  html += `<div class="ds-ana-blok">${dersTalepleriHtml()}${dikkatHtml()?`<div class="ds-baslik">Dikkat</div>${dikkatHtml()}`:''}${yoklamaListesiHtml(todayStr(),'Bugünkü dersler')}</div>`;
 
   // Toplu hatırlatma
   const hatGereken = data.filter(o=>(efektifKalan(o)<=3&&efektifKalan(o)>0)||kalanDers(o)===0||gecikmiMi(o));
@@ -1387,48 +1615,263 @@ async function renderAnaOlcumOzeti() {
 function renderOgr() {
   const el = document.getElementById('ogr-c');
   if(!data.length) {el.innerHTML='<div class="alert a-blue" style="margin-top:12px">Henüz öğrenci yok.</div>';return;}
-  let html = `<div style="padding:12px 16px 8px;display:flex;gap:8px">
-    <input type="text" id="ogr-ara" placeholder="Öğrenci ara..." style="flex:1" oninput="aramaYap(this.value)">
-  </div><div id="ogr-liste">`;
+  const sifresiz = data.filter(o=>!o._authId).length;
+  let html = `<div id="silme-talepleri"></div>
+  <div class="ds-ogr-ust">
+    <div class="ds-arama-sat"><label class="ds-arama">${dsIc('search')}<input type="text" id="ogr-ara" placeholder="Öğrenci ara" oninput="aramaYap(this.value)"></label><button class="ds-arsiv-btn" onclick="arsivGoster()" title="Öğrenci arşivi">${dsIc('package')}<span>Arşiv</span></button></div>
+    ${sifresiz?`<button class="ds-serit" onclick="topluSifre()">${dsIc('key')}<span><b>${sifresiz} öğrencinin</b> panel şifresi yok</span><span class="ds-serit-ok">Oluştur ${dsIc('chev')}</span></button>`:''}
+  </div><div id="ogr-liste" class="ds-ogr-liste">`;
   html += data.map((o,i) => ogrKarti(o,i)).join('');
   html += '</div>';
   el.innerHTML = html;
+  silmeTalepleriYukle();
 }
 
 function ogrKarti(o,i) {
   const kalan = efektifKalan(o);
   const toplam = o.paket||20;
-  const yuzde = Math.max(0,Math.min(100,(kalan/toplam)*100));
+  const buPaket = Math.max(0, toplam - Math.max(0,kalan));
+  const yuzde = Math.max(0,Math.min(100,(buPaket/toplam)*100));
   const bit = getBitis(o);
-  return `<div class="ogr-card">
-    <div style="display:flex;align-items:flex-start;gap:10px">
-      <div style="flex:1">
-        <div class="ogr-name">${o.ad}</div>
-        <div class="ogr-row">
-          <span class="b-${o.tur}">${o.tur==='ems'?'⚡ EMS':'🧘 Pilates'}</span>
-          ${o.tel?`<span style="font-size:11px;color:var(--text3)">📱 ${o.tel}</span>`:''}
-        </div>
+  const kalanRenk = kalan<=0?'var(--red)':kalan<=3?'var(--ds-gold7)':'var(--ds-ink)';
+  return `<div class="ogr-card ds-ogr">
+    <div class="ds-ogr-bas">
+      <div style="min-width:0">
+        <div class="ds-ogr-ad ds-tik" onclick="ogrDetay('${o._id}')" title="Öğrenci detayı">${htmlKac(o.ad)}</div>
+        ${o.tel?`<div class="ds-ogr-tel">${o.tel}</div>`:''}
       </div>
-      <div style="text-align:right;flex-shrink:0">
-        <div style="font-size:20px;font-weight:700;color:var(--gold-dark);font-family:Georgia,serif">${kalan}</div>
-        <div style="font-size:9px;color:var(--text3)">ders kaldı</div>
-      </div>
+      <div class="ds-kalan"><b style="color:${kalanRenk}">${kalan}</b><small>ders kaldı</small></div>
     </div>
-    <div class="progress-wrap">
-      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-bottom:4px">
-        <span>${o.yapilan}/${toplam} yapıldı</span>
-        ${bit?`<span>Bitiş: ${bit.toLocaleDateString('tr-TR')}</span>`:''}
-      </div>
-      <div class="progress-bar"><div class="progress-fill" style="width:${yuzde}%"></div></div>
+    <div class="ds-rozetler">
+      <span class="b-${o.tur}">${o.tur==='ems'?'EMS':'Pilates'}</span>
+      ${o._authId?'<span class="ds-rozet"><span class="ds-nokta" style="background:var(--green)"></span>Panel açık</span>':'<span class="ds-rozet" style="color:var(--red)"><span class="ds-nokta" style="background:var(--red)"></span>Şifre yok</span>'}
+      <button class="ds-rozet ds-rozet-btn" onclick="analizPaketiDegistir(${i})" title="Vücut Analizi ve Beslenme Paketi: açmak / kapatmak için dokunun" style="${o.analizPaketi?'color:var(--ds-gold7);border-color:var(--ds-goldline);background:var(--ds-goldbg)':''}">${dsIc('chart')}Analiz paketi ${o.analizPaketi?'açık':'kapalı'}</button>
+      ${o.odemeBekliyor?'<span class="ds-rozet" style="color:var(--ds-gold7);border-color:var(--ds-goldline);background:var(--ds-goldbg)">Ödeme bildirdi</span>':''}
+      ${o.borcTl>0?`<span class="ds-rozet" style="color:#8E3A30;border-color:#EBCFC9;background:#FBF1EF">Borç ${tlBicim(o.borcTl)}</span>`:''}
+      ${dogumGunuBugunMu(o)?`<span class="ds-rozet" style="color:var(--ds-gold7)">${dsIc('sparkle')}Doğum günü</span>`:''}
     </div>
-    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">
-      <button class="btn btn-primary btn-sm" onclick="dersEkle(${i})">+1 Ders</button>
-      <button class="btn btn-ghost btn-sm" onclick="pakiYenile(${i})">🔄 Paket</button>
-      <button class="btn btn-ghost btn-sm" onclick="waAc(${i},'wa')">📱 WA</button>
-      <button class="btn btn-ghost btn-sm" onclick="duzenle(${i})">✏️</button>
-      <button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="sil(${i})">🗑</button>
+    <div class="ds-ilerleme"><span>${buPaket} / ${toplam} ders</span>${bit?`<span>Bitiş ${bit.toLocaleDateString('tr-TR')}</span>`:''}</div>
+    <div class="progress-bar"><div class="progress-fill" style="width:${yuzde}%"></div></div>
+    <div class="ds-eylem">
+      <button class="btn btn-primary ds-b" onclick="dersEkle(${i})">${dsIc('plus')}Ders</button>
+      <button class="btn btn-ghost ds-b" onclick="pakiYenile(${i})">${dsIc('refresh')}<span class="ds-etk">Paket</span></button>
+      <button class="btn btn-ghost ds-kare" onclick="waAc(${i},'wa')" title="WhatsApp mesajı">${dsIc('msg')}</button>
+      <button class="btn btn-ghost ds-kare" onclick="duzenle(${i})" title="Düzenle">${dsIc('edit')}</button>
+      <button class="btn btn-ghost ds-kare" onclick="sifreVer(${i})" title="Panel şifresi belirle">${dsIc('key')}</button>
+      <button class="btn btn-ghost ds-kare ds-sil" onclick="sil(${i})" title="Öğrenciyi sil">${dsIc('trash')}</button>
     </div>
   </div>`;
+}
+
+// ── ÖĞRENCİ PANELİ ŞİFRELERİ ──
+function girisMesaji(ad, tel, sifre) {
+  return `Merhaba ${ad.split(' ')[0]}, DumansStudio üye paneline giriş bilgileriniz:\n\n🌐 ogrenci.dumansstudio.com\n📱 Telefon: ${tel}\n🔑 Şifre: ${sifre}\n\nŞifrenizi kimseyle paylaşmayın.`;
+}
+function sifreListesiGoster(liste, hatalar) {
+  const satir = (x) => `<div style="display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--border)">
+      <div style="flex:1"><div style="font-weight:600;font-size:13px">${x.ad}</div><div style="font-size:11px;color:var(--text3)">${x.tel||''}</div></div>
+      <div style="font-family:monospace;font-size:17px;font-weight:700;letter-spacing:2px;color:var(--gold-dark)">${x.sifre}</div>
+      <a class="btn btn-ghost btn-sm" target="_blank" rel="noopener" href="https://wa.me/90${(x.tel||'').replace(/\D/g,'').slice(-10)}?text=${encodeURIComponent(girisMesaji(x.ad, x.tel, x.sifre))}">📱 Gönder</a>
+    </div>`;
+  const ov = document.createElement('div');
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9000;display:flex;align-items:center;justify-content:center;padding:16px';
+  ov.innerHTML = `<div style="background:var(--card,#fff);border-radius:14px;max-width:520px;width:100%;max-height:88vh;overflow:auto;padding:20px">
+      <div style="font-size:16px;font-weight:700;margin-bottom:4px">🔑 Panel şifreleri</div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:12px">Bu şifreler yalnızca şimdi gösteriliyor. Öğrencilere iletin veya not alın; kaybolursa "🔑 Şifre" ile yenisini oluşturabilirsiniz.</div>
+      ${liste.length ? liste.map(satir).join('') : '<div class="alert a-blue">Şifre oluşturulacak öğrenci yok.</div>'}
+      ${hatalar && hatalar.length ? `<div class="alert a-red" style="margin-top:12px;font-size:12px">${hatalar.join('<br>')}</div>` : ''}
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button class="btn btn-ghost" onclick="window.print()">🖨 Yazdır</button>
+        <button class="btn btn-primary" style="margin-left:auto" onclick="this.closest('div[style*=fixed]').remove()">Kapat</button>
+      </div></div>`;
+  document.body.appendChild(ov);
+}
+async function sifreVer(i) {
+  const o = data[i];
+  if(!o._id) return;
+  if(!o.tel || o.tel.replace(/\D/g,'').length < 10) { alert('❌ Önce öğrencinin telefon numarasını kaydedin.'); return; }
+  const soru = o._authId
+    ? `${o.ad} için YENİ şifre oluşturulsun mu?\nEski şifre geçersiz olur.\n\nKendiniz belirlemek için en az 6 karakter yazın, otomatik 6 haneli şifre için boş bırakın:`
+    : `${o.ad} için panel şifresi oluşturulacak.\n\nKendiniz belirlemek için en az 6 karakter yazın, otomatik 6 haneli şifre için boş bırakın:`;
+  const girilen = prompt(soru, '');
+  if(girilen === null) return;
+  if(girilen && girilen.trim().length < 6) { alert('❌ Şifre en az 6 karakter olmalı.'); return; }
+  gosterYukleniyor();
+  try {
+    const r = await hesapFonksiyonu({islem:'sifre_belirle', ogrenci_id:o._id, sifre:girilen.trim()||undefined});
+    await veriYukle(); renderOgr();
+    sifreListesiGoster([r], []);
+  } catch(e) { alert('Hata: '+e.message); }
+  finally { gizleYukleniyor(); }
+}
+async function topluSifre() {
+  const eksik = data.filter(o=>!o._authId).length;
+  if(!eksik) { alert('✅ Tüm öğrencilerin panel şifresi var.'); return; }
+  if(!confirm(`Panel şifresi olmayan ${eksik} öğrenci için otomatik 6 haneli şifre oluşturulsun mu?`)) return;
+  gosterYukleniyor();
+  try {
+    const r = await hesapFonksiyonu({islem:'toplu_sifre'});
+    await veriYukle(); renderOgr();
+    sifreListesiGoster(r.sonuc||[], r.hatalar||[]);
+  } catch(e) { alert('Hata: '+e.message); }
+  finally { gizleYukleniyor(); }
+}
+async function analizPaketiDegistir(i) {
+  const o = data[i];
+  const yeni = !o.analizPaketi;
+  if(!confirm(`${o.ad} için "Vücut Analizi ve Beslenme Paketi" ${yeni?'AÇILSIN':'KAPATILSIN'} mı?`)) return;
+  gosterYukleniyor();
+  try {
+    const {error} = await sb.from('ogrenciler').update({analiz_paketi:yeni}).eq('id',o._id);
+    if(error) throw error;
+    o.analizPaketi = yeni; renderOgr();
+  } catch(e) { alert('Hata: '+e.message); }
+  finally { gizleYukleniyor(); }
+}
+
+// ── HESAP SİLME TALEPLERİ (öğrenci panelinden gelir; KVKK: en geç 30 gün) ──
+// ── SEÇİM PENCERESİ: birden fazla seçenekli onay (ör. Arşive kaldır / Kalıcı sil / Vazgeç) ──
+// Seçilen seçeneğin "deger"ini, kapatılırsa null döndürür.
+function dsSecim({ust, baslik, metin, secenekler}) {
+  return new Promise(coz => {
+    const ov = document.createElement('div');
+    ov.className = 'ds-secim-ov';
+    ov.innerHTML = `<div class="ds-secim" role="dialog" aria-modal="true">
+      ${ust?`<div class="ds-eyebrow">${ust}</div>`:''}
+      <div class="ds-secim-baslik">${baslik}</div>
+      ${metin?`<div class="ds-secim-metin">${metin}</div>`:''}
+      <div class="ds-secim-btnlar">${secenekler.map((s,k)=>`<button class="btn ${s.tip==='ana'?'btn-primary':s.tip==='tehlike'?'btn-ghost ds-tehlike':'btn-ghost'}" data-k="${k}">${s.ikon?dsIc(s.ikon):''}${s.etiket}${s.alt?`<small>${s.alt}</small>`:''}</button>`).join('')}</div>
+    </div>`;
+    const bitir = d => { ov.remove(); coz(d); };
+    ov.addEventListener('click', e => {
+      if(e.target === ov) return bitir(null);
+      const b = e.target.closest('button[data-k]');
+      if(b) bitir(secenekler[+b.dataset.k].deger);
+    });
+    document.body.appendChild(ov);
+  });
+}
+
+// ── ÖĞRENCİ KALDIRMA VE ARŞİV ──
+// Arşivlenen öğrencinin kaydı, ölçümleri, sağlık formları ve kalori kayıtları 2 yıl saklanır, sonra kendiliğinden silinir.
+// Ödeme kayıtları (gelir / gider) iki durumda da silinmez.
+const ARSIV_SURESI = '2 yıl';
+async function ogrSilDB(id, arsivle, sebep) {
+  // Önce öğrencinin panel giriş hesabı kapatılır, sonra kaydı arşive taşınır ya da silinir.
+  await hesapFonksiyonu({islem:'hesap_sil', ogrenci_id:id});
+  const {error} = await sb.rpc('ogrenci_kaldir', {p_ogrenci_id:id, p_arsivle:!!arsivle, p_sebep:sebep||'yonetici'});
+  if(error) throw error;
+}
+async function sil(i) {
+  const o = data[i];
+  const secim = await dsSecim({
+    ust: 'Öğrenciyi kaldır', baslik: o.ad,
+    metin: `Ödeme kayıtları her iki durumda da gelir / gider listesinde kalır. Öğrencinin panel girişi kapanır.`,
+    secenekler: [
+      {etiket:'Arşive kaldır', alt:`Geri dönerse tek dokunuşla geri yüklenir · ${ARSIV_SURESI} sonra silinir`, deger:'arsiv', tip:'ana', ikon:'package'},
+      {etiket:'Kalıcı olarak sil', alt:'Ölçümler ve sağlık formu da silinir, geri alınamaz', deger:'sil', tip:'tehlike', ikon:'trash'},
+      {etiket:'Vazgeç', deger:null}
+    ]
+  });
+  if(!secim) return;
+  if(secim==='sil' && !confirm(`${o.ad} ve tüm bilgileri kalıcı olarak silinecek. Emin misiniz?`)) return;
+  gosterYukleniyor();
+  try{
+    if(o._id) await ogrSilDB(o._id, secim==='arsiv', 'yonetici');
+    data.splice(i,1); renderOgr(); renderAna();
+  }
+  catch(e){alert('Hata: '+e.message);}
+  finally{gizleYukleniyor();}
+}
+
+async function silmeTalepleriYukle() {
+  const el = document.getElementById('silme-talepleri');
+  if(!el) return;
+  const {data:t} = await sb.from('hesap_silme_talepleri').select('*').eq('tamamlandi',false).order('talep_tarihi');
+  if(!t || !t.length) { el.innerHTML=''; return; }
+  el.innerHTML = `<div class="alert a-red ds-talep">
+    <div style="font-weight:500;margin-bottom:6px">${dsIc('warn')} ${t.length} hesap silme talebi bekliyor · KVKK gereği en geç 30 gün içinde uygulanmalı</div>
+    ${t.map(x=>`<div class="ds-talep-sat">
+      <span style="flex:1;min-width:0"><b style="font-weight:500">${x.ad||'—'}</b> · ${x.tel||''} · ${new Date(x.talep_tarihi).toLocaleDateString('tr-TR')}<br>
+      <small>${x.arsiv_izni?`Öğrenci arşivde saklanmasına izin verdi (${ARSIV_SURESI})`:'Öğrenci kalıcı silinmesini istedi'}</small></span>
+      <button class="btn btn-primary btn-sm" onclick="silmeTalebiUygula('${x.id}')">Talebi uygula</button>
+    </div>`).join('')}
+  </div>`;
+}
+async function silmeTalebiUygula(id) {
+  const {data:x} = await sb.from('hesap_silme_talepleri').select('*').eq('id',id).single();
+  if(!x) return;
+  const o = data.find(d=>d._id===x.ogrenci_id);
+  const ne = x.arsiv_izni ? `arşive kaldırılacak (${ARSIV_SURESI} sonra kendiliğinden silinir)` : 'ölçümleri ve sağlık formuyla birlikte kalıcı olarak silinecek';
+  if(!confirm(`${x.ad||'Öğrenci'} ${ne}. Ödeme kayıtları gelir / gider listesinde kalır. Devam edilsin mi?`)) return;
+  gosterYukleniyor();
+  try{
+    if(o) await ogrSilDB(o._id, x.arsiv_izni, 'ogrenci_talebi');
+    await sb.from('hesap_silme_talepleri').update({tamamlandi:true, tamamlanma_tarihi:new Date().toISOString()}).eq('id',id);
+    await veriYukle(); renderOgr(); renderAna();
+  }catch(e){alert('Hata: '+e.message);}
+  finally{gizleYukleniyor();}
+}
+
+async function arsivGoster() {
+  const {data:liste, error} = await sb.from('ogrenci_arsivi').select('id,ad,tel,sebep,arsiv_tarihi,silinme_tarihi').order('arsiv_tarihi',{ascending:false});
+  if(error){alert('Arşiv açılamadı: '+error.message);return;}
+  const ov = document.createElement('div');
+  ov.className = 'ds-secim-ov';
+  ov.innerHTML = `<div class="ds-secim" style="max-width:560px">
+    <div class="ds-eyebrow">${dsIc('package')} Öğrenci arşivi</div>
+    <div class="ds-secim-baslik">${liste.length?liste.length+' kişi arşivde':'Arşiv boş'}</div>
+    <div class="ds-secim-metin">Arşivdeki öğrenciler süresi dolunca kendiliğinden silinir. Geri yüklenen öğrenciye panel şifresini yeniden vermeniz gerekir.</div>
+    <div class="ds-arsiv-liste">${liste.map(a=>`<div class="ds-arsiv-sat">
+      <div style="flex:1;min-width:0"><div class="ds-sat-ad">${a.ad}</div><div class="ds-kucuk">${a.tel||''} · ${new Date(a.arsiv_tarihi).toLocaleDateString('tr-TR')} tarihinde arşivlendi${a.sebep==='ogrenci_talebi'?' (öğrenci talebi)':''} · ${new Date(a.silinme_tarihi).toLocaleDateString('tr-TR')} tarihinde silinecek</div></div>
+      <button class="btn btn-primary btn-sm" data-yukle="${a.id}">${dsIc('refresh')}Geri yükle</button>
+      <button class="btn btn-ghost btn-sm ds-kare" data-sil="${a.id}" title="Arşivden kalıcı sil">${dsIc('trash')}</button>
+    </div>`).join('')}</div>
+    <div style="text-align:right;margin-top:14px"><button class="btn btn-ghost btn-sm" data-kapat="1">Kapat</button></div>
+  </div>`;
+  ov.addEventListener('click', async e => {
+    const b = e.target.closest('button');
+    if(e.target===ov || (b&&b.dataset.kapat)) return ov.remove();
+    if(!b) return;
+    if(b.dataset.yukle){ ov.remove(); await arsivdenYukle(b.dataset.yukle); }
+    if(b.dataset.sil){
+      if(!confirm('Bu kişinin arşivdeki tüm bilgileri kalıcı olarak silinecek. Emin misiniz?')) return;
+      const {error} = await sb.from('ogrenci_arsivi').delete().eq('id', b.dataset.sil);
+      if(error) return alert('Hata: '+error.message);
+      ov.remove(); arsivGoster();
+    }
+  });
+  document.body.appendChild(ov);
+}
+async function arsivdenYukle(arsivId) {
+  gosterYukleniyor();
+  try{
+    const {error} = await sb.rpc('ogrenci_arsivden_yukle', {p_arsiv_id:arsivId});
+    if(error) throw error;
+    await veriYukle();
+    duzenlemeIdx=-1; renderEkleForm();
+    sp('ogr');
+    alert('Öğrenci geçmiş bilgileriyle birlikte geri yüklendi. Panel girişi için kartındaki anahtar düğmesiyle yeni şifre verin; paket ve ders günlerini düzenle düğmesinden güncelleyebilirsiniz.');
+  }catch(e){alert('Geri yüklenemedi: '+e.message);}
+  finally{gizleYukleniyor();}
+}
+// Yeni öğrenci eklenirken aynı telefon arşivde varsa sorulur. true dönerse kayıt işlemi durdurulur.
+async function arsivEslesmesiSor(tel) {
+  const t10 = (tel||'').replace(/\D/g,'').slice(-10);
+  if(t10.length!==10) return false;
+  const {data:ar} = await sb.from('ogrenci_arsivi').select('id,ad,arsiv_tarihi').eq('tel10',t10).order('arsiv_tarihi',{ascending:false}).limit(1);
+  if(!ar || !ar.length) return false;
+  const secim = await dsSecim({
+    ust:'Bu telefon arşivde kayıtlı', baslik: ar[0].ad,
+    metin:`${new Date(ar[0].arsiv_tarihi).toLocaleDateString('tr-TR')} tarihinde arşive kaldırılmış. Geri yüklerseniz eski ölçümleri, sağlık formu ve ders geçmişi geri gelir.`,
+    secenekler:[
+      {etiket:'Arşivden geri yükle', deger:'yukle', tip:'ana', ikon:'refresh'},
+      {etiket:'Yeni kayıt olarak ekle', alt:'Arşivdeki bilgiler olduğu gibi kalır', deger:'yeni'},
+      {etiket:'Vazgeç', deger:null}
+    ]
+  });
+  if(secim==='yukle'){ await arsivdenYukle(ar[0].id); return true; }
+  return secim===null;
 }
 
 function aramaYap(q) {
@@ -1445,23 +1888,7 @@ function renderEkle() {
 }
 
 // ── DERS EKLE ──
-async function dersEkle(i) {
-  const o=data[i];
-  if(efektifKalan(o)<=0){alert('❌ Ders hakkı kalmadı!');return;}
-  data[i].yapilan=(o.yapilan||0)+1;
-  gosterYukleniyor();
-  try{await ogrKaydet(data[i]);renderOgr();}
-  catch(e){alert('Hata: '+e.message);}
-  finally{gizleYukleniyor();}
-}
 
-async function sil(i) {
-  if(!confirm(`${data[i].ad} silinsin mi?`))return;
-  gosterYukleniyor();
-  try{if(data[i]._id)await ogrSilDB(data[i]._id);data.splice(i,1);renderOgr();renderAna();}
-  catch(e){alert('Hata: '+e.message);}
-  finally{gizleYukleniyor();}
-}
 
 
 // ── TÜRKİYE RESMİ TATİLLERİ ──
@@ -1504,93 +1931,6 @@ function tatilMi(yil, ay, gun) {
 }
 
 
-// ── DERS İPTAL ──
-async function dersIptalEt(idlerStr, saat) {
-  const idler = idlerStr.split(',').map(Number);
-  const ogrs = idler.map(i=>data[i]).filter(Boolean);
-  if(!ogrs.length) return;
-  const isimler = ogrs.map(o=>o.ad).join(', ');
-  const neden = prompt(`${saat} - ${isimler} dersi iptal ediliyor.\nİptal sebebi:\n1) Öğrenci isteği (iptal hakkı kullanılır)\n2) Stüdyo kararı (iptal hakkı kullanılmaz)\n\n1 veya 2 girin:`);
-  if(!neden) return;
-  const ogrenciIstegi = neden.trim() === '1';
-  const bugun = new Date().toISOString().split('T')[0];
-  gosterYükleme();
-  try {
-    for(const o of ogrs) {
-      const updates = {};
-      if(ogrenciIstegi) {
-        // İptal hakkı kullan
-        const mevcutGecmis = o.iptal_gecmisi||[];
-        mevcutGecmis.push(bugun);
-        updates.iptal_gecmisi = mevcutGecmis;
-        // yapilan değişmez, ders sayısı düşmez (zaten işlenmedi)
-      }
-      // Her iki durumda da ders sayısı artmaz (iptal = işlenmedi)
-      if(Object.keys(updates).length > 0) {
-        await sb.from('ogrenciler').update(updates).eq('id', o._id);
-      }
-    }
-    const mesaj = ogrenciIstegi 
-      ? `✅ ${isimler} dersi iptal edildi. İptal hakkı kullanıldı.`
-      : `✅ ${isimler} dersi stüdyo kararıyla iptal edildi. İptal hakkı kullanılmadı.`;
-    alert(mesaj);
-    await yukleData();
-    renderAna();
-  } catch(e) { alert('Hata: ' + e.message); }
-  gizleYükleme();
-}
-
-// ── DERS ERTELE ──
-async function dersErtele(idlerStr, saat) {
-  const idler = idlerStr.split(',').map(Number);
-  const ogrs = idler.map(i=>data[i]).filter(Boolean);
-  if(!ogrs.length) return;
-  const isimler = ogrs.map(o=>o.ad).join(', ');
-  const neden = prompt(`${saat} - ${isimler} dersi erteleniyor.\nErteleme sebebi:\n(Tatil / Hastalık / Stüdyo kapalı vb.)\n\nSebep girin:`);
-  if(!neden) return;
-  const yeniTarih = prompt('Ertelenen ders ne zaman yapılacak? (örn: 15.06.2026 veya boş bırakın)');
-  
-  // Ders ertelenince yapilan sayısı artmaz, ders hakkı korunur
-  // Sadece bilgi amaçlı kayıt
-  alert(`✅ ${isimler} dersi ertelendi.\nSebep: ${neden}${yeniTarih ? '\nYeni tarih: '+yeniTarih : ''}\n\nNot: Ders hakkı korundu, paket süresi etkilenmedi.`);
-  // Buraya ileride erteleme tablosu eklenebilir
-}
-
-// ── OTOMATIK DERS İŞLEME (gün sonu) ──
-// Gün içinde iptal edilmemiş dersler otomatik işlendi sayılır
-// Bu kontrol renderAna'da her açılışta çalışır
-async function gunSonuOtomatikIsle() {
-  const bugun = new Date();
-  const saat = bugun.getHours();
-  // Gece 23:00'dan sonra o günün derslerini işle
-  if(saat < 23) return;
-  
-  const gun = bugun.getDay();
-  const bugunDersler = data.filter(o => 
-    (o.gunler||[]).includes(gun) && efektifKalan(o) > 0
-  );
-  
-  if(!bugunDersler.length) return;
-  
-  const bugunStr = bugun.toISOString().split('T')[0];
-  const sonIsleKey = 'son_isle_' + bugunStr;
-  if(localStorage.getItem(sonIsleKey)) return; // Bugün zaten işlendi
-  
-  if(!confirm(`Gün sonu: ${bugunDersler.length} öğrencinin bugünkü dersi otomatik işlensin mi?\n\n${bugunDersler.map(o=>o.ad).join(', ')}`)) return;
-  
-  gosterYükleme();
-  try {
-    for(const o of bugunDersler) {
-      const yeniYapilan = (o.yapilan||0) + 1;
-      await sb.from('ogrenciler').update({yapilan: yeniYapilan}).eq('id', o._id);
-    }
-    localStorage.setItem(sonIsleKey, '1');
-    alert(`✅ ${bugunDersler.length} öğrencinin dersi işlendi!`);
-    await yukleData();
-    renderAna();
-  } catch(e) { alert('Hata: ' + e.message); }
-  gizleYükleme();
-}
 
 
 // ── VERİ YENİLE ──
@@ -1641,35 +1981,6 @@ function renderTakvim() {
   el.innerHTML=html;
 }
 
-function takvimGunDetay(g,ay,yil) {
-  const tarih=new Date(yil,ay,g);
-  const gun=tarih.getDay();
-  const gunDersler=data.filter(o=>o.gunler&&o.gunler.includes(gun)&&efektifKalan(o)>0);
-  const el=document.getElementById('takvim-detay');
-  const tatilAdi=tatilMi(yil,ay,g);
-  let detayHtml='';
-  if(tatilAdi){
-    detayHtml+=`<div style="background:#FFF0EC;border:1px solid #F4B8A8;color:#C03010;border-radius:10px;padding:10px 14px;margin:8px 16px;font-size:13px">🇹🇷 <strong>${tatilAdi}</strong></div>`;
-  }
-  if(!gunDersler.length){el.innerHTML=detayHtml+`<div class="alert a-blue" style="margin:8px 16px">Bu gün ders yok.</div>`;return;}
-  const saatGruplari={};
-  gunDersler.forEach(o=>{const s=o.saat||'--:--';if(!saatGruplari[s])saatGruplari[s]=[];saatGruplari[s].push(o);});
-  let html=`<div class="section-title">${g} - ${['Paz','Pzt','Sal','Çar','Per','Cum','Cmt'][gun]} Dersleri</div>`;
-  Object.keys(saatGruplari).sort().forEach(saat=>{
-    const ogrs=saatGruplari[saat];
-    const tur=ogrs[0].tur;
-    const max=tur==='ems'?2:3;
-    html+=`<div class="ders-item">
-      <div class="ders-saat">${saat}</div>
-      <div class="ders-divider"></div>
-      <div class="ders-info">
-        <div class="ders-ad">${tur==='ems'?'⚡ EMS':'🧘 Pilates'}</div>
-        <div class="ders-alt">${ogrs.map(o=>o.ad).join(', ')} · ${ogrs.length}/${max}</div>
-      </div>
-    </div>`;
-  });
-  el.innerHTML=html;
-}
 
 // ── GELİR/GİDER ──
 function renderGelir() {
@@ -1730,82 +2041,737 @@ async function gelirSil(id,i) {
 }
 
 // ── ÖDEME ONAYLA ──
-async function odemeOnayla(i) {
-  const o=data[i];
-  const kalanMevcut=efektifKalan(o);
-  const yeniPaket=o.paket||20;
-  const borcMesaj=o.borc>0?`\n💸 ${o.borc} ders borcu yeni paketten düşülecek`:'';
-  const netKalan=kalanMevcut+yeniPaket-(o.borc||0);
-  const msg=`${o.ad} ödeme onaylansın mı?\n\n📦 Yeni paket: ${yeniPaket} ders${borcMesaj}\n✅ Mevcut kalan: ${kalanMevcut} ders\n🎯 Net yeni kalan: ${netKalan} ders`;
-  if(!confirm(msg))return;
-  data[i].odemeBekliyor=false;
-  data[i].toplam_paket=(o.toplam_paket||o.paket||20)+yeniPaket-(o.borc||0); // Borcu yeni paketten düş
-  data[i].borc=0;
-  const b=new Date();
-  data[i].baslangic=`${b.getFullYear()}-${pad(b.getMonth()+1)}-${pad(b.getDate())}`;
-  gosterYukleniyor();
-  try{
-    await ogrKaydet(data[i]);
-    if(o.ucret>0) await gelirKaydet({tip:'gelir',tutar:o.ucret,acik:`${o.ad} — ${o.tur==='ems'?'EMS':'Pilates'} paket ödemesi`,tarih:todayStr()});
-    await veriYukle();
-    renderAna();
-    alert(`✅ Ödeme onaylandı!\n${o.ad} şimdi ${kalanMevcut+yeniPaket} dersi var.`);
-  }catch(e){alert('Hata: '+e.message);}
-  finally{gizleYukleniyor();}
-}
 
 function odemeRed(i) {if(confirm('Reddet?')){data[i].odemeBekliyor=false;ogrKaydet(data[i]).then(()=>renderAna()).catch(()=>{});}}
 
 // ── İLK ÖDEME ──
-async function ilkOdemeOnayla(i) {
-  const o=data[i];
-  if(!confirm(`${o.ad} ilk ödeme onaylansın mı?\n₺${(o.ucret||0).toLocaleString('tr-TR')}`))return;
-  const b=new Date();
-  data[i].ilkOdemeAlindi=true;
-  data[i].odemeBekliyor=false;
-  data[i].baslangic=`${b.getFullYear()}-${pad(b.getMonth()+1)}-${pad(b.getDate())}`;
-  data[i].yapilan=0;data[i].borc=0;
-  gosterYukleniyor();
-  try{
-    await ogrKaydet(data[i]);
-    if(o.ucret>0) await gelirKaydet({tip:'gelir',tutar:o.ucret,acik:`${o.ad} — ${o.tur==='ems'?'EMS':'Pilates'} ilk paket`,tarih:todayStr()});
-    await veriYukle();
-    renderAna();
-  }catch(e){alert('Hata: '+e.message);}
-  finally{gizleYukleniyor();}
-}
 
 // ── PAKİ YENİLE ──
-async function pakiYenile(i) {
+
+// ── AYLIK ÖZET: bu ay ne kadar alındı, ne kadar daha alınacak ──
+// "Alınan": gelir_gider tablosundaki o ayın gelir kayıtları.
+// "Beklenen": her öğrencinin kalan dersi ve ders günleri ileriye doğru sayılarak paketinin biteceği gün bulunur;
+// yeni paket ücreti (ogrenciler.ucret) o gün beklenir. Ay içinde paket birden fazla kez bitiyorsa her biri sayılır.
+// İlk ödemesi alınmamış, ödeme bildirmiş ya da paketi bitmiş öğrencilerin ödemesi bu ay "gecikmiş / bekleyen" sayılır.
+let aylikOfset = 0;
+let aylikHedef = null;
+const AY_ADLARI = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+const tlBicim = n => '₺' + Math.round(n||0).toLocaleString('tr-TR');
+function gunBas(d){const x=new Date(d);x.setHours(0,0,0,0);return x;}
+function dersGunuMu(o,d){return (o.gunler||[]).includes(d.getDay()) && !tatilMi(d.getFullYear(),d.getMonth(),d.getDate());}
+// basTarih dahil, n. dersin tarihi
+function nDersSonra(o,basTarih,n){
+  const d=gunBas(basTarih);let say=0,guvenlik=0;
+  while(guvenlik++<800){if(dersGunuMu(o,d)){say++;if(say>=n)return d;}d.setDate(d.getDate()+1);}
+  return null;
+}
+function odemePlani(o, ayBas, aySon){
+  const bugunT=gunBas(new Date());
+  const olaylar=[];
+  const ucret=+o.ucret||0;
+  const buAyMi=bugunT>=ayBas&&bugunT<=aySon;
+  const gecmisAy=gunBas(aySon)<bugunT;
+  if(gecmisAy) return olaylar;
+  if(!o.ilkOdemeAlindi){ if(buAyMi) olaylar.push({tarih:bugunT,tutar:ucret,durum:'ilk'}); return olaylar; }
+  if(o.odemeBekliyor){ if(buAyMi) olaylar.push({tarih:bugunT,tutar:ucret,durum:'onay'}); return olaylar; }
+  if(!(o.gunler||[]).length) return olaylar;
+  const kalan=efektifKalan(o);
+  let vade;
+  if(kalan<=0) vade=bugunT;
+  else vade=nDersSonra(o,bugunT,kalan+1); // yeni paketin ilk dersi = ödeme günü
+  const bit=getBitis(o);
+  const suresiDoldu=!!(bit && gunBas(bit)<bugunT && kalan>0);
+  if(suresiDoldu) vade=bugunT;
+  const paket=o.paket||20;
+  let ilk=true,guvenlik=0;
+  while(vade && vade<=aySon && guvenlik++<12){
+    if(vade>=ayBas) olaylar.push({tarih:vade,tutar:ucret,durum:ilk&&(kalan<=0||suresiDoldu)?'gecikti':'plan'});
+    ilk=false;
+    vade=nDersSonra(o,vade,paket+1); // yeni paket vade gününde başlar; paket+1. ders bir sonraki ödeme günüdür
+  }
+  return olaylar;
+}
+async function aylikHedefYukle(){
+  try{const {data:r}=await sb.from('yonetici_ayarlar').select('deger').eq('anahtar','aylik_hedef').maybeSingle();aylikHedef=(r&&r.deger&&+r.deger.tutar)||0;}
+  catch(e){aylikHedef=0;}
+}
+async function aylikHedefBelirle(){
+  const v=prompt('Aylık gelir hedefiniz (₺). Boş bırakırsanız hedef kaldırılır:', aylikHedef||'');
+  if(v===null)return;
+  const tutar=parseFloat(String(v).replace(/[^\d,.]/g,'').replace(/\./g,'').replace(',','.'))||0;
+  try{await sb.from('yonetici_ayarlar').upsert({anahtar:'aylik_hedef',deger:{tutar},guncelleme:new Date().toISOString()});aylikHedef=tutar;renderAylik();}
+  catch(e){alert('Hedef kaydedilemedi: '+e.message);}
+}
+function aylikAy(d){aylikOfset+=d;renderAylik();}
+async function aylikOdemeAl(i,durum){
+  if(durum==='borc') await borcOdemesiAl(data[i]._id);
+  else if(durum==='ilk') await ilkOdemeOnayla(i);
+  else if(durum==='onay') await odemeOnayla(i);
+  else await pakiYenile(i);
+  renderAylik();
+}
+function aylikHesapla(ofset){
+  const n=new Date();
+  const ayBas=new Date(n.getFullYear(),n.getMonth()+ofset,1);
+  const aySon=new Date(n.getFullYear(),n.getMonth()+ofset+1,0);
+  const ayIci=g=>{const t=gunBas(g.tarih);return t>=ayBas&&t<=aySon;};
+  const gelirler=gelirData.filter(g=>g.tip==='gelir'&&ayIci(g)).sort((a,b)=>a.tarih<b.tarih?1:-1);
+  const giderler=gelirData.filter(g=>g.tip==='gider'&&ayIci(g));
+  const alinan=gelirler.reduce((t,g)=>t+(+g.tutar||0),0);
+  const gider=giderler.reduce((t,g)=>t+(+g.tutar||0),0);
+  const beklenenler=[];const plansiz=[];
+  data.forEach((o,i)=>{
+    if(!(+o.ucret>0)){plansiz.push(o.ad+' (ücret yok)');return;}
+    if(o.ilkOdemeAlindi&&!o.odemeBekliyor&&!(o.gunler||[]).length&&efektifKalan(o)>0){plansiz.push(o.ad+' (ders günü yok)');return;}
+    odemePlani(o,ayBas,aySon).forEach(e=>beklenenler.push({...e,o,i}));
+    // Kısmi ödemeden kalan ₺ borç bu ay alınacaklara eklenir
+    if((o.borcTl||0)>0 && gunBas(new Date())>=ayBas && gunBas(new Date())<=aySon) beklenenler.push({tarih:gunBas(new Date()),tutar:o.borcTl,durum:'borc',o,i});
+  });
+  beklenenler.sort((a,b)=>a.tarih-b.tarih);
+  const beklenen=beklenenler.reduce((t,e)=>t+e.tutar,0);
+  return {ayBas,aySon,gelirler,giderler,alinan,gider,beklenenler,beklenen,plansiz};
+}
+function renderAylik(){
+  const el=document.getElementById('aylik-c');if(!el)return;
+  if(aylikHedef===null){aylikHedef=0;aylikHedefYukle().then(()=>{if(document.getElementById('aylik').classList.contains('active'))renderAylik();});}
+  const h=aylikHesapla(aylikOfset);
+  const bugunT=gunBas(new Date());
+  const gecmis=h.aySon<bugunT, gelecek=h.ayBas>bugunT;
+  const tahmin=h.alinan+h.beklenen;
+  const oran=tahmin>0?Math.round(h.alinan/tahmin*100):0;
+  const hedefOran=aylikHedef>0?Math.round(tahmin/aylikHedef*100):0;
+  const gecikenToplam=h.beklenenler.filter(e=>e.durum!=='plan').reduce((t,e)=>t+e.tutar,0);
+  const durumEtiket={borc:['Kalan borç','kirmizi'],ilk:['İlk ödeme','kirmizi'],onay:['Onay bekliyor','altin'],gecikti:['Gecikti','kirmizi'],plan:['Planlı','gri']};
+  const gunFmt=d=>d.getDate()+' '+AY_ADLARI[d.getMonth()].slice(0,3)+' · '+['Paz','Pzt','Sal','Çar','Per','Cum','Cmt'][d.getDay()];
+
+  let html=`<div class="ds-ay">
+  <div class="ds-ay-bas">
+    <button class="ds-kare-btn" onclick="aylikAy(-1)" title="Önceki ay">${dsIc('chevl')}</button>
+    <div style="text-align:center"><div class="ds-eyebrow">${gecmis?'Kapanan ay':gelecek?'Gelecek ay · tahmin':'Bu ay'}</div><div class="ds-ay-ad">${AY_ADLARI[h.ayBas.getMonth()]} ${h.ayBas.getFullYear()}</div></div>
+    <button class="ds-kare-btn" onclick="aylikAy(1)" title="Sonraki ay">${dsIc('chev')}</button>
+  </div>
+
+  <div class="card ds-ay-hero">
+    <div class="ds-ay-iki">
+      <div><div class="ds-eyebrow">${dsIc('check')} Alınan</div><div class="ds-buyuk">${tlBicim(h.alinan)}</div><div class="ds-kucuk">${h.gelirler.length} ödeme kaydı</div></div>
+      <div><div class="ds-eyebrow">${dsIc('hourglass')} ${gecmis?'Alınmayan':'Daha alınacak'}</div><div class="ds-buyuk" style="color:var(--ds-gold7)">${tlBicim(h.beklenen)}</div><div class="ds-kucuk">${h.beklenenler.length} öğrenci ödemesi${gecikenToplam?` · <span style="color:var(--red)">${tlBicim(gecikenToplam)} gecikmiş</span>`:''}</div></div>
+    </div>
+    <div class="ds-cift-cubuk" title="Alınan / ay sonu tahmini"><i style="width:${oran}%"></i></div>
+    <div class="ds-ay-alt"><span>Ay sonu tahmini <b>${tlBicim(tahmin)}</b></span><span>%${oran} tahsil edildi</span></div>
+  </div>
+
+  <div class="ds-ay-uc">
+    <div class="card"><div class="ds-eyebrow">${dsIc('down')} Gider</div><div class="ds-orta" style="color:var(--red)">${tlBicim(h.gider)}</div><div class="ds-kucuk">${h.giderler.length} kayıt</div></div>
+    <div class="card"><div class="ds-eyebrow">${dsIc('wallet')} Tahmini net</div><div class="ds-orta">${tlBicim(tahmin-h.gider)}</div><div class="ds-kucuk">Alınan + beklenen − gider</div></div>
+    <div class="card ds-tik" onclick="aylikHedefBelirle()"><div class="ds-eyebrow">${dsIc('target')} Aylık hedef</div>
+      ${aylikHedef>0?`<div class="ds-orta">${tlBicim(aylikHedef)}</div><div class="progress-bar" style="margin-top:8px"><div class="progress-fill" style="width:${Math.min(100,hedefOran)}%"></div></div><div class="ds-kucuk">Tahmin, hedefin %${hedefOran} kadarı${tahmin<aylikHedef?` · ${tlBicim(aylikHedef-tahmin)} eksik`:''}</div>`:`<div class="ds-orta" style="color:var(--text3)">—</div><div class="ds-kucuk">Hedef belirlemek için dokunun</div>`}
+    </div>
+  </div>
+
+  <div class="ds-ay-kolonlar">
+  <div>
+    <div class="ds-baslik">${gecmis?'Bu ay alınmayan ödemeler':'Beklenen ödemeler'}</div>
+    ${h.beklenenler.length?`<div class="card ds-liste">${h.beklenenler.map(e=>{
+      const [et,renk]=durumEtiket[e.durum];
+      const buAy=!gecmis&&!gelecek;
+      return `<div class="ds-sat">
+        <div class="ds-sat-tarih"><b>${e.tarih.getDate()}</b><small>${AY_ADLARI[e.tarih.getMonth()].slice(0,3)}</small></div>
+        <div class="ds-sat-orta"><div class="ds-sat-ad">${e.o.ad}</div><div class="ds-kucuk">${e.o.tur==='ems'?'EMS':'Pilates'} · ${e.durum==='plan'?'Paket bitişi '+gunFmt(e.tarih):e.durum==='borc'?'Kısmi ödemeden kalan borç':e.durum==='ilk'?'İlk paket ödemesi':e.durum==='onay'?'Öğrenci ödediğini bildirdi':'Paketi bitti, yenilenmedi'}</div></div>
+        <div class="ds-sat-sag"><div class="ds-tutar">${tlBicim(e.tutar)}</div><span class="ds-durum ds-${renk}">${et}</span></div>
+        ${buAy&&(e.durum!=='plan'||e.tarih-bugunT<=7*864e5)?`<div class="ds-sat-eylem">
+          <button class="btn btn-primary btn-sm" onclick="aylikOdemeAl(${e.i},'${e.durum}')">${dsIc('check')}Ödeme alındı</button>
+          <button class="btn btn-ghost btn-sm" onclick="waAc(${e.i},'wa')">${dsIc('msg')}Hatırlat</button></div>`:''}
+      </div>`;}).join('')}</div>`:`<div class="alert a-green">${gecmis?'Bu ay bekleyen ödeme kalmamış.':'Bu ay için beklenen başka ödeme yok.'}</div>`}
+    ${h.plansiz.length?`<div class="ds-not">${dsIc('warn')} Plana dahil edilemeyenler: ${h.plansiz.join(', ')}. Öğrenci kartındaki düzenle düğmesinden ücret ve ders günlerini girebilirsiniz.</div>`:''}
+  </div>
+  <div>
+    <div class="ds-baslik">Alınan ödemeler</div>
+    ${h.gelirler.length?`<div class="card ds-liste">${h.gelirler.map(g=>`<div class="ds-sat">
+        <div class="ds-sat-tarih"><b>${new Date(g.tarih).getDate()}</b><small>${AY_ADLARI[new Date(g.tarih).getMonth()].slice(0,3)}</small></div>
+        <div class="ds-sat-orta"><div class="ds-sat-ad">${g.acik||'Gelir'}</div></div>
+        <div class="ds-sat-sag"><div class="ds-tutar" style="color:var(--green)">+${tlBicim(g.tutar)}</div></div>
+      </div>`).join('')}</div>`:`<div class="ds-bos">Bu ay henüz ödeme kaydı yok.</div>`}
+    <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+      <button class="btn btn-ghost btn-sm" onclick="sp('gelir')">${dsIc('plus')}Gelir / gider ekle</button>
+      <button class="btn btn-ghost btn-sm" onclick="finansHatirlatici(true)">${dsIc('clock')}14 günlük kontrol</button>
+      <button class="btn btn-ghost btn-sm" onclick="aylikPdf()">${dsIc('printer')}Yazdır / PDF</button>
+    </div>
+  </div>
+  </div>
+  </div>`;
+  el.innerHTML=html;
+}
+// Ana sayfadaki kısa aylık özet kartı
+function aylikOzetKarti(){
+  const h=aylikHesapla(0);
+  const tahmin=h.alinan+h.beklenen;
+  const oran=tahmin>0?Math.round(h.alinan/tahmin*100):0;
+  return `<div class="card ds-tik ds-ana-ozet" onclick="sp('aylik')">
+    <div style="display:flex;justify-content:space-between;align-items:center"><div class="ds-eyebrow">${AY_ADLARI[h.ayBas.getMonth()]} özeti</div><span class="ds-kucuk" style="display:flex;align-items:center;gap:2px">Ayrıntı ${dsIc('chev')}</span></div>
+    <div class="ds-ay-iki" style="margin-top:10px">
+      <div><div class="ds-kucuk">Alınan</div><div class="ds-orta">${tlBicim(h.alinan)}</div></div>
+      <div><div class="ds-kucuk">Daha alınacak</div><div class="ds-orta" style="color:var(--ds-gold7)">${tlBicim(h.beklenen)}</div></div>
+    </div>
+    <div class="ds-cift-cubuk" style="margin-top:10px"><i style="width:${oran}%"></i></div>
+  </div>`;
+}
+
+// ════════════════════════════════════════════════════════════════════
+// GELİŞTİRMELER (03_gelistirmeler.sql ile birlikte çalışır)
+// ════════════════════════════════════════════════════════════════════
+let yoklamaData = [], tatilMap = {}, dersTalepleri = [], yoneticiAyar = {};
+const YOKLAMA_ETIKET = {
+  geldi:['Geldi','yesil'], gelmedi:['Gelmedi','kirmizi'], iptal:['İptal · hak kullanıldı','gri'],
+  studyo_iptal:['Stüdyo iptali','gri'], ertelendi:['Ertelendi','altin'], telafi:['Telafi dersi','altin']
+};
+const DAVET_INDIRIMI = 0.10;
+function tarihStr(d){return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;}
+function tarihTR(s){return s?new Date(s+(String(s).length===10?'T12:00':'')).toLocaleDateString('tr-TR'):'—';}
+function gunEkle(s,n){const d=new Date(s+'T12:00');d.setDate(d.getDate()+n);return tarihStr(d);}
+function yoklamaBul(ogrId,t){return yoklamaData.find(y=>y.ogrenci_id===ogrId&&y.tarih===t);}
+function ogrIdx(id){return data.findIndex(o=>o._id===id);}
+function waNumara(tel){const n=(tel||'').replace(/\D/g,'');return n.startsWith('0')?'90'+n.slice(1):(n.length===10?'90'+n:n);}
+function waAcMetin(tel,metin){window.open('https://wa.me/'+waNumara(tel)+'?text='+encodeURIComponent(metin),'_blank','noopener');}
+function saatDk(s){const m=String(s||"").match(/(\d{1,2}):(\d{2})/);return m?(+m[1])*60+(+m[2]):9999;}
+function saatSirala(a,b){return saatDk(a)-saatDk(b);}
+function htmlKac(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+// Veritabanındaki tatil / stüdyo kapalı günleri, paneldeki sabit listeye eklenir.
+const _tatilMiSabit = tatilMi;
+tatilMi = function(yil, ay, gun){ return tatilMap[`${yil}-${pad(ay+1)}-${pad(gun)}`] || _tatilMiSabit(yil, ay, gun); };
+
+async function ekVeriYukle(){
+  const bas = gunEkle(todayStr(), -120);
+  const [y, t, d, a] = await Promise.all([
+    sb.from('yoklama').select('*').gte('tarih', bas),
+    sb.from('tatiller').select('*'),
+    sb.from('ders_talepleri').select('*').eq('durum','bekliyor').order('tarih'),
+    sb.from('yonetici_ayarlar').select('anahtar,deger')
+  ]);
+  if(!y.error) yoklamaData = y.data||[];
+  if(!t.error){ tatilMap = {}; (t.data||[]).forEach(r=>tatilMap[r.tarih]=r.ad); }
+  if(!d.error) dersTalepleri = d.data||[];
+  if(!a.error){ yoneticiAyar = {}; (a.data||[]).forEach(r=>yoneticiAyar[r.anahtar]=r.deger); }
+}
+function aktifSayfa(){return document.querySelector('.page.active')?.id;}
+function sayfayiYenile(){
+  const p = aktifSayfa();
+  const r = {ana:renderAna,ogr:renderOgr,takvim:renderTakvim,aylik:renderAylik,gelir:renderGelir,toplumesaj:renderTopluMesaj}[p];
+  if(r) r();
+  if(document.getElementById('ds-detay')) ogrDetay(document.getElementById('ds-detay').dataset.ogr);
+}
+// Panel başka bir sekmeden / uygulamadan geri gelince veriler tazelenir (gece işlenen dersler görünür).
+document.addEventListener('visibilitychange', async ()=>{
+  if(document.visibilityState!=='visible' || !document.getElementById('app').classList.contains('show')) return;
+  if(aktifSayfa()==='ekle') return;
+  try{ await veriYukle(); sayfayiYenile(); }catch(e){}
+});
+
+// ── FORM PENCERESİ: tarih, tutar, metin sormak için ──
+function dsForm({ust, baslik, metin, alanlar, onay='Kaydet', tehlike=false}){
+  return new Promise(coz=>{
+    const ov=document.createElement('div'); ov.className='ds-secim-ov';
+    ov.innerHTML=`<form class="ds-secim" novalidate>
+      ${ust?`<div class="ds-eyebrow">${ust}</div>`:''}<div class="ds-secim-baslik">${baslik}</div>
+      ${metin?`<div class="ds-secim-metin">${metin}</div>`:''}
+      ${alanlar.map(a=>`<label class="ds-form-alan"><span>${a.etiket}</span>${a.tip==='textarea'
+        ?`<textarea name="${a.ad}" rows="3" placeholder="${a.ipucu||''}">${htmlKac(a.deger||'')}</textarea>`
+        :a.tip==='select'?`<select name="${a.ad}">${a.secenekler.map(s=>`<option value="${s[0]}"${s[0]===a.deger?' selected':''}>${s[1]}</option>`).join('')}</select>`
+        :`<input name="${a.ad}" type="${a.tip||'text'}" value="${htmlKac(a.deger??'')}" placeholder="${a.ipucu||''}"${a.min!=null?` min="${a.min}"`:''}${a.zorunlu?' required':''} ${a.tip==='number'?'inputmode="decimal" step="any"':''}>`}
+        ${a.not?`<small>${a.not}</small>`:''}</label>`).join('')}
+      <div class="ds-form-hata" hidden></div>
+      <div class="ds-secim-btnlar ds-yan"><button type="button" class="btn btn-ghost" data-vazgec="1">Vazgeç</button><button type="submit" class="btn ${tehlike?'btn-ghost ds-tehlike':'btn-primary'}">${onay}</button></div>
+    </form>`;
+    const f=ov.querySelector('form');
+    const bitir=d=>{ov.remove();coz(d);};
+    ov.addEventListener('click',e=>{if(e.target===ov||e.target.dataset.vazgec)bitir(null);});
+    f.addEventListener('submit',e=>{
+      e.preventDefault();
+      const s={};
+      for(const a of alanlar){
+        let v=f.elements[a.ad].value.trim();
+        if(a.zorunlu&&!v){const h=f.querySelector('.ds-form-hata');h.textContent=a.etiket+' boş bırakılamaz.';h.hidden=false;return;}
+        if(a.tip==='number') v=v===''?null:parseFloat(v.replace(/\./g,'').replace(',','.'));
+        s[a.ad]=v;
+      }
+      bitir(s);
+    });
+    document.body.appendChild(ov);
+    setTimeout(()=>f.querySelector('input,textarea,select')?.focus(),50);
+  });
+}
+
+// ── YOKLAMA ──
+async function yoklamaYap(ogrId, tarih, durum, aciklama, telafi, ek){
+  gosterYukleniyor();
+  try{
+    const {error}=await sb.rpc('yoklama_isaretle',{p_ogrenci:ogrId,p_tarih:tarih,p_durum:durum,p_aciklama:aciklama||null,p_telafi:telafi||null,p_ek:!!ek});
+    if(error) throw error;
+    await veriYukle(); sayfayiYenile();
+  }catch(e){alert('Kaydedilemedi: '+e.message);}
+  finally{gizleYukleniyor();}
+}
+function iptalHakkiKalan(o){
+  const kullanilan=(o.iptalGecmisi||[]).filter(t=>!o.baslangic||t>=o.baslangic).length;
+  return Math.max(0,(o.iptalHakki??1)-kullanilan);
+}
+async function yoklamaDiger(ogrId, tarih){
+  const o=data[ogrIdx(ogrId)]; if(!o) return;
+  const hak=iptalHakkiKalan(o);
+  const s=await dsSecim({ust:tarihTR(tarih)+' dersi', baslik:o.ad, metin:`Bu paket için kalan iptal hakkı: <b>${hak}</b>`, secenekler:[
+    {etiket:'Öğrenci isteğiyle iptal', alt:'Ders düşmez, iptal hakkından bir eksilir', deger:'iptal', ikon:'x'},
+    {etiket:'Stüdyo iptali', alt:'Ders düşmez, iptal hakkı korunur', deger:'studyo_iptal', ikon:'ban'},
+    {etiket:'Ertele / telafi günü belirle', alt:'Ders düşmez; telafi günü dersi işlenir', deger:'ertelendi', ikon:'cal'},
+    {etiket:'Yoklamayı temizle', alt:'Bu günün kaydını siler', deger:'temizle', ikon:'refresh'},
+    {etiket:'Vazgeç', deger:null}
+  ]});
+  if(!s) return;
+  if(s==='iptal' && hak<=0 && !confirm(`${o.ad} bu paketteki iptal hakkını kullanmış. Yine de iptal edilsin mi?`)) return;
+  if(s==='temizle') return yoklamaYap(ogrId,tarih,null);
+  if(s==='ertelendi'){
+    const f=await dsForm({ust:'Ertele', baslik:o.ad, metin:'Telafi dersinin yapılacağı günü seçin. Boş bırakırsanız yalnızca erteleme kaydı tutulur.',
+      alanlar:[{ad:'telafi',etiket:'Telafi günü',tip:'date',min:todayStr()},{ad:'aciklama',etiket:'Sebep',ipucu:'Hastalık, seyahat…'}]});
+    if(!f) return;
+    return yoklamaYap(ogrId,tarih,'ertelendi',f.aciklama,f.telafi||null);
+  }
+  const f=await dsForm({ust:s==='iptal'?'Öğrenci isteğiyle iptal':'Stüdyo iptali', baslik:o.ad, alanlar:[{ad:'aciklama',etiket:'Not (isteğe bağlı)'}], onay:'İptal et'});
+  if(!f) return;
+  yoklamaYap(ogrId,tarih,s,f.aciklama);
+}
+// Belirli bir gün dersi olması beklenen öğrenciler (ders günü + o güne telafi verilenler)
+function gununOgrencileri(t){
+  const gun=new Date(t+'T12:00').getDay();
+  const liste=data.filter(o=>(o.gunler||[]).includes(gun) && o.ilkOdemeAlindi!==false && (!o.baslangic||o.baslangic<=t) && (efektifKalan(o)>0||yoklamaBul(o._id,t)));
+  yoklamaData.filter(y=>y.tarih===t&&(y.durum==='telafi'||y.aciklama?.startsWith('Telafi'))).forEach(y=>{const o=data[ogrIdx(y.ogrenci_id)];if(o&&!liste.includes(o))liste.push(o);});
+  return liste;
+}
+function yoklamaListesiHtml(t, baslik){
+  const ogrs=gununOgrencileri(t);
+  const tatil=tatilMi(...t.split('-').map((v,k)=>k===1?+v-1:+v));
+  if(tatil) return `<div class="ds-baslik">${baslik}</div><div class="alert a-blue">${dsIc('cal')} ${htmlKac(tatil)} · bu gün ders işlenmez.</div>`;
+  if(!ogrs.length) return '';
+  const gruplar={};
+  ogrs.forEach(o=>{const s=o.saat||'--:--';(gruplar[s]=gruplar[s]||[]).push(o);});
+  const gecmis=t<todayStr();
+  return `<div class="ds-baslik">${baslik}</div><div class="card ds-liste ds-yk">${Object.keys(gruplar).sort(saatSirala).map(s=>{
+    const g=gruplar[s];const tur=g[0].tur;const max=tur==='ems'?2:3;
+    return `<div class="ds-yk-grup"><div class="ds-yk-saat"><b>${s}</b><small>${tur==='ems'?'EMS':'Pilates'} · ${g.length}/${max}</small></div><div style="flex:1;min-width:0">${g.map(o=>{
+      const y=yoklamaBul(o._id,t);const talep=dersTalepleri.find(d=>d.ogrenci_id===o._id&&d.tarih===t);
+      const [et,renk]=y?YOKLAMA_ETIKET[y.durum]:talep?['İptal talebi var','altin']:[gecmis?'İşlenmedi':'Bekliyor','gri'];
+      return `<div class="ds-yk-sat"><span class="ds-yk-ad" onclick="ogrDetay('${o._id}')">${htmlKac(o.ad)}</span>
+        <span class="ds-durum ds-${renk}">${et}${y?.kaynak==='otomatik'?' · oto':''}${y?.telafi_tarihi?' → '+tarihTR(y.telafi_tarihi):''}</span>
+        <span class="ds-yk-btn">
+          <button class="ds-mini${y?.durum==='geldi'?' sec':''}" onclick="yoklamaYap('${o._id}','${t}','geldi')">Geldi</button>
+          <button class="ds-mini${y?.durum==='gelmedi'?' sec':''}" onclick="yoklamaYap('${o._id}','${t}','gelmedi')">Gelmedi</button>
+          <button class="ds-mini" onclick="yoklamaDiger('${o._id}','${t}')" title="İptal, erteleme, temizle">${dsIc('edit')}</button>
+        </span></div>`;}).join('')}</div></div>`;}).join('')}
+    <div class="ds-not" style="padding:10px 14px 12px;margin:0">${dsIc('clock')} ${gecmis?'İşaretlenmemiş dersler için: <button class="ds-link" onclick="gunuIsle(\''+t+'\')">bu günü şimdi işle</button>':'İşaretlemediğiniz dersler her gece 23:55\'te "geldi" olarak işlenir. Haber vermeden gelmeyen öğrencinin dersi de düşer.'}</div></div>`;
+}
+async function gunuIsle(t){
+  if(!confirm(tarihTR(t)+' günü yoklaması girilmemiş dersler "geldi" olarak işlensin mi?')) return;
+  gosterYukleniyor();
+  try{const {data:n,error}=await sb.rpc('gun_sonu_isle',{p_tarih:t});if(error)throw error;await veriYukle();sayfayiYenile();alert(n+' ders işlendi.');}
+  catch(e){alert('Hata: '+e.message);}finally{gizleYukleniyor();}
+}
+async function dersEkle(i){
+  const o=data[i];const t=todayStr();const y=yoklamaBul(o._id,t);
+  if(y&&(y.durum==='geldi'||y.durum==='gelmedi')){
+    if(!confirm(`${o.ad} için bugünkü ders zaten işlendi. Ek ders olarak bir ders daha düşülsün mü?`)) return;
+    return yoklamaYap(o._id,t,'geldi',null,null,true);
+  }
+  if(efektifKalan(o)<=0 && !confirm(`${o.ad} öğrencisinin paketi bitmiş. Bu ders borç olarak yazılsın mı?`)) return;
+  yoklamaYap(o._id,t,'geldi');
+}
+
+// ── DERS TALEPLERİ (öğrenci panelinden) ──
+function dersTalepleriHtml(){
+  if(!dersTalepleri.length) return '';
+  return `<div class="ds-baslik">Ders talepleri</div><div class="card ds-liste">${dersTalepleri.map(d=>{
+    const o=data[ogrIdx(d.ogrenci_id)];
+    return `<div class="ds-sat" style="grid-template-columns:44px 1fr">
+      <div class="ds-sat-tarih"><b>${new Date(d.tarih+'T12:00').getDate()}</b><small>${AY_ADLARI[new Date(d.tarih+'T12:00').getMonth()].slice(0,3)}</small></div>
+      <div class="ds-sat-orta"><div class="ds-sat-ad">${htmlKac(o?.ad||'—')} · ${d.tip==='iptal'?'Gelemeyecek':'Ertelemek istiyor'}</div>
+        <div class="ds-kucuk">${d.istenen_tarih?'Önerdiği telafi günü: '+tarihTR(d.istenen_tarih)+' · ':''}${d.aciklama?htmlKac(d.aciklama)+' · ':''}Kalan iptal hakkı: ${o?iptalHakkiKalan(o):'—'}</div></div>
+      <div class="ds-sat-eylem" style="grid-column:2"><button class="btn btn-primary btn-sm" onclick="dersTalebiYanitla('${d.id}',true)">${dsIc('check')}Onayla</button>
+        <button class="btn btn-ghost btn-sm" onclick="dersTalebiYanitla('${d.id}',false)">Reddet</button></div></div>`;}).join('')}</div>`;
+}
+async function dersTalebiYanitla(id, onay){
+  const d=dersTalepleri.find(x=>x.id===id); if(!d) return;
+  const o=data[ogrIdx(d.ogrenci_id)]; if(!o) return;
+  let durum=null, telafi=null, yanit='';
+  if(onay){
+    const secenekler=[{etiket:'İptal hakkından düşerek onayla', alt:`Kalan hak: ${iptalHakkiKalan(o)}`, deger:'iptal', tip:'ana'},
+      {etiket:'Hak düşmeden onayla', alt:'Stüdyo iptali gibi işlenir', deger:'studyo_iptal'}];
+    if(d.tip==='erteleme') secenekler.unshift({etiket:'Ertele ve telafi günü ver', alt:d.istenen_tarih?'Öğrencinin önerdiği gün: '+tarihTR(d.istenen_tarih):'Telafi gününü siz seçin', deger:'ertelendi', tip:'ana'});
+    secenekler.push({etiket:'Vazgeç', deger:null});
+    durum=await dsSecim({ust:'Talebi onayla', baslik:o.ad, metin:tarihTR(d.tarih)+' dersi', secenekler});
+    if(!durum) return;
+    if(durum==='ertelendi'){
+      const f=await dsForm({ust:'Telafi günü', baslik:o.ad, alanlar:[{ad:'telafi',etiket:'Telafi günü',tip:'date',deger:d.istenen_tarih||'',min:todayStr()}]});
+      if(!f) return; telafi=f.telafi||null;
+    }
+  }else{
+    const f=await dsForm({ust:'Talebi reddet', baslik:o.ad, metin:'Ders yapılmış sayılır. Öğrenciye görünecek kısa bir açıklama yazabilirsiniz.', alanlar:[{ad:'yanit',etiket:'Açıklama',ipucu:'Ör. Ders saatine 24 saatten az kaldığı için…'}], onay:'Reddet', tehlike:true});
+    if(!f) return; yanit=f.yanit||'';
+  }
+  gosterYukleniyor();
+  try{
+    const {error}=await sb.from('ders_talepleri').update({durum:onay?'onaylandi':'reddedildi',yanit:yanit||null,yanit_tarihi:new Date().toISOString()}).eq('id',id);
+    if(error) throw error;
+    if(onay) await sb.rpc('yoklama_isaretle',{p_ogrenci:o._id,p_tarih:d.tarih,p_durum:durum,p_aciklama:'Öğrenci talebi'+(d.aciklama?': '+d.aciklama:''),p_telafi:telafi,p_ek:false});
+    else if(d.tarih<todayStr()) await sb.rpc('yoklama_isaretle',{p_ogrenci:o._id,p_tarih:d.tarih,p_durum:'gelmedi',p_aciklama:'İptal talebi reddedildi',p_telafi:null,p_ek:false});
+    await veriYukle(); sayfayiYenile();
+  }catch(e){alert('Hata: '+e.message);}finally{gizleYukleniyor();}
+}
+
+// ── DİKKAT LİSTELERİ: doğum günü, kayıp öğrenci, sık gelmeyen, yedek ──
+function dogumGunuBugunMu(o){if(!o.dogumTarihi)return false;const n=new Date();return o.dogumTarihi.slice(5)===`${pad(n.getMonth()+1)}-${pad(n.getDate())}`;}
+function sonDersTarihi(o){
+  const s=yoklamaData.filter(y=>y.ogrenci_id===o._id&&y.sayim!=='yok').map(y=>y.tarih).sort().pop();
+  if(s) return s; const b=getBitis(o); return b?tarihStr(b):null;
+}
+function kayipOgrenciler(){
+  const sinir=gunEkle(todayStr(),-14);
+  return data.filter(o=>efektifKalan(o)<=0&&!o.odemeBekliyor&&o.ilkOdemeAlindi!==false&&(sonDersTarihi(o)||'9999')<=sinir);
+}
+function sikGelmeyenler(){
+  const sinir=gunEkle(todayStr(),-30);
+  return data.map(o=>({o,n:yoklamaData.filter(y=>y.ogrenci_id===o._id&&y.durum==='gelmedi'&&y.tarih>=sinir).length})).filter(x=>x.n>=2);
+}
+function dikkatHtml(){
+  let h='';
+  const dg=data.filter(dogumGunuBugunMu);
+  if(dg.length) h+=dg.map(o=>`<div class="alert a-gold ds-dikkat">${dsIc('sparkle')}<span><b>${htmlKac(o.ad)}</b> bugün doğum gününü kutluyor.</span><button class="btn btn-ghost btn-sm" onclick="sablonGonder('${o._id}','dogumgunu')">Kutla</button></div>`).join('');
+  const k=kayipOgrenciler();
+  if(k.length) h+=`<div class="alert a-red ds-dikkat">${dsIc('users')}<span><b>${k.length} öğrenci</b> paketini 2 haftadır yenilemedi: ${k.map(o=>htmlKac(o.ad)).join(', ')}</span><button class="btn btn-ghost btn-sm" onclick="topluMesajAc('kayip','geriKazanim')">Mesaj gönder</button></div>`;
+  const s=sikGelmeyenler();
+  if(s.length) h+=`<div class="alert a-gold ds-dikkat">${dsIc('warn')}<span>Son 30 günde 2+ kez haber vermeden gelmeyenler: ${s.map(x=>`<b>${htmlKac(x.o.ad)}</b> (${x.n})`).join(', ')}</span></div>`;
+  const sy=yoneticiAyar.son_yedek?.tarih;
+  if(!sy || (Date.now()-new Date(sy))/864e5>=7) h+=`<div class="alert a-blue ds-dikkat">${dsIc('save')}<span>${sy?'Son yedek '+tarihTR(sy.slice(0,10))+' tarihinde alındı.':'Henüz tam yedek alınmadı.'} Haftada bir yedek almanızı öneririz.</span><button class="btn btn-ghost btn-sm" onclick="yedekle()">Yedekle</button></div>`;
+  return h;
+}
+
+// ── ÖDEME ALMA (kısmi ödeme ve ₺ borç) ──
+async function odemeAlPenceresi(o, {ust, beklenen, metin}){
+  const f=await dsForm({ust, baslik:o.ad,
+    metin:(metin?metin+'<br>':'')+`Beklenen tutar <b>${tlBicim(beklenen)}</b>. Eksik ödenen kısım öğrencinin borcuna yazılır.`,
+    alanlar:[{ad:'tutar',etiket:'Alınan tutar (₺)',tip:'number',deger:beklenen,zorunlu:true}], onay:'Ödemeyi kaydet'});
+  if(!f) return null;
+  if(!(f.tutar>=0)){alert('Geçerli bir tutar girin.');return null;}
+  return f.tutar;
+}
+function odemeGeliri(o, tutar, acik){return {tip:'gelir',tutar,acik:`${o.ad} — ${acik}`,tarih:todayStr(),ogrenciId:o._id};}
+async function paketOdemesiIsle(i, {ust, metin, ilk, acik}){
   const o=data[i];
-  const kalanMevcut = efektifKalan(o);
-  const yeniPaket = o.paket||20;
-  // Kalan dersler yeni pakete eklenir, yapilan HİÇ sıfırlanmaz
-  const yeniToplam = (o.toplam_paket||o.paket||20) + yeniPaket;
-  const borcVar=o.borc>0?`\n💸 ${o.borc} ders borcu yeni paketten düşülecek`:'';
-  const netYeniKalan=kalanMevcut+yeniPaket-(o.borc||0);
-  const msg = `${o.ad} paketi yenilensin mi?\n\n📦 Yeni paket: ${yeniPaket} ders${borcVar}\n✅ Mevcut kalan: ${kalanMevcut} ders\n🎯 Net kalan olacak: ${netYeniKalan} ders\n\nToplam yapılan ${o.yapilan||0} ders korunacak.`;
-  if(!confirm(msg))return;
-  // Borç yeni paketten düşülür:
-  // Örn: 2 borç + 20 yeni ders = 18 net ders
-  // toplam_paket'e yeniPaket ekle, borc sıfırla
-  // yapilan değişmediği için efektifKalan otomatik doğru hesaplanır
-  data[i].toplam_paket = yeniToplam - (o.borc||0); // Borcu düş
-  data[i].borc = 0;
-  // yapilan DEĞİŞMİYOR - birikimli devam eder
-  const b=new Date();
-  data[i].baslangic=`${b.getFullYear()}-${pad(b.getMonth()+1)}-${pad(b.getDate())}`;
+  const indirim = ilk && o.davetEden ? Math.round((o.ucret||0)*DAVET_INDIRIMI) : 0;
+  const beklenen=(o.ucret||0)-indirim;
+  const tutar=await odemeAlPenceresi(o,{ust, beklenen, metin:metin+(indirim?`<br>Davet indirimi %${DAVET_INDIRIMI*100}: −${tlBicim(indirim)}`:'')});
+  if(tutar===null) return false;
+  return {tutar, eksik:Math.max(0,beklenen-tutar), acik:acik+(indirim?` (davet indirimi %${DAVET_INDIRIMI*100})`:'')};
+}
+async function odemeOnayla(i){
+  const o=data[i];const yeniPaket=o.paket||20;const kalanMevcut=efektifKalan(o);
+  const r=await paketOdemesiIsle(i,{ust:'Ödeme bildirimi',metin:`Yeni paket: ${yeniPaket} ders · mevcut kalan: ${kalanMevcut} ders${o.borc>0?` · ${o.borc} ders borcu düşülecek`:''}`,acik:`${o.tur==='ems'?'EMS':'Pilates'} paket ödemesi`});
+  if(!r) return;
+  data[i].odemeBekliyor=false;
+  data[i].toplam_paket=(o.toplam_paket||o.paket||20)+yeniPaket-(o.borc||0);
+  data[i].borc=0; data[i].baslangic=todayStr(); data[i].borcTl=(o.borcTl||0)+r.eksik;
+  gosterYukleniyor();
+  try{await ogrKaydet(data[i]);if(r.tutar>0)await gelirKaydet(odemeGeliri(o,r.tutar,r.acik));await veriYukle();sayfayiYenile();}
+  catch(e){alert('Hata: '+e.message);}finally{gizleYukleniyor();}
+}
+async function ilkOdemeOnayla(i){
+  const o=data[i];
+  const r=await paketOdemesiIsle(i,{ust:'İlk paket ödemesi',metin:`${o.paket||20} derslik ${o.tur==='ems'?'EMS':'Pilates'} paketi`,ilk:true,acik:`${o.tur==='ems'?'EMS':'Pilates'} ilk paket`});
+  if(!r) return;
+  Object.assign(data[i],{ilkOdemeAlindi:true,odemeBekliyor:false,baslangic:todayStr(),yapilan:0,borc:0,borcTl:(o.borcTl||0)+r.eksik});
   gosterYukleniyor();
   try{
     await ogrKaydet(data[i]);
-    // Gelir kaydı
-    if(o.ucret>0) await gelirKaydet({tip:'gelir',tutar:o.ucret,acik:`${o.ad} — Paket yenileme (${yeniPaket} ders)`,tarih:todayStr()});
-    await veriYukle();
-    renderOgr();renderAna();
-    alert(`✅ Paket yenilendi!\n${o.ad} şimdi ${kalanMevcut+yeniPaket} dersi var.`);
+    await sb.from('ogrenciler').update({yapilan:0}).eq('id',o._id); // ilk pakette sayaç sıfırdan başlar
+    if(r.tutar>0)await gelirKaydet(odemeGeliri(o,r.tutar,r.acik));
+    await veriYukle();sayfayiYenile();
+  }catch(e){alert('Hata: '+e.message);}finally{gizleYukleniyor();}
+}
+async function pakiYenile(i){
+  const o=data[i];const yeniPaket=o.paket||20;const kalanMevcut=efektifKalan(o);
+  const r=await paketOdemesiIsle(i,{ust:'Paket yenileme',metin:`Yeni paket: ${yeniPaket} ders · mevcut kalan: ${kalanMevcut} ders${o.borc>0?` · ${o.borc} ders borcu düşülecek`:''} · net kalan: ${kalanMevcut+yeniPaket-(o.borc||0)} ders`,acik:`Paket yenileme (${yeniPaket} ders)`});
+  if(!r) return;
+  data[i].toplam_paket=(o.toplam_paket||o.paket||20)+yeniPaket-(o.borc||0);
+  data[i].borc=0; data[i].baslangic=todayStr(); data[i].borcTl=(o.borcTl||0)+r.eksik;
+  gosterYukleniyor();
+  try{await ogrKaydet(data[i]);if(r.tutar>0)await gelirKaydet(odemeGeliri(o,r.tutar,r.acik));await veriYukle();sayfayiYenile();}
+  catch(e){alert('Hata: '+e.message);}finally{gizleYukleniyor();}
+}
+async function borcOdemesiAl(ogrId){
+  const i=ogrIdx(ogrId);const o=data[i];if(!o)return;
+  const tutar=await odemeAlPenceresi(o,{ust:'Borç / taksit ödemesi',beklenen:o.borcTl||0,metin:`Kalan borç ${tlBicim(o.borcTl||0)}`});
+  if(tutar===null||tutar<=0) return;
+  data[i].borcTl=Math.max(0,(o.borcTl||0)-tutar);
+  gosterYukleniyor();
+  try{await ogrKaydet(data[i]);await gelirKaydet(odemeGeliri(o,tutar,'Borç / taksit ödemesi'));await veriYukle();sayfayiYenile();}
+  catch(e){alert('Hata: '+e.message);}finally{gizleYukleniyor();}
+}
+async function borcDuzenle(ogrId){
+  const i=ogrIdx(ogrId);const o=data[i];if(!o)return;
+  const f=await dsForm({ust:'Borcu düzenle',baslik:o.ad,metin:'Ödeme kaydı oluşturmadan borç tutarını değiştirir (ör. indirim, yanlış giriş).',alanlar:[{ad:'tutar',etiket:'Borç (₺)',tip:'number',deger:o.borcTl||0,zorunlu:true}]});
+  if(!f||!(f.tutar>=0)) return;
+  data[i].borcTl=f.tutar;
+  gosterYukleniyor();try{await ogrKaydet(data[i]);await veriYukle();sayfayiYenile();}catch(e){alert('Hata: '+e.message);}finally{gizleYukleniyor();}
+}
+
+// ── ÖĞRENCİ DETAYI ──
+function ogrDetay(ogrId){
+  const o=data[ogrIdx(ogrId)];if(!o)return;
+  document.getElementById('ds-detay')?.remove();
+  const odemeler=gelirData.filter(g=>g.ogrenciId===o._id&&g.tip==='gelir');
+  const yk=yoklamaData.filter(y=>y.ogrenci_id===o._id).sort((a,b)=>a.tarih<b.tarih?1:-1).slice(0,40);
+  const davetEden=o.davetEden?data[ogrIdx(o.davetEden)]:null;
+  const davetEttikleri=data.filter(x=>x.davetEden===o._id);
+  const ozet={geldi:0,gelmedi:0,iptal:0};yk.forEach(y=>{if(ozet[y.durum]!=null)ozet[y.durum]++;});
+  const ov=document.createElement('div');ov.className='ds-secim-ov';ov.id='ds-detay';ov.dataset.ogr=o._id;
+  ov.innerHTML=`<div class="ds-secim ds-detay">
+    <div class="ds-detay-bas"><div><div class="ds-eyebrow">${o.tur==='ems'?'EMS':'Pilates'} · ${o.saat||''} · ${(o.gunler||[]).map(gunAdi).join(', ')}</div>
+      <div class="ds-secim-baslik">${htmlKac(o.ad)}</div><div class="ds-kucuk">${htmlKac(o.tel)}${o.dogumTarihi?' · Doğum günü '+tarihTR(o.dogumTarihi).slice(0,5):''}</div></div>
+      <button class="ds-kare-btn" data-kapat="1" title="Kapat">${dsIc('x')}</button></div>
+    <div class="ds-detay-izgara">
+      <div class="ds-kutu"><small>Kalan ders</small><b>${efektifKalan(o)}</b><span>${o.yapilan||0} ders yapıldı${o.borc?` · ${o.borc} ders borç`:''}</span></div>
+      <div class="ds-kutu"><small>İptal hakkı</small><b>${iptalHakkiKalan(o)}</b><span>bu paket için kalan</span></div>
+      <div class="ds-kutu${o.borcTl>0?' ds-kutu-kirmizi':''}"><small>Borç</small><b>${tlBicim(o.borcTl||0)}</b><span><button class="ds-link" onclick="borcOdemesiAl('${o._id}')">Ödeme al</button> · <button class="ds-link" onclick="borcDuzenle('${o._id}')">Düzenle</button></span></div>
+      <div class="ds-kutu"><small>Son 40 kayıt</small><b>${ozet.geldi}</b><span>geldi · ${ozet.gelmedi} gelmedi · ${ozet.iptal} iptal</span></div>
+    </div>
+    <div class="ds-detay-kolon">
+      <div><div class="ds-baslik">Ödeme geçmişi</div>${odemeler.length?`<div class="ds-mini-liste">${odemeler.map(g=>`<div><span>${tarihTR(g.tarih)}</span><span>${htmlKac((g.acik||'').replace(o.ad+' — ',''))}</span><b>${tlBicim(g.tutar)}</b></div>`).join('')}</div>`:'<div class="ds-bos">Kayıtlı ödeme yok.</div>'}</div>
+      <div><div class="ds-baslik">Yoklama</div>${yk.length?`<div class="ds-mini-liste">${yk.map(y=>`<div class="ds-tik" onclick="yoklamaDiger('${o._id}','${y.tarih}')"><span>${tarihTR(y.tarih)} ${gunAdi(new Date(y.tarih+'T12:00').getDay())}</span><span class="ds-durum ds-${YOKLAMA_ETIKET[y.durum][1]}">${YOKLAMA_ETIKET[y.durum][0]}</span><span class="ds-kucuk">${htmlKac(y.aciklama||'')}</span></div>`).join('')}</div>`:'<div class="ds-bos">Henüz yoklama kaydı yok.</div>'}</div>
+    </div>
+    <div class="ds-baslik">Davet</div>
+    <div class="ds-kucuk" style="line-height:1.7">Davet kodu: <b style="color:var(--ds-ink);letter-spacing:.08em">${o.davetKodu||'—'}</b>${davetEden?` · ${htmlKac(davetEden.ad)} tarafından davet edildi`:''}${davetEttikleri.length?`<br>Davet ettikleri: ${davetEttikleri.map(x=>htmlKac(x.ad)).join(', ')}`:''}</div>
+    <div class="ds-secim-btnlar ds-yan" style="margin-top:18px">
+      <button class="btn btn-ghost btn-sm" onclick="document.getElementById('ds-detay').remove();waAc(${ogrIdx(o._id)},'wa')">${dsIc('msg')}Mesaj</button>
+      <button class="btn btn-ghost btn-sm" onclick="document.getElementById('ds-detay').remove();duzenle(${ogrIdx(o._id)})">${dsIc('edit')}Düzenle</button>
+      <button class="btn btn-primary btn-sm" onclick="dersEkle(${ogrIdx(o._id)})">${dsIc('plus')}Bugün geldi</button>
+    </div></div>`;
+  ov.addEventListener('click',e=>{if(e.target===ov||e.target.closest('[data-kapat]'))ov.remove();});
+  document.body.appendChild(ov);
+}
+
+// ── TAKVİM: haftalık doluluk, gün detayı, stüdyo kapalı günleri, etkinlik katılımı ──
+function dolulukHtml(){
+  const aktif=data.filter(o=>efektifKalan(o)>0&&o.saat&&(o.gunler||[]).length);
+  const saatler=[...new Set(aktif.map(o=>o.saat))].sort(saatSirala);
+  if(!saatler.length) return '';
+  const gunler=[1,2,3,4,5,6,0];
+  return `<div class="ds-baslik" style="margin-top:6px">Haftalık doluluk</div><div class="card ds-doluluk-kap"><table class="ds-doluluk"><thead><tr><th></th>${gunler.map(g=>`<th>${gunAdi(g)}</th>`).join('')}</tr></thead><tbody>${saatler.map(s=>`<tr><th>${s}</th>${gunler.map(g=>{
+    const ogrs=aktif.filter(o=>o.saat===s&&o.gunler.includes(g));
+    if(!ogrs.length) return '<td class="bos">—</td>';
+    const p=ogrs.filter(o=>o.tur!=='ems').length,e=ogrs.filter(o=>o.tur==='ems').length;
+    const dolu=(p&&p>=3)||(e&&e>=2);
+    return `<td class="${dolu?'dolu':'kismi'}" title="${htmlKac(ogrs.map(o=>o.ad).join(', '))}">${p?`<span>P ${p}/3</span>`:''}${e?`<span>E ${e}/2</span>`:''}</td>`;}).join('')}</tr>`).join('')}</tbody></table>
+    <div class="ds-not" style="margin:10px 2px 0">${dsIc('users')} P: Pilates (en fazla 3 kişi) · E: EMS (en fazla 2 kişi). Koyu kutular dolu, açık kutularda yer var.</div></div>`;
+}
+function takvimGunDetay(g,ay,yil){
+  const t=`${yil}-${pad(ay+1)}-${pad(g)}`;
+  const el=document.getElementById('takvim-detay');
+  const vt=tatilMap[t];const sabit=_tatilMiSabit(yil,ay,g);
+  const baslik=`${g} ${AY_ADLARI[ay]} ${['Pazar','Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi'][new Date(yil,ay,g).getDay()]}`;
+  let html=yoklamaListesiHtml(t,baslik)||`<div class="ds-baslik">${baslik}</div><div class="ds-bos">Bu gün planlı ders yok.</div>`;
+  html+=`<div style="margin:12px 0 4px">${sabit&&!vt?`<span class="ds-kucuk">${dsIc('cal')} Resmî tatil: ${htmlKac(sabit)}</span>`
+    :`<button class="btn btn-ghost btn-sm" onclick="studyoKapaliDegistir('${t}')">${dsIc(vt?'refresh':'ban')}${vt?'Kapalı gün işaretini kaldır ('+htmlKac(vt)+')':'Bu günü stüdyo kapalı olarak işaretle'}</button>`}</div>`;
+  el.innerHTML=`<div style="padding:0 16px">${html}</div>`;
+}
+async function studyoKapaliDegistir(t){
+  gosterYukleniyor();
+  try{
+    if(tatilMap[t]){const {error}=await sb.from('tatiller').delete().eq('tarih',t);if(error)throw error;}
+    else{
+      const f=await dsForm({ust:'Stüdyo kapalı',baslik:tarihTR(t),metin:'Bu günün dersleri işlenmez ve paket bitiş tarihi hesabında atlanır.',alanlar:[{ad:'ad',etiket:'Açıklama',deger:'Stüdyo kapalı',zorunlu:true}]});
+      if(!f){gizleYukleniyor();return;}
+      const {error}=await sb.from('tatiller').insert({tarih:t,ad:f.ad});if(error)throw error;
+    }
+    await veriYukle();renderTakvim();const [y,a,g]=t.split('-').map(Number);takvimGunDetay(g,a-1,y);
+  }catch(e){alert('Hata: '+e.message);}finally{gizleYukleniyor();}
+}
+function etkinlikleriYukle(){
+  if(window.DUMANS_EVENTS) return Promise.resolve(window.DUMANS_EVENTS);
+  return new Promise(coz=>{const s=document.createElement('script');s.src='https://dumansstudio.com/etkinlikler.js?v='+Date.now();s.onload=()=>coz(window.DUMANS_EVENTS||[]);s.onerror=()=>coz([]);document.head.appendChild(s);});
+}
+async function etkinlikKatilimHtml(){
+  const ev=(await etkinlikleriYukle()).filter(e=>e.tarih>=todayStr()).sort((a,b)=>a.tarih<b.tarih?-1:1);
+  if(!ev.length) return '';
+  const {data:k}=await sb.from('etkinlik_katilim').select('ogrenci_id,etkinlik');
+  return `<div class="ds-baslik">Yaklaşan etkinlikler</div><div class="card ds-liste">${ev.map(e=>{
+    const anahtar=e.tarih+'|'+e.baslik;const kat=(k||[]).filter(x=>x.etkinlik===anahtar);
+    return `<div class="ds-sat" style="grid-template-columns:44px 1fr auto"><div class="ds-sat-tarih"><b>${new Date(e.tarih+'T12:00').getDate()}</b><small>${AY_ADLARI[new Date(e.tarih+'T12:00').getMonth()].slice(0,3)}</small></div>
+      <div class="ds-sat-orta"><div class="ds-sat-ad">${htmlKac(e.baslik)}</div><div class="ds-kucuk">${htmlKac(e.yer||'')}${kat.length?' · '+kat.map(x=>htmlKac(data[ogrIdx(x.ogrenci_id)]?.ad||'')).filter(Boolean).join(', '):''}</div></div>
+      <div class="ds-sat-sag"><div class="ds-tutar">${kat.length}</div><small class="ds-kucuk">katılacak</small></div></div>`;}).join('')}</div>`;
+}
+const _renderTakvimEski = renderTakvim;
+renderTakvim = function(){
+  _renderTakvimEski();
+  const el=document.getElementById('takvim-c');
+  el.insertAdjacentHTML('afterbegin',`<div style="padding:0 16px">${dolulukHtml()}</div>`);
+  el.insertAdjacentHTML('beforeend','<div id="takvim-etkinlik" style="padding:0 16px 16px"></div>');
+  const n=new Date();takvimGunDetay(n.getDate(),n.getMonth(),n.getFullYear());
+  etkinlikKatilimHtml().then(h=>{const e=document.getElementById('takvim-etkinlik');if(e)e.innerHTML=h;});
+};
+
+// ── NOTLAR (veritabanında; telefon ve bilgisayarda aynı) ──
+let notlarCache=[];
+async function notlariYukle(){
+  const eski=JSON.parse(localStorage.getItem('ds_notlar')||'[]');
+  if(eski.length){ // bu cihazda kalmış eski notları bir kez veritabanına taşı
+    const {error}=await sb.from('yonetici_notlar').insert(eski.map(n=>({baslik:n.baslik||null,icerik:n.icerik,renk:n.renk||null,tarih:n.tarih||new Date().toISOString()})));
+    if(!error) localStorage.removeItem('ds_notlar');
   }
-  catch(e){alert('Hata: '+e.message);}
-  finally{gizleYukleniyor();}
+  const {data:n}=await sb.from('yonetici_notlar').select('*').order('tarih',{ascending:false});
+  notlarCache=n||[];
+}
+async function renderNotlar(){
+  const el=document.getElementById('notlar-c');
+  el.innerHTML='<div class="ds-ay"><div class="ds-bos">Yükleniyor…</div></div>';
+  await notlariYukle();
+  const renkler=[['#FFFFFF','Beyaz'],['#FBF5E2','Altın'],['#F2F6F0','Yeşil'],['#FBF1EF','Kırmızı'],['#F1F4F7','Mavi']];
+  el.innerHTML=`<div class="ds-ay">
+    <div class="ds-ay-ad" style="margin-bottom:14px">Notlar</div>
+    <div class="card" style="margin-bottom:16px">
+      <input id="not-baslik" type="text" placeholder="Başlık (isteğe bağlı)" style="margin-bottom:8px">
+      <textarea id="not-icerik" placeholder="Notunuzu yazın…" rows="3" style="resize:vertical;font-family:inherit"></textarea>
+      <div style="display:flex;gap:8px;margin-top:10px;align-items:center;flex-wrap:wrap">
+        <div class="ds-renkler">${renkler.map((r,k)=>`<label title="${r[1]}"><input type="radio" name="not-renk" value="${r[0]}"${k===0?' checked':''}><i style="background:${r[0]}"></i></label>`).join('')}</div>
+        <button onclick="notEkle()" class="btn btn-primary btn-sm" style="margin-left:auto">${dsIc('plus')}Not ekle</button>
+      </div>
+      <div class="ds-not" style="margin-top:10px">${dsIc('globe')} Notlarınız hesabınızda saklanır; telefon ve bilgisayarda aynı görünür.</div>
+    </div>
+    <div class="ds-notlar">${notlarCache.length?notlarCache.map(n=>`<div class="ds-not-kart" style="background:${htmlKac(n.renk||'#fff')}">
+      <button class="ds-not-sil" onclick="notSil('${n.id}')" title="Sil">${dsIc('trash')}</button>
+      ${n.baslik?`<div class="ds-sat-ad">${htmlKac(n.baslik)}</div>`:''}<div class="ds-not-metin">${htmlKac(n.icerik)}</div>
+      <div class="ds-kucuk" style="text-align:right;margin-top:8px">${new Date(n.tarih).toLocaleString('tr-TR',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}</div></div>`).join(''):'<div class="ds-bos">Henüz not yok.</div>'}</div></div>`;
+}
+async function notEkle(){
+  const baslik=document.getElementById('not-baslik').value.trim();const icerik=document.getElementById('not-icerik').value.trim();
+  const renk=document.querySelector('input[name="not-renk"]:checked')?.value||'#FFFFFF';
+  if(!icerik){alert('Not içeriği boş olamaz.');return;}
+  const {error}=await sb.from('yonetici_notlar').insert({baslik:baslik||null,icerik,renk});
+  if(error){alert('Kaydedilemedi: '+error.message);return;}
+  renderNotlar();
+}
+async function notSil(id){
+  if(!confirm('Bu not silinsin mi?'))return;
+  const {error}=await sb.from('yonetici_notlar').delete().eq('id',id);
+  if(error){alert('Silinemedi: '+error.message);return;}
+  renderNotlar();
+}
+
+// ── MESAJ ŞABLONLARI ve TOPLU MESAJ ──
+function mesajSablonlari(o){
+  const ad=o.ad.split(' ')[0];
+  return {
+    odemeHatirlat:['Ödeme hatırlatması',`Merhaba ${ad} Hanım,\n\nDUMANSSTUDIO paket ödemeniz (${tlBicim(o.ucret||0)}${o.borcTl>0?`, kalan borç ${tlBicim(o.borcTl)}`:''}) için hatırlatma yapmak istedik. Ödeme bilgilerine üye panelinizdeki Ödeme sayfasından ulaşabilirsiniz.\n\nTeşekkür ederiz.\nDUMANSSTUDIO`],
+    paketTeklif:['Paket yenileme',`Merhaba ${ad} Hanım,\n\nPaketinizde ${Math.max(0,efektifKalan(o))} ders kaldı. Derslerinize ara vermeden devam etmek için yeni paketinizi şimdiden planlayabiliriz. Uygun olduğunuzda bize yazmanız yeterli.\n\nDUMANSSTUDIO`],
+    dogumgunu:['Doğum günü',`Sevgili ${ad} Hanım,\n\nDoğum gününüzü en içten dileklerimizle kutlarız. Sağlıklı, güçlü ve huzurlu bir yaş dileriz.\n\nMerve Duman ve DUMANSSTUDIO ailesi`],
+    dersIptal:['Ders iptali',`Merhaba ${ad} Hanım,\n\nBugünkü dersimizi maalesef yapamayacağız. Ders hakkınız korunur; telafi günü için sizinle iletişime geçeceğiz. Anlayışınız için teşekkür ederiz.\n\nDUMANSSTUDIO`],
+    geriKazanim:['Sizi özledik',`Merhaba ${ad} Hanım,\n\nBir süredir sizi stüdyomuzda göremiyoruz ve özledik. Derslerinize yeniden başlamak isterseniz size uygun gün ve saati birlikte planlayalım.\n\nDUMANSSTUDIO`],
+    davet:['Arkadaşını getir',`Merhaba ${ad} Hanım,\n\nDUMANSSTUDIO'ya bir arkadaşınızı davet etmek ister misiniz? Davet kodunuz: ${o.davetKodu||''}\nBu kodla kayıt olan arkadaşınız ilk paketinde %${DAVET_INDIRIMI*100} indirim kazanır.\n\nDUMANSSTUDIO`],
+    menuHatirlat:['Günün menüsü',`Merhaba ${ad} Hanım,\n\nBugünün beslenme önerisi üye panelinizde yayında. Afiyet olsun!\n\nDUMANSSTUDIO`]
+  };
+}
+function sablonGonder(ogrId,k){const o=data[ogrIdx(ogrId)];if(!o)return;waAcMetin(o.tel,mesajSablonlari(o)[k][1]);}
+const MESAJ_GRUPLARI={
+  tumu:['Tüm öğrenciler',()=>data],
+  pilates:['Pilates öğrencileri',()=>data.filter(o=>o.tur!=='ems')],
+  ems:['EMS öğrencileri',()=>data.filter(o=>o.tur==='ems')],
+  odeme:['Ödemesi bekleyenler',()=>data.filter(o=>o.odemeBekliyor||o.ilkOdemeAlindi===false||(o.borcTl||0)>0||efektifKalan(o)<=0||gecikmiMi(o))],
+  azkalan:['3 ve daha az dersi kalanlar',()=>data.filter(o=>efektifKalan(o)>0&&efektifKalan(o)<=3)],
+  dogumgunu:['Bugün doğum günü olanlar',()=>data.filter(dogumGunuBugunMu)],
+  kayip:['2 haftadır yenilemeyenler',()=>kayipOgrenciler()],
+  analizsiz:['Analiz paketi olmayanlar',()=>data.filter(o=>!o.analizPaketi)]
+};
+let topluMesajSecim={grup:'tumu',sablon:'paketTeklif'};
+function topluMesajAc(grup,sablon){topluMesajSecim={grup,sablon};sp('toplumesaj');}
+function renderTopluMesaj(){
+  const el=document.getElementById('toplumesaj-c');
+  const {grup,sablon}=topluMesajSecim;
+  const liste=MESAJ_GRUPLARI[grup][1]().filter(o=>o.tel);
+  const ornek=data[0]?mesajSablonlari(data[0]):mesajSablonlari({ad:'Ad',ucret:0});
+  el.innerHTML=`<div class="ds-ay">
+    <div class="ds-ay-ad" style="margin-bottom:4px">Toplu mesaj</div>
+    <div class="ds-kucuk" style="margin-bottom:14px">Mesajlar WhatsApp üzerinden tek tek açılır; her birinde "Gönder"e basmanız yeterli.</div>
+    <div class="ds-ay-iki">
+      <label class="ds-form-alan"><span>Kime</span><select onchange="topluMesajSecim.grup=this.value;renderTopluMesaj()">${Object.entries(MESAJ_GRUPLARI).map(([k,v])=>`<option value="${k}"${k===grup?' selected':''}>${v[0]}</option>`).join('')}</select></label>
+      <label class="ds-form-alan"><span>Mesaj</span><select onchange="topluMesajSecim.sablon=this.value;renderTopluMesaj()">${Object.entries(ornek).map(([k,v])=>`<option value="${k}"${k===sablon?' selected':''}>${v[0]}</option>`).join('')}</select></label>
+    </div>
+    <div class="card" style="margin-top:12px"><div class="ds-eyebrow" style="margin-bottom:8px">Önizleme</div><div class="ds-not-metin">${htmlKac(liste[0]?mesajSablonlari(liste[0])[sablon][1]:ornek[sablon][1])}</div></div>
+    <div class="ds-baslik">${liste.length} kişi</div>
+    ${liste.length?`<div class="card ds-liste">${liste.map(o=>`<label class="ds-secim-sat"><input type="checkbox" class="tm-sec" value="${o._id}" checked><span>${htmlKac(o.ad)}</span><span class="ds-kucuk">${htmlKac(o.tel)}</span></label>`).join('')}</div>
+      <button class="btn btn-primary" style="width:100%;margin-top:12px" onclick="topluMesajBaslat()">${dsIc('msg')}Seçilenlere sırayla gönder</button>`:'<div class="ds-bos">Bu grupta telefonu kayıtlı öğrenci yok.</div>'}
+  </div>`;
+}
+function topluMesajBaslat(){
+  const idler=[...document.querySelectorAll('.tm-sec:checked')].map(c=>c.value);
+  if(!idler.length) return;
+  let k=0;
+  const ov=document.createElement('div');ov.className='ds-secim-ov';
+  const ciz=()=>{
+    if(k>=idler.length){ov.innerHTML=`<div class="ds-secim"><div class="ds-secim-baslik">Tamamlandı</div><div class="ds-secim-metin">${idler.length} mesaj açıldı.</div><div class="ds-secim-btnlar"><button class="btn btn-primary" data-kapat="1">Kapat</button></div></div>`;return;}
+    const o=data[ogrIdx(idler[k])];
+    ov.innerHTML=`<div class="ds-secim"><div class="ds-eyebrow">${k+1} / ${idler.length}</div><div class="ds-secim-baslik">${htmlKac(o.ad)}</div>
+      <div class="ds-secim-metin" style="white-space:pre-wrap">${htmlKac(mesajSablonlari(o)[topluMesajSecim.sablon][1])}</div>
+      <div class="ds-secim-btnlar"><button class="btn btn-primary" data-gonder="1">${dsIc('msg')}WhatsApp'ta aç</button><button class="btn btn-ghost" data-atla="1">Bu kişiyi atla</button><button class="btn btn-ghost" data-kapat="1">Durdur</button></div></div>`;
+  };
+  ov.addEventListener('click',e=>{
+    const b=e.target.closest('button');if(!b)return;
+    if(b.dataset.kapat)return ov.remove();
+    if(b.dataset.gonder){const o=data[ogrIdx(idler[k])];waAcMetin(o.tel,mesajSablonlari(o)[topluMesajSecim.sablon][1]);}
+    k++;ciz();
+  });
+  ciz();document.body.appendChild(ov);
+}
+
+// ── TAM YEDEK (tüm tablolar) ──
+async function yedekle(){
+  const tablolar=['ogrenciler','gelir_gider','olcumler','saglik_formlari','bultenler','kalori_kayitlari','yoklama','ders_talepleri','yonetici_notlar','ogrenci_arsivi','hesap_silme_talepleri','etkinlik_katilim','tatiller','yonetici_ayarlar'];
+  gosterYukleniyor();
+  try{
+    const yedek={olusturma:new Date().toISOString(),not:'DumansStudio tam yedek. Kişisel ve sağlık verisi içerir; güvenli bir yerde saklayın.'};
+    for(const t of tablolar){const {data:r,error}=await sb.from(t).select('*');yedek[t]=error?{hata:error.message}:r;}
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(new Blob([JSON.stringify(yedek,null,1)],{type:'application/json'}));
+    a.download=`dumansstudio_yedek_${todayStr()}.json`;a.click();
+    const deger={tarih:new Date().toISOString()};
+    await sb.from('yonetici_ayarlar').upsert({anahtar:'son_yedek',deger,guncelleme:new Date().toISOString()});
+    yoneticiAyar.son_yedek=deger;sayfayiYenile();
+  }catch(e){alert('Yedek alınamadı: '+e.message);}finally{gizleYukleniyor();}
+}
+
+// ── AYLIK RAPOR (yazdır / PDF) ──
+function aylikPdf(){
+  const h=aylikHesapla(aylikOfset);const ay=`${AY_ADLARI[h.ayBas.getMonth()]} ${h.ayBas.getFullYear()}`;
+  const satir=(a,b,c)=>`<tr><td>${a}</td><td>${b}</td><td style="text-align:right">${c}</td></tr>`;
+  const w=window.open('','_blank');if(!w){alert('Açılır pencere engellendi. Tarayıcı ayarından izin verin.');return;}
+  w.document.write(`<!doctype html><html lang="tr"><head><meta charset="utf-8"><title>DumansStudio ${ay} raporu</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Jost:wght@400;500&display=swap" rel="stylesheet">
+  <style>body{font-family:Jost,Arial,sans-serif;color:#1A1714;margin:32px;font-size:12.5px}h1{font-family:'Cormorant Garamond',serif;font-weight:500;font-size:30px;margin:0}
+  .e{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#8F7120}h2{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#6E655B;margin:24px 0 8px;font-weight:500}
+  .k{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:18px}.k div{border:1px solid #E6DED0;border-radius:10px;padding:10px}.k b{display:block;font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:500}
+  table{width:100%;border-collapse:collapse}td{padding:6px 4px;border-bottom:1px solid #EFE8DC}@media print{body{margin:12mm}}</style></head><body>
+  <div class="e">DumansStudio · Aylık rapor</div><h1>${ay}</h1><div style="color:#6E655B;margin-top:4px">Oluşturma: ${new Date().toLocaleString('tr-TR')}</div>
+  <div class="k"><div>Alınan<b>${tlBicim(h.alinan)}</b></div><div>Daha alınacak<b>${tlBicim(h.beklenen)}</b></div><div>Gider<b>${tlBicim(h.gider)}</b></div><div>Tahmini net<b>${tlBicim(h.alinan+h.beklenen-h.gider)}</b></div></div>
+  <h2>Alınan ödemeler</h2><table>${h.gelirler.map(g=>satir(tarihTR(g.tarih),htmlKac(g.acik||'Gelir'),tlBicim(g.tutar))).join('')||'<tr><td>Kayıt yok</td></tr>'}</table>
+  <h2>Giderler</h2><table>${h.giderler.map(g=>satir(tarihTR(g.tarih),htmlKac(g.acik||'Gider'),tlBicim(g.tutar))).join('')||'<tr><td>Kayıt yok</td></tr>'}</table>
+  <h2>Beklenen ödemeler</h2><table>${h.beklenenler.map(e=>satir(e.tarih.toLocaleDateString('tr-TR'),htmlKac(e.o.ad),tlBicim(e.tutar))).join('')||'<tr><td>Kayıt yok</td></tr>'}</table>
+  </body></html>`);
+  w.document.close();setTimeout(()=>{w.focus();w.print();},700);
+}
+
+// ── TELEFON MENÜSÜ: yan menüdeki tüm sayfalar ──
+function menuAc(){
+  const ov=document.createElement('div');ov.className='ds-menu-ov';
+  const kopya=document.getElementById('side-nav').cloneNode(true);
+  kopya.querySelectorAll('[id]').forEach(e=>e.removeAttribute('id'));
+  const ic=[...kopya.children].filter(e=>e.matches('.snav-section,.snav-btn')).map(e=>e.outerHTML).join('');
+  ov.innerHTML=`<div class="ds-menu"><div class="ds-menu-tutamac"></div>${ic}<button class="snav-btn" onclick="cikisYap()" style="color:var(--red) !important">${dsIc('logout')} Çıkış yap</button></div>`;
+  ov.addEventListener('click',e=>{if(e.target===ov||e.target.closest('.snav-btn'))ov.remove();});
+  document.body.appendChild(ov);
 }
 
 // ── BİLDİRİMLER ──
@@ -1833,12 +2799,15 @@ function renderMesajlar() {
     kalan:`Merhaba ${o.ad} Hanım,\n\n${efektifKalan(o)} dersiniz kalmıştır. Yeni paket için ödemenizi gerçekleştirebilirsiniz.\n\nDUMANSSTUDIO`,
     hosgeldin:`Merhaba ${o.ad} Hanım,\n\nDUMANSSTUDIO ailesine hoş geldiniz! 🎉\n\nDersleriniz: ${(o.gunler||[]).map(g=>gunAdi(g)).join(', ')} ${o.saat||''}\nPaket: ${o.paket} ders\n\nGörüşürüz! 🧘`,
   };
+  const ekSablon=mesajSablonlari(o);
+  Object.keys(ekSablon).forEach(k=>{if(k!=='odemeHatirlat')msgs[k]=ekSablon[k][1];});
+  const etiket=k=>({odeme:'Ödeme bilgileri',kalan:'Kalan ders',hosgeldin:'Hoş geldiniz'})[k]||ekSablon[k][0];
   el.innerHTML=`
     <div class="section-title">📱 MESAJ GÖNDER — ${o.ad}</div>
     <div style="padding:0 16px;display:flex;flex-direction:column;gap:8px">
       ${Object.entries(msgs).map(([k,v])=>`
         <div class="card">
-          <div style="font-size:11px;color:var(--gold-dark);font-weight:600;margin-bottom:8px">${k==='odeme'?'💳 Ödeme Hatırlatma':k==='kalan'?'⚠️ Kalan Ders':'🎉 Hoş Geldin'}</div>
+          <div style="font-size:11px;color:var(--gold-dark);font-weight:600;margin-bottom:8px">${etiket(k)}</div>
           <div style="font-size:12px;color:var(--text2);white-space:pre-line;margin-bottom:10px">${v.slice(0,120)}...</div>
           <div style="display:flex;gap:6px">
             <button class="btn btn-wa btn-sm" onclick="window.open('https://wa.me/${intNum}?text=${encodeURIComponent(v)}','_blank')">📱 WhatsApp</button>
@@ -2390,12 +3359,6 @@ async function topluHatirlatma(){
 }
 
 // ── YEDEKLE ──
-function yedekle(){
-  const d={ogrenciler:data,gelirGider:gelirData,tarih:new Date().toISOString()};
-  const a=document.createElement('a');
-  a.href='data:text/json;charset=utf-8,'+encodeURIComponent(JSON.stringify(d,null,2));
-  a.download=`dumanss_yedek_${todayStr()}.json`;a.click();
-}
 
 // ── DUZENLE / EKLeme FORMU ──
 let duzenlemeIdx=-1;
@@ -2415,6 +3378,7 @@ function renderEkleForm(o={}){
     <div><div class="field-label">AD SOYAD *</div><input id="f-ad" class="field-input" value="${o.ad||''}" placeholder="Ad Soyad"></div>
     <div><div class="field-label">TELEFON</div><input id="f-tel" class="field-input" type="tel" value="${o.tel||''}" placeholder="05XX XXX XX XX"></div>
     <div><div class="field-label">E-POSTA</div><input id="f-mail" class="field-input" type="email" value="${o.mail||''}" placeholder="ornek@mail.com"></div>
+    <div><div class="field-label">DOĞUM TARİHİ</div><input id="f-dogum" class="field-input" type="date" value="${o.dogumTarihi||''}"><div class="ds-kucuk" style="margin-top:4px">İsteğe bağlı. Doğum gününde ana sayfada kutlama hatırlatması çıkar.</div></div>
     <div><div class="field-label">DERS TÜRÜ</div>
       <select id="f-tur">
         <option value="pilates"${(o.tur||'pilates')==='pilates'?' selected':''}>🧘 Pilates (max 3 kişi)</option>
@@ -2433,6 +3397,7 @@ function renderEkleForm(o={}){
       </div>
     </div>
     <div><div class="field-label">İPTAL HAKKI</div><input id="f-iptal" class="field-input" type="number" value="${o.iptalHakki??1}"></div>
+    ${yeni?`<div><div class="field-label">DAVET KODU</div><input id="f-davet" class="field-input" placeholder="Ör. DS4K7P" style="text-transform:uppercase"><div class="ds-kucuk" style="margin-top:4px">Bir öğrencinin davetiyle geldiyse kodunu yazın; ilk ödemede %10 indirim önerilir.</div></div>`:''}
     ${yeni?`<label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
       <input type="checkbox" id="f-ilkodeme" style="width:auto"> İlk ödeme henüz alınmadı
     </label>`:''}
@@ -2451,6 +3416,8 @@ document.addEventListener('DOMContentLoaded',()=>{
 async function kaydet(){
   const ad=document.getElementById('f-ad')?.value?.trim();
   if(!ad){alert('Ad zorunlu!');return;}
+  // Yeni öğrencinin telefonu arşivde varsa önce geri yükleme önerilir.
+  if(duzenlemeIdx===-1 && await arsivEslesmesiSor(document.getElementById('f-tel')?.value)) return;
   const gunler=Array.from(document.querySelectorAll('input[type=checkbox]:checked')).filter(c=>c.id!=='f-ilkodeme').map(c=>parseInt(c.value));
   const tur=document.getElementById('f-tur')?.value||'pilates';
   const saat=document.getElementById('f-saat')?.value||'';
@@ -2463,17 +3430,32 @@ async function kaydet(){
   }
 
   const ilkOdemeAlindi=document.getElementById('f-ilkodeme')?!document.getElementById('f-ilkodeme').checked:true;
+  // Düzenlemede formda olmayan bilgiler (toplam paket, ödeme durumu, borç…) korunur.
+  const onceki=duzenlemeIdx>-1?data[duzenlemeIdx]:null;
+  const paket=parseInt(document.getElementById('f-paket')?.value)||20;
+  let davetEden=onceki?onceki.davetEden:null;
+  const davetKod=(document.getElementById('f-davet')?.value||'').trim().toUpperCase();
+  if(!onceki&&davetKod){
+    const davetci=data.find(x=>(x.davetKodu||'').toUpperCase()===davetKod);
+    if(!davetci){alert('Bu davet kodu bulunamadı: '+davetKod);return;}
+    davetEden=davetci._id;
+  }
   const o={
-    _id: duzenlemeIdx>-1?data[duzenlemeIdx]._id:undefined,
+    ...(onceki||{}),
+    _id: onceki?onceki._id:undefined,
     ad, tel:document.getElementById('f-tel')?.value||'',
     mail:document.getElementById('f-mail')?.value||'',
-    tur, paket:parseInt(document.getElementById('f-paket')?.value)||20,
+    dogumTarihi:document.getElementById('f-dogum')?.value||null,
+    tur, paket,
     ucret:parseFloat(document.getElementById('f-ucret')?.value)||0,
     saat, gunler, iptalHakki:parseInt(document.getElementById('f-iptal')?.value)??1,
-    yapilan:duzenlemeIdx>-1?data[duzenlemeIdx].yapilan:0,
-    borc:duzenlemeIdx>-1?data[duzenlemeIdx].borc:0,
-    baslangic:duzenlemeIdx>-1?data[duzenlemeIdx].baslangic:null,
-    odemeBekliyor:false, ilkOdemeAlindi,
+    toplam_paket:onceki?(onceki.toplam_paket||paket):paket,
+    yapilan:onceki?onceki.yapilan:0,
+    borc:onceki?onceki.borc:0,
+    baslangic:onceki?onceki.baslangic:null,
+    odemeBekliyor:onceki?onceki.odemeBekliyor:false,
+    ilkOdemeAlindi:onceki?onceki.ilkOdemeAlindi:ilkOdemeAlindi,
+    davetEden,
   };
 
   gosterYukleniyor();
@@ -2501,7 +3483,7 @@ async function kaydet(){
 
 async function renderDiyet() {
   const el = document.getElementById('diyet-c');
-  const ogrenciOptions = (data||[]).map(o => `<option value="${o.id}">${o.ad}</option>`).join('');
+  const ogrenciOptions = (data||[]).map(o => `<option value="${o._id}">${o.ad}</option>`).join('');
   el.innerHTML = `
   <div class="section-title">📰 GÜNLÜK MENÜLER VE HABERLER</div>
   <div style="padding:0 16px">
@@ -2593,7 +3575,7 @@ function bultenWhatsappMesaji(baslik, icerik) {
 async function bultenWhatsappGonder(baslik, icerik, tip, ogrId) {
   let hedefler = [];
   if (tip === 'ogrenci') {
-    const o = (data||[]).find(x => x.id === ogrId);
+    const o = (data||[]).find(x => x._id === ogrId);
     if (o && o.tel) hedefler = [o];
   } else {
     hedefler = (data||[]).filter(o => o.tel);
@@ -2664,6 +3646,71 @@ async function uygulamaBaslat(){
   finally{gizleYukleniyor();}
   renderAna();
   renderEkleForm();
+  finansHatirlatici();
+  sb.rpc('arsiv_temizle').then(()=>{},()=>{}); // süresi dolan arşiv kayıtlarını sil
+}
+
+// ── 14 GÜNLÜK HATIRLATMA: giderleri girin, gelen ödemeleri kontrol edin ──
+// Son kontrol tarihi veritabanında (yonetici_ayarlar) tutulur; telefon ve bilgisayarda aynı durum görünür.
+const FINANS_KONTROL_GUN = 14;
+async function finansAyarKaydet(deger) {
+  await sb.from('yonetici_ayarlar').upsert({anahtar:'finans_kontrol', deger, guncelleme:new Date().toISOString()});
+}
+async function finansHatirlatici(zorla) {
+  let ayar = {};
+  try {
+    const {data:r} = await sb.from('yonetici_ayarlar').select('deger').eq('anahtar','finans_kontrol').maybeSingle();
+    ayar = (r && r.deger) || {};
+  } catch(e) { return; }
+  const bugunS = todayStr();
+  const gunFarki = (s) => s ? Math.floor((new Date(bugunS) - new Date(s)) / 864e5) : Infinity;
+  if(!zorla) {
+    if(ayar.ertele && ayar.ertele > bugunS) return;
+    if(gunFarki(ayar.son_kontrol) < FINANS_KONTROL_GUN) return;
+  }
+  const sinir = new Date(); sinir.setDate(sinir.getDate() - FINANS_KONTROL_GUN);
+  const son14 = gelirData.filter(g => g.tarih && new Date(g.tarih) >= sinir);
+  const toplam = (tip) => son14.filter(g=>g.tip===tip).reduce((t,g)=>t+(+g.tutar||0),0);
+  const tl = (n) => '₺' + Math.round(n).toLocaleString('tr-TR');
+  const odemeBildiren = data.filter(o=>o.odemeBekliyor);
+  const ilkOdeme = data.filter(o=>!o.ilkOdemeAlindi);
+  const borclu = data.filter(o=>(o.borc||0)>0);
+  const paketBitti = data.filter(o=>kalanDers(o)===0 || gecikmiMi(o));
+  const liste = (baslik, arr, renk) => arr.length ? `<div style="margin-top:10px"><div style="font-size:11px;font-weight:700;color:${renk};letter-spacing:.5px">${baslik} (${arr.length})</div><div style="font-size:12px;color:var(--text2);margin-top:3px">${arr.map(o=>o.ad).join(', ')}</div></div>` : '';
+  const sonKontrol = ayar.son_kontrol ? new Date(ayar.son_kontrol).toLocaleDateString('tr-TR') : 'henüz yapılmadı';
+  const ov = document.createElement('div');
+  ov.id = 'finans-hatirlatici';
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(20,14,6,.55);z-index:9000;display:flex;align-items:center;justify-content:center;padding:16px';
+  ov.innerHTML = `<div style="background:#fff;border-radius:16px;max-width:460px;width:100%;max-height:90vh;overflow:auto;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+    <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;color:var(--gold-dark)">⏰ ${FINANS_KONTROL_GUN} GÜNLÜK KONTROL</div>
+    <div style="font-size:19px;font-weight:700;margin:6px 0 4px">Giderlerinizi girin, gelen ödemeleri kontrol edin</div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:14px">Son kontrol: ${sonKontrol}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;text-align:center">
+      <div style="background:var(--card2);border-radius:10px;padding:10px 4px"><div style="font-size:10px;color:var(--text3)">Son ${FINANS_KONTROL_GUN} gün gelir</div><div style="font-weight:700;color:var(--green)">${tl(toplam('gelir'))}</div></div>
+      <div style="background:var(--card2);border-radius:10px;padding:10px 4px"><div style="font-size:10px;color:var(--text3)">Son ${FINANS_KONTROL_GUN} gün gider</div><div style="font-weight:700;color:var(--red)">${tl(toplam('gider'))}</div></div>
+      <div style="background:var(--card2);border-radius:10px;padding:10px 4px"><div style="font-size:10px;color:var(--text3)">Gider kaydı</div><div style="font-weight:700">${son14.filter(g=>g.tip==='gider').length} adet</div></div>
+    </div>
+    ${son14.filter(g=>g.tip==='gider').length===0?'<div class="alert a-yellow" style="margin-top:12px;font-size:12px">Son 14 günde hiç gider girilmemiş. Kira, fatura, malzeme gibi harcamaları eklemeyi unutmayın.</div>':''}
+    ${liste('💳 Ödeme yaptığını bildirenler — onay bekliyor', odemeBildiren, 'var(--red)')}
+    ${liste('⏳ İlk ödemesi beklenenler', ilkOdeme, 'var(--red)')}
+    ${liste('⚠️ Ders borcu olanlar', borclu, '#A03000')}
+    ${liste('📦 Paketi biten / süresi dolanlar', paketBitti, 'var(--gold-dark)')}
+    ${!odemeBildiren.length&&!ilkOdeme.length&&!borclu.length&&!paketBitti.length?'<div class="alert a-green" style="margin-top:12px;font-size:12px">✓ Bekleyen ödeme veya borçlu öğrenci yok.</div>':''}
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:18px">
+      <button class="btn btn-ghost btn-sm" data-git="gelir">➕ Gider ekle</button>
+      <button class="btn btn-ghost btn-sm" data-git="ana">💳 Ödemeleri gör</button>
+      <button class="btn btn-ghost btn-sm" data-ertele="1">Yarın hatırlat</button>
+      <button class="btn btn-primary btn-sm" style="margin-left:auto" data-tamam="1">✓ Kontrol ettim</button>
+    </div></div>`;
+  ov.addEventListener('click', async (e) => {
+    const b = e.target.closest('button');
+    if(!b) return;
+    if(b.dataset.git) { ov.remove(); sp(b.dataset.git); return; }
+    if(b.dataset.ertele) { const y = new Date(); y.setDate(y.getDate()+1); await finansAyarKaydet({...ayar, ertele:`${y.getFullYear()}-${pad(y.getMonth()+1)}-${pad(y.getDate())}`}); ov.remove(); return; }
+    if(b.dataset.tamam) { await finansAyarKaydet({son_kontrol:bugunS}); ov.remove(); return; }
+  });
+  document.getElementById('finans-hatirlatici')?.remove();
+  document.body.appendChild(ov);
 }
 </script>
 </div>
@@ -2694,6 +3741,119 @@ async function uygulamaBaslat(){
 </script>
 <script>
 if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));}
+</script>
+<!-- ── DS TEMA: emoji yerine ince çizgi simgeler (iki panelde aynı) ── -->
+<script id="ds-tema-js">
+(function(){
+  // Lucide tarzı simgeler (24x24, çizgi 1.5)
+  var P={
+    home:'<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/>',
+    users:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.2a6.5 6.5 0 0 1 3.5 5.8"/>',
+    plus:'<path d="M12 5v14M5 12h14"/>',
+    cal:'<rect x="3" y="4.5" width="18" height="16.5" rx="2"/><path d="M16 3v3M8 3v3M3 10h18"/>',
+    chart:'<path d="M3 3v18h18"/><path d="M7 16v-4M12 16V8M17 16v-7"/>',
+    up:'<path d="M22 7l-8.5 8.5-5-5L2 17"/><path d="M16 7h6v6"/>',
+    down:'<path d="M22 17l-8.5-8.5-5 5L2 7"/><path d="M16 17h6v-6"/>',
+    gauge:'<path d="M12 14l4-4"/><path d="M3.3 19a10 10 0 1 1 17.4 0"/>',
+    flame:'<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.4-.5-2-1-3-1.1-2.1-.2-4 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.2.4-2.3 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>',
+    pulse:'<path d="M19 14c1.5-1.5 3-3.2 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.8 0-3 .5-4.5 2-1.5-1.5-2.7-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4 3 5.5l7 7z"/><path d="M3.2 12h6.3l.5-1 2 4.5 2-7 1.5 3.5h5.3"/>',
+    file:'<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z"/><path d="M14 2v5h6M16 13H8M16 17H8M10 9H8"/>',
+    edit:'<path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5z"/>',
+    bell:'<path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/>',
+    save:'<path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7M7 3v4a1 1 0 0 0 1 1h7"/>',
+    logout:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5M21 12H9"/>',
+    drop:'<path d="M12 2.7s6.5 7 6.5 11.8a6.5 6.5 0 0 1-13 0C5.5 9.7 12 2.7 12 2.7z"/>',
+    moon:'<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
+    card:'<rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="M2.5 10h19M6.5 15h4"/>',
+    user:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+    key:'<circle cx="7.5" cy="15.5" r="4.5"/><path d="m10.7 12.3 9.8-9.8M17 6l3 3M14.5 8.5l2 2"/>',
+    lock:'<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
+    refresh:'<path d="M3 12a9 9 0 0 1 15.5-6.2L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16"/><path d="M3 21v-5h5"/>',
+    phone:'<rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M11 18h2"/>',
+    msg:'<path d="M21 11.5a8.4 8.4 0 0 1-12.4 7.4L3 21l2-5.4A8.4 8.4 0 1 1 21 11.5z"/>',
+    trash:'<path d="M3 6h18M8 6V4h8v2M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>',
+    check:'<circle cx="12" cy="12" r="9.5"/><path d="m8.5 12 2.5 2.5 4.5-5"/>',
+    x:'<circle cx="12" cy="12" r="9.5"/><path d="m15 9-6 6M9 9l6 6"/>',
+    warn:'<path d="M10.3 3.9 2.4 18a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/>',
+    clock:'<circle cx="12" cy="12" r="9.5"/><path d="M12 7v5l3 2"/>',
+    hourglass:'<path d="M5 22h14M5 2h14"/><path d="M17 22v-4.2a2 2 0 0 0-.6-1.4L12 12l-4.4 4.4a2 2 0 0 0-.6 1.4V22M7 2v4.2a2 2 0 0 0 .6 1.4L12 12l4.4-4.4a2 2 0 0 0 .6-1.4V2"/>',
+    mail:'<rect x="2.5" y="4.5" width="19" height="15" rx="2"/><path d="m22 7-9 5.7a2 2 0 0 1-2 0L2 7"/>',
+    wallet:'<path d="M20 7V5a2 2 0 0 0-2-2H5a2 2 0 0 0 0 4h15v14H5a2 2 0 0 1-2-2V5"/><path d="M16 14h.01"/>',
+    package:'<path d="M11 21.7a2 2 0 0 0 2 0l7-4a2 2 0 0 0 1-1.7V8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7z"/><path d="M12 22V12M3.3 7 12 12l8.7-5"/>',
+    activity:'<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>',
+    sparkle:'<path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 17v4M17 19h4"/>',
+    target:'<circle cx="12" cy="12" r="9.5"/><circle cx="12" cy="12" r="5.5"/><circle cx="12" cy="12" r="1.5"/>',
+    heart:'<path d="M19 14c1.5-1.5 3-3.2 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.8 0-3 .5-4.5 2-1.5-1.5-2.7-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4 3 5.5l7 7z"/>',
+    megaphone:'<path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/>',
+    globe:'<circle cx="12" cy="12" r="9.5"/><path d="M2.5 12h19M12 2.5a14.5 14.5 0 0 1 0 19 14.5 14.5 0 0 1 0-19z"/>',
+    printer:'<path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>',
+    uten:'<path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/>',
+    settings:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9 7 7M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1 7 17M17 7l2.1-2.1"/>',
+    smile:'<circle cx="12" cy="12" r="9.5"/><path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01"/>',
+    ban:'<circle cx="12" cy="12" r="9.5"/><path d="m5.3 5.3 13.4 13.4"/>',
+    search:'<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',
+    chev:'<path d="m9 6 6 6-6 6"/>',
+    chevl:'<path d="m15 6-6 6 6 6"/>'
+  };
+  window.dsIc=function(ad,stil){return '<svg class="ds-ic" viewBox="0 0 24 24" aria-hidden="true"'+(stil?' style="'+stil+'"':'')+'>'+(P[ad]||'')+'</svg>';};
+
+  var HARITA={'🏠':'home','👥':'users','➕':'plus','📅':'cal','📆':'cal','📊':'chart','📈':'up','📉':'down','📏':'gauge','⚖':'gauge',
+    '🔥':'flame','🩺':'pulse','📰':'file','📋':'file','📄':'file','📝':'edit','🔔':'bell','💾':'save','🚪':'logout','💧':'drop','🩸':'drop',
+    '🌸':'moon','💳':'card','👤':'user','🔑':'key','🔒':'lock','🔄':'refresh','📱':'phone','✏':'edit','🗑':'trash','✅':'check','❌':'x',
+    '⚠':'warn','⏰':'clock','⏳':'hourglass','📧':'mail','💰':'wallet','💸':'down','📦':'package','💪':'activity','🦵':'activity',
+    '🎉':'sparkle','🌟':'sparkle','🎯':'target','🙏':'heart','🩷':'heart','📣':'megaphone','🌐':'globe','🖨':'printer','🥗':'uten','🍽':'uten',
+    '⚙':'settings','🙂':'smile','👍':'check','🚫':'ban','🔬':'chart'};
+  var NOKTA={'🔴':'#A2463B','🟢':'#5F7F5A','🟡':'#D4AF37','🔵':'#5A7A9A','⬜':'#D9CFBE'};
+  var RE=/(?:\p{Extended_Pictographic}(?:️|‍\p{Extended_Pictographic})*|[\u{1F1E6}-\u{1F1FF}]{2})️?[  ]?/gu;
+  var ATLA={SCRIPT:1,STYLE:1,TEXTAREA:1,TITLE:1,svg:1,CANVAS:1};
+  function temizMetin(s){return s.replace(RE,function(m){var k=m.replace(/[️‍  ]/g,'');return (HARITA[k]||NOKTA[k])?'':'';}).replace(/^\s+/,'');}
+  window.dsEmojisiz=function(s){return typeof s==='string'?s.replace(RE,'').replace(/^\s+/,''):s;};
+
+  function isle(node){
+    var t=node.nodeValue; RE.lastIndex=0;
+    if(!RE.test(t))return;
+    var ust=node.parentNode; if(!ust)return;
+    var ad=ust.nodeName;
+    if(ATLA[ad]||ust.closest&&ust.closest('svg,textarea'))return;
+    if(ad==='OPTION'||ad==='BUTTON'&&ust.closest('select')){node.nodeValue=temizMetin(t);return;}
+    RE.lastIndex=0;
+    var parca=document.createDocumentFragment(),son=0,m;
+    while((m=RE.exec(t))){
+      if(m.index>son)parca.appendChild(document.createTextNode(t.slice(son,m.index)));
+      var k=m[0].replace(/[️‍  ]/g,''),bosluk=/[  ]$/.test(m[0]);
+      var sp=document.createElement('span');
+      if(HARITA[k]){sp.innerHTML=window.dsIc(HARITA[k]);parca.appendChild(sp.firstChild);if(bosluk)parca.appendChild(document.createTextNode(' '));}
+      else if(NOKTA[k]){sp.className='ds-nokta';sp.style.background=NOKTA[k];parca.appendChild(sp);if(bosluk)parca.appendChild(document.createTextNode(' '));}
+      son=m.index+m[0].length;
+    }
+    if(son<t.length)parca.appendChild(document.createTextNode(t.slice(son)));
+    ust.replaceChild(parca,node);
+  }
+  function tara(kok){
+    if(kok.nodeType===3){isle(kok);return;}
+    if(kok.nodeType!==1||ATLA[kok.nodeName])return;
+    if(kok.placeholder&&RE.test(kok.placeholder)){kok.placeholder=temizMetin(kok.placeholder);}
+    RE.lastIndex=0;
+    var w=document.createTreeWalker(kok,NodeFilter.SHOW_TEXT,null),liste=[],n;
+    while((n=w.nextNode()))liste.push(n);
+    liste.forEach(isle);
+    kok.querySelectorAll&&kok.querySelectorAll('[placeholder]').forEach(function(e){RE.lastIndex=0;if(RE.test(e.placeholder))e.placeholder=temizMetin(e.placeholder);});
+  }
+  function basla(){
+    tara(document.body);
+    new MutationObserver(function(ks){ks.forEach(function(k){
+      if(k.type==='characterData')tara(k.target);
+      else k.addedNodes.forEach(tara);
+    });}).observe(document.body,{childList:true,subtree:true,characterData:true});
+  }
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',basla);else basla();
+
+  // Sistem pencerelerindeki (onay / uyarı) emojileri de kaldır
+  var a=window.alert,c=window.confirm,p=window.prompt;
+  window.alert=function(m){return a.call(window,window.dsEmojisiz(String(m)));};
+  window.confirm=function(m){return c.call(window,window.dsEmojisiz(String(m)));};
+  window.prompt=function(m,d){return p.call(window,window.dsEmojisiz(String(m)),d);};
+})();
 </script>
 </body>
 </html>
