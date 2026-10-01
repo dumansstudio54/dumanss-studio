@@ -672,6 +672,11 @@ input:focus,select:focus,textarea:focus{border-color:var(--ds-gold6) !important;
 .ds-menu .snav-btn{padding:13px 12px !important;font-size:14.5px}
 .ds-menu .snav-section{padding:12px 12px 4px}
 .ds-menu-tutamac{width:40px;height:4px;border-radius:4px;background:var(--ds-line);margin:2px auto 8px}
+/* Toplu mesaj: seçim düğmeleri */
+.ds-tm-ust{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:22px 2px 10px}
+.ds-tm-secim{display:flex;gap:6px}
+.ds-tm-secim .btn{height:32px;padding:0 12px !important;font-size:12px !important}
+#tm-gonder:disabled{opacity:.45;cursor:not-allowed}
 /* Üye paneli rehberi */
 .ds-rehber-kart{display:flex;gap:14px;align-items:center;padding:12px;border:1px solid var(--ds-goldline);background:var(--ds-goldbg);border-radius:14px}
 .ds-rehber-kart img{width:62px;height:96px;object-fit:cover;object-position:top;border-radius:8px;border:1px solid var(--ds-line);cursor:zoom-in;flex:none;background:#0a0a0a}
@@ -2790,7 +2795,7 @@ function renderTopluMesaj(){
   const el=document.getElementById('toplumesaj-c');
   const {grup,sablon}=topluMesajSecim;
   if(sablon==='panelRehber') rehberHazirla();
-  const liste=MESAJ_GRUPLARI[grup][1]().filter(o=>o.tel);
+  const liste=MESAJ_GRUPLARI[grup][1]().filter(o=>o.tel).sort((a,b)=>(a.ad||'').localeCompare(b.ad||'','tr',{sensitivity:'base'}));
   const ornek=data[0]?mesajSablonlari(data[0]):mesajSablonlari({ad:'Ad',ucret:0});
   el.innerHTML=`<div class="ds-ay">
     <div class="ds-ay-ad" style="margin-bottom:4px">Toplu mesaj</div>
@@ -2802,10 +2807,20 @@ function renderTopluMesaj(){
     <div class="card" style="margin-top:12px"><div class="ds-eyebrow" style="margin-bottom:8px">Önizleme</div><div class="ds-not-metin">${htmlKac(liste[0]?mesajSablonlari(liste[0])[sablon][1]:ornek[sablon][1])}</div></div>
     ${sablon==='panelRehber'?`<div style="margin-top:12px">${rehberKartHtml('Mesajdaki bağlantı rehber görselini açar. Telefondan gönderirken her kişi için görseli dosya olarak da paylaşabilirsiniz.')}</div>
       ${grup!=='sifresiz'&&data.some(o=>!o._authId)?`<div class="alert a-gold" style="margin-top:10px;font-size:12.5px">${data.filter(o=>!o._authId).length} öğrencinin henüz panel şifresi yok. Önce Öğrenciler sayfasından şifre oluşturursanız giriş bilgileri mesajı rehber bağlantısını zaten içerir.</div>`:''}`:''}
-    <div class="ds-baslik">${liste.length} kişi</div>
-    ${liste.length?`<div class="card ds-liste">${liste.map(o=>`<label class="ds-secim-sat"><input type="checkbox" class="tm-sec" value="${o._id}" checked><span>${htmlKac(o.ad)}</span><span class="ds-kucuk">${htmlKac(o.tel)}</span></label>`).join('')}</div>
-      <button class="btn btn-primary" style="width:100%;margin-top:12px" onclick="topluMesajBaslat()">${dsIc('msg')}Seçilenlere sırayla gönder</button>`:'<div class="ds-bos">Bu grupta telefonu kayıtlı öğrenci yok.</div>'}
+    <div class="ds-tm-ust"><div class="ds-baslik" style="margin:0">${liste.length} kişi · <span id="tm-sayac">${liste.length} seçili</span></div>
+      ${liste.length?`<div class="ds-tm-secim"><button type="button" class="btn btn-ghost" onclick="topluSecim(true)">${dsIc('check')}Tümünü seç</button><button type="button" class="btn btn-ghost" onclick="topluSecim(false)">${dsIc('x')}Tümünü kaldır</button></div>`:''}</div>
+    ${liste.length?`<div class="card ds-liste">${liste.map(o=>`<label class="ds-secim-sat"><input type="checkbox" class="tm-sec" value="${o._id}" checked onchange="topluSayac()"><span>${htmlKac(o.ad)}</span><span class="ds-kucuk">${htmlKac(o.tel)}</span></label>`).join('')}</div>
+      <button class="btn btn-primary" id="tm-gonder" style="width:100%;margin-top:12px" onclick="topluMesajBaslat()">${dsIc('msg')}Seçilenlere sırayla gönder</button>`:'<div class="ds-bos">Bu grupta telefonu kayıtlı öğrenci yok.</div>'}
   </div>`;
+}
+function topluSecim(hepsi){
+  document.querySelectorAll('.tm-sec').forEach(c=>{c.checked=hepsi;});
+  topluSayac();
+}
+function topluSayac(){
+  const n=document.querySelectorAll('.tm-sec:checked').length;
+  const s=document.getElementById('tm-sayac'); if(s) s.textContent=n+' seçili';
+  const b=document.getElementById('tm-gonder'); if(b) b.disabled=!n;
 }
 function topluMesajBaslat(){
   const idler=[...document.querySelectorAll('.tm-sec:checked')].map(c=>c.value);
