@@ -672,6 +672,46 @@ input:focus,select:focus,textarea:focus{border-color:var(--ds-gold6) !important;
 .ds-menu .snav-btn{padding:13px 12px !important;font-size:14.5px}
 .ds-menu .snav-section{padding:12px 12px 4px}
 .ds-menu-tutamac{width:40px;height:4px;border-radius:4px;background:var(--ds-line);margin:2px auto 8px}
+/* QR ile giriş sayfası */
+.ds-qr-durum{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.ds-qr-durum .btn{flex:none}
+.ds-qr-iki{display:grid;grid-template-columns:1fr;gap:12px;margin-top:12px}
+@media(min-width:900px){.ds-qr-iki{grid-template-columns:300px 1fr}}
+.ds-qr-onizleme{text-align:center}
+.ds-qr-resim{width:200px;height:200px;margin:0 auto;display:flex;align-items:center;justify-content:center;padding:8px;border:2px solid var(--ds-goldline);border-radius:14px;background:#fff}
+.ds-qr-resim svg{width:100%;height:100%}
+.ds-qr-ayar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 0;border-bottom:1px solid var(--ds-stone);font-size:13px}
+.ds-qr-ayar span{color:var(--ds-ink5);flex:1;min-width:120px}
+.ds-qr-ayar b{font-weight:600;color:var(--ds-ink)}
+/* Öğrenci listesi sıralama seçimi */
+.ds-sira-sec{display:flex;align-items:center;gap:8px;margin-top:8px;padding:0 12px;height:40px;border-radius:14px;border:1px solid var(--ds-line);background:#fff;font-size:12px;color:var(--ds-ink5)}
+.ds-sira-sec .ds-ic{color:var(--ds-gold6,#b8932a);font-size:15px}
+.ds-sira-sec select{flex:1;border:0 !important;background:transparent !important;font:500 13px 'Jost',sans-serif;color:var(--ds-ink);padding:0 !important;height:auto !important;box-shadow:none !important}
+@media(min-width:900px){.ds-ogr-ust .ds-sira-sec{margin-top:0;flex:none;min-width:240px}}
+/* Davet indirimi notu ve davet sıralaması */
+.ds-indirim-not{display:flex;align-items:center;justify-content:flex-end;gap:4px;font-size:10.5px;color:var(--ds-gold7);margin:2px 0}
+.ds-indirim-not .ds-ic{font-size:12px}
+.ds-donem{display:flex;gap:6px;flex-wrap:wrap}
+.ds-donem .btn{height:34px;padding:0 14px !important;font-size:12.5px !important}
+.ds-davet-sira{border-top:1px solid var(--ds-stone)}
+.ds-davet-sira:first-child{border-top:0}
+.ds-davet-sira summary{display:flex;align-items:center;gap:12px;padding:12px 2px;cursor:pointer;list-style:none}
+.ds-davet-sira summary::-webkit-details-marker{display:none}
+.ds-sira{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none;font:600 15px 'Cormorant Garamond',Georgia,serif;color:var(--ds-ink5);background:var(--ds-stone)}
+.ds-sira-1{background:linear-gradient(135deg,#e6cd7e,#d4af37 45%,#b8932a);color:#1a1714}
+.ds-sira-2{background:#E9E4DA;color:var(--ds-ink)}
+.ds-sira-3{background:#EBD9C4;color:var(--ds-ink)}
+.ds-sira-orta{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.ds-sira-orta b{font-size:14px;font-weight:600;color:var(--ds-ink)}
+.ds-sira-orta small{font-size:11.5px;color:var(--ds-ink5)}
+.ds-sira-cubuk{display:block;height:4px;border-radius:4px;background:var(--ds-stone);margin-top:3px}
+.ds-sira-cubuk i{display:block;height:100%;border-radius:4px;background:var(--ds-gold6,#b8932a)}
+.ds-sira-sayi{text-align:center;flex:none;min-width:44px}
+.ds-sira-sayi b{display:block;font:500 26px/1 'Cormorant Garamond',Georgia,serif;color:var(--ds-ink)}
+.ds-sira-sayi small{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ds-ink5)}
+.ds-sira-ic{padding:0 2px 14px 42px}
+.ds-sira-ic>div:not(.ds-kucuk):not(.ds-secim-btnlar){display:flex;align-items:center;gap:10px;padding:6px 0;font-size:13px;border-bottom:1px dashed var(--ds-stone)}
+.ds-sira-ic>div>span:first-child{flex:1}
 /* Toplu mesaj: seçim düğmeleri */
 .ds-tm-ust{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:22px 2px 10px}
 .ds-tm-secim{display:flex;gap:6px}
@@ -753,6 +793,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--ds-gold6) !important;
   <div class="snav-section">ÖĞRENCİLER</div>
   <button class="snav-btn" id="snav-ogr" onclick="sp('ogr')"><span>👥</span> Öğrenci Listesi</button>
   <button class="snav-btn" id="snav-ekle" onclick="sp('ekle')"><span>➕</span> Yeni Ekle</button>
+  <button class="snav-btn" id="snav-davetler" onclick="sp('davetler')"><span>🩷</span> Davet Sıralaması</button>
   <div class="snav-section">TAKVİM & FİNANS</div>
   <button class="snav-btn" id="snav-takvim" onclick="sp('takvim')"><span>📅</span> Takvim</button>
   <button class="snav-btn" id="snav-aylik" onclick="sp('aylik')"><span>💰</span> Aylık Özet</button>
@@ -763,6 +804,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--ds-gold6) !important;
   <button class="snav-btn" id="snav-saglikform" onclick="sp('saglikform')"><span>🩺</span> Sağlık Formları</button>
   <button class="snav-btn" id="snav-diyet" onclick="sp('diyet')"><span>📰</span> Günlük Menüler ve Haberler</button>
   <button class="snav-btn" id="snav-toplumesaj" onclick="sp('toplumesaj')"><span>📣</span> Toplu Mesaj</button>
+  <button class="snav-btn" id="snav-qr" onclick="sp('qr')"><span>📱</span> QR ile Giriş</button>
   <button class="snav-btn" id="snav-notlar" onclick="sp('notlar')"><span>📝</span> Notlar</button>
   <button class="snav-btn" id="snav-rapor" onclick="sp('rapor')"><span>📊</span> Raporlama</button>
   <div style="flex:1"></div>
@@ -787,6 +829,8 @@ input:focus,select:focus,textarea:focus{border-color:var(--ds-gold6) !important;
   <div id="bildirimler" class="page"><div id="bildirimler-c"></div></div>
   <div id="mesajlar" class="page"><div id="mesajlar-c"></div></div>
   <div id="toplumesaj" class="page"><div id="toplumesaj-c"></div></div>
+  <div id="davetler" class="page"><div id="davetler-c"></div></div>
+  <div id="qr" class="page"><div id="qr-c"></div></div>
 
   <nav class="bottom-nav">
     <button class="nav-btn active" onclick="sp('ana')" id="nav-ana"><div class="nav-icon">🏠</div><div class="nav-label">Ana</div></button>
@@ -893,7 +937,7 @@ function sp(page) {
   if(nb) nb.classList.add('active');
   const sb = document.getElementById('snav-'+page);
   if(sb) sb.classList.add('active');
-  const renders = {ana:renderAna,ogr:renderOgr,aylik:renderAylik,toplumesaj:renderTopluMesaj,takvim:renderTakvim,gelir:renderGelir,bildirimler:renderBildirimler,mesajlar:renderMesajlar,olcum:renderOlcum,diyet:renderDiyet,kaloritakip:renderKaloriTakip,saglikform:renderSaglikFormlari,notlar:renderNotlar,rapor:renderRapor};
+  const renders = {qr:renderQr,davetler:renderDavetler,ana:renderAna,ogr:renderOgr,aylik:renderAylik,toplumesaj:renderTopluMesaj,takvim:renderTakvim,gelir:renderGelir,bildirimler:renderBildirimler,mesajlar:renderMesajlar,olcum:renderOlcum,diyet:renderDiyet,kaloritakip:renderKaloriTakip,saglikform:renderSaglikFormlari,notlar:renderNotlar,rapor:renderRapor};
   if(renders[page]) renders[page]();
   window.scrollTo(0,0);
 }
@@ -1635,12 +1679,26 @@ function renderOgr() {
   <div class="ds-ogr-ust">
     <div class="ds-arama-sat"><label class="ds-arama">${dsIc('search')}<input type="text" id="ogr-ara" placeholder="Öğrenci ara" oninput="aramaYap(this.value)"></label><button class="ds-arsiv-btn" onclick="arsivGoster()" title="Öğrenci arşivi">${dsIc('package')}<span>Arşiv</span></button></div>
     ${sifresiz?`<button class="ds-serit" onclick="topluSifre()">${dsIc('key')}<span><b>${sifresiz} öğrencinin</b> panel şifresi yok</span><span class="ds-serit-ok">Oluştur ${dsIc('chev')}</span></button>`:''}
+    <label class="ds-sira-sec">${dsIc('chart')}<span>Sırala</span><select onchange="ogrSira=this.value;aramaYap(document.getElementById('ogr-ara').value)">
+      ${Object.entries(OGR_SIRALARI).map(([k,v])=>`<option value="${k}"${k===ogrSira?' selected':''}>${v[0]}</option>`).join('')}</select></label>
   </div><div id="ogr-liste" class="ds-ogr-liste">`;
-  html += data.map((o,i) => ogrKarti(o,i)).join('');
+  html += ogrSirala(data).map(o => ogrKarti(o,data.indexOf(o))).join('');
   html += '</div>';
   el.innerHTML = html;
   silmeTalepleriYukle();
 }
+// Öğrenci listesi sıralaması (kartlar data içindeki asıl sırasıyla işlem yapar; burada yalnızca gösterim sırası değişir)
+let ogrSira='ad';
+const adKarsilastir=(a,b)=>(a.ad||'').localeCompare(b.ad||'','tr',{sensitivity:'base'});
+const odemeOnceligi=o=>o.ilkOdemeAlindi===false||o.odemeBekliyor?0:(o.borcTl||0)>0||efektifKalan(o)<=0||gecikmiMi(o)?1:2;
+const OGR_SIRALARI={
+  ad:['Ada göre (A-Z)',(a,b)=>adKarsilastir(a,b)],
+  kalan:['Az dersi kalan önce',(a,b)=>efektifKalan(a)-efektifKalan(b)||adKarsilastir(a,b)],
+  odeme:['Ödemesi gelen önce',(a,b)=>odemeOnceligi(a)-odemeOnceligi(b)||adKarsilastir(a,b)],
+  yeni:['En yeni kayıt önce',(a,b)=>data.indexOf(b)-data.indexOf(a)],
+  eski:['En eski kayıt önce',(a,b)=>data.indexOf(a)-data.indexOf(b)]
+};
+function ogrSirala(liste){return [...liste].sort(OGR_SIRALARI[ogrSira][1]);}
 
 function ogrKarti(o,i) {
   const kalan = efektifKalan(o);
@@ -1663,6 +1721,7 @@ function ogrKarti(o,i) {
       <button class="ds-rozet ds-rozet-btn" onclick="analizPaketiDegistir(${i})" title="Vücut Analizi ve Beslenme Paketi: açmak / kapatmak için dokunun" style="${o.analizPaketi?'color:var(--ds-gold7);border-color:var(--ds-goldline);background:var(--ds-goldbg)':''}">${dsIc('chart')}Analiz paketi ${o.analizPaketi?'açık':'kapalı'}</button>
       ${o.odemeBekliyor?'<span class="ds-rozet" style="color:var(--ds-gold7);border-color:var(--ds-goldline);background:var(--ds-goldbg)">Ödeme bildirdi</span>':''}
       ${o.borcTl>0?`<span class="ds-rozet" style="color:#8E3A30;border-color:#EBCFC9;background:#FBF1EF">Borç ${tlBicim(o.borcTl)}</span>`:''}
+      ${odulRozet(o)}
       ${dogumGunuBugunMu(o)?`<span class="ds-rozet" style="color:var(--ds-gold7)">${dsIc('sparkle')}Doğum günü</span>`:''}
     </div>
     <div class="ds-ilerleme"><span>${buPaket} / ${toplam} ders</span>${bit?`<span>Bitiş ${bit.toLocaleDateString('tr-TR')}</span>`:''}</div>
@@ -1731,29 +1790,117 @@ function rehberKartHtml(not) {
       <button type="button" class="btn btn-ghost" onclick="rehberOnizle()">Rehberi göster</button></div>
   </div>`;
 }
-// Yeni öğrenci kaydedildikten sonra: şifre oluştur, giriş bilgilerini ve rehberi gönder.
-function kayitSonrasi(o, ilkOdemeAlindi) {
+// ── DAVET KODU ──
+// Her kod yalnızca bir kez kullanılır; kullanılınca veritabanı davet edene yeni kod verir (05_davet_tek_kullanim.sql).
+const KULLANILMIS_KOD_MESAJI = 'Bu davet kodu daha önce kullanıldı. Her kod yalnızca bir kez geçerlidir; davet eden üyenin panelindeki yeni kodu isteyin.';
+function kullanilmisKodMu(kod){return davetGecmisi.some(g=>(g.kod||'').toUpperCase()===kod);}
+// Bir sonraki paket ödemesinde öğrenciden alınacak tutar (davet indirimleri düşülmüş).
+function odenecekTutar(o){
+  const ucret=+o.ucret||0; let indirim=0; const notlar=[];
+  if(o.ilkOdemeAlindi===false&&o.davetEden){const x=Math.round(ucret*DAVET_INDIRIMI);indirim+=x;notlar.push('davetle ilk paket');}
+  const bek=bekleyenOduller(o).reduce((t,x)=>t+(+x.kalan),0);
+  if(bek>0){const x=Math.min(bek,ucret-indirim);indirim+=x;notlar.push('davet ödülü');}
+  return {tutar:ucret-indirim,indirim,not:notlar.length?`${notlar.join(' + ')} −${tlBicim(indirim)}`:''};
+}
+// Öğrenci kartındaki davet rozeti
+function odulRozet(o){
+  const bek=bekleyenOduller(o).reduce((t,x)=>t+(+x.kalan),0);
+  const aktif=davetOdulleri.filter(x=>x.davet_eden===o._id&&x.durum==='aktif'&&new Date(x.bitis)>new Date());
+  let h='';
+  if(bek>0) h+=`<span class="ds-rozet" style="color:var(--ds-gold7);border-color:var(--ds-goldline);background:var(--ds-goldbg)">${dsIc('heart')}Davet indirimi −${tlBicim(bek)}</span>`;
+  if(aktif.length) h+=`<span class="ds-rozet" title="Üye henüz kullanmadı; son gün ${new Date(aktif[0].bitis).toLocaleDateString('tr-TR')}">${dsIc('heart')}%${DAVET_INDIRIMI*100} hak kullanılmadı</span>`;
+  const sira=davetOdulleri.filter(x=>x.davet_eden===o._id&&x.durum==='sirada').length;
+  if(sira) h+=`<span class="ds-rozet" title="Her ay bir hak aktif olur">${dsIc('hourglass')}${sira} hak sırada</span>`;
+  return h;
+}
+// Formda kod yazılırken kimin davet ettiğini ve indirimli ilk paket tutarını gösterir.
+function davetKontrol() {
+  const inp = document.getElementById('f-davet'), el = document.getElementById('f-davet-durum');
+  if (!inp || !el) return;
+  const kod = inp.value.trim().toUpperCase();
+  el.style.color = '';
+  if (!kod) { el.innerHTML = `Bir öğrencinin davetiyle geldiyse kodunu yazın; ilk paket ödemesinde %${DAVET_INDIRIMI*100} indirim önerilir.`; return; }
+  const d = data.find(x => (x.davetKodu || '').toUpperCase() === kod);
+  const kendi = duzenlemeIdx > -1 ? data[duzenlemeIdx] : null;
+  if (!d) { el.style.color = 'var(--red)'; el.textContent = kullanilmisKodMu(kod) ? KULLANILMIS_KOD_MESAJI : 'Bu kodla kayıtlı öğrenci bulunamadı.'; return; }
+  if (kendi && d._id === kendi._id) { el.style.color = 'var(--red)'; el.textContent = 'Öğrenci kendi davet kodunu kullanamaz.'; return; }
+  const ucret = parseFloat(document.getElementById('f-ucret')?.value) || 0;
+  const indirim = Math.round(ucret * DAVET_INDIRIMI);
+  el.style.color = 'var(--ds-gold7)';
+  el.innerHTML = `${dsIc('check')} <b>${htmlKac(d.ad)}</b> davet etti. ` + (kendi && kendi.ilkOdemeAlindi !== false
+    ? 'İlk ödemesi daha önce alındığı için indirim otomatik önerilmez; gerekirse sonraki ödemede tutarı elle düşürebilirsiniz.'
+    : `İlk paket ödemesinde ${tlBicim(ucret)} yerine <b>${tlBicim(ucret - indirim)}</b> önerilir (%${DAVET_INDIRIMI*100} indirim).`);
+}
+function davetTesekkurMesaji(d, odul) {
+  // Gizlilik: davet edilen kişinin adı mesaja yazılmaz. odul: bu davet için verilen hak (yoksa boş).
+  return `Merhaba ${d.ad.split(' ')[0]} Hanım,\n\nDavet kodunuzla bir arkadaşınız DUMANSSTUDIO ailesine katıldı. Bizi önerdiğiniz için çok teşekkür ederiz!`
+    + (odul && odul.durum === 'sirada'
+      ? `\n\nTeşekkür olarak %${DAVET_INDIRIMI*100} indirim hakkı kazandınız. Her ay bir indirim hakkınız aktif olduğu için bu hak sıraya alındı; aktif olduğunda üye panelinizde görünür ve 30 gün boyunca "İndirimi Uygula" düğmesiyle kullanabilirsiniz.`
+      : odul ? `\n\nTeşekkür olarak %${DAVET_INDIRIMI*100} indirim hakkı kazandınız. Hakkınız 30 gün geçerlidir; üye panelinizdeki "İndirimi Uygula" düğmesiyle kullanabilirsiniz.` : '')
+    + `\n\nDUMANSSTUDIO`;
+}
+// Öğrenci detayında davet ödüllerinin durumu
+function odulDetayHtml(o){
+  const l=davetOdulleri.filter(x=>x.davet_eden===o._id);
+  if(!l.length) return '';
+  const tr=ts=>new Date(ts).toLocaleDateString('tr-TR');
+  return '<br>Davet ödülleri: '+l.map(x=>{
+    if(x.durum==='sirada') return `sırada (kazanıldı ${tr(x.kazanma||x.verilis)})`;
+    if(x.durum==='aktif'&&new Date(x.bitis)>new Date()) return `<b>%${Math.round(x.oran*100)} hakkı, kullanılmadı</b> (son gün ${tr(x.bitis)})`;
+    if(x.durum==='kullanildi') return `kullanıldı ${tr(x.kullanim)}: ${tlBicim(x.tutar)}`
+      +(+x.borca_yansiyan>0?` · ${tlBicim(x.borca_yansiyan)} borçtan düşüldü`:'')
+      +(+x.kalan>0?` · <b>${tlBicim(x.kalan)} sonraki paket ödemesinden düşülecek</b>`:'');
+    return `süresi doldu (${tr(x.bitis)})`;
+  }).join('; ');
+}
+// Kayıt sırasında alınan ilk paket ödemesini kaydeder (davet indirimi burada önerilir).
+async function kayitOdemesiAl(i) {
+  const o = data[i];
+  const r = await paketOdemesiIsle(i, {ust:'İlk paket ödemesi', metin:`${o.paket||20} derslik ${o.tur==='ems'?'EMS':'Pilates'} paketi`, ilk:true, acik:`${o.tur==='ems'?'EMS':'Pilates'} ilk paket`});
+  if (!r) return false;
+  data[i].borcTl = (o.borcTl || 0) + r.eksik;
+  gosterYukleniyor();
+  try {
+    if (r.eksik > 0) await sb.from('ogrenciler').update({borc_tl:data[i].borcTl}).eq('id', o._id);
+    if (r.tutar > 0) await gelirKaydet(odemeGeliri(o, r.tutar, r.acik));
+    await odulMahsup(r);
+    await veriYukle(); sayfayiYenile();
+    return true;
+  } catch (e) { alert('Hata: ' + e.message); return false; }
+  finally { gizleYukleniyor(); }
+}
+
+// Yeni öğrenci kaydedildikten sonra: ilk ödeme, davet teşekkürü, şifre ve rehber.
+function kayitSonrasi(o, ilkOdemeAlindi, odendi) {
   rehberHazirla();
   const i = data.findIndex(x => x._id === o._id);
-  const telVar = (o.tel || '').replace(/\D/g, '').length >= 10;
+  const k = i > -1 ? data[i] : o;
+  const telVar = (k.tel || '').replace(/\D/g, '').length >= 10;
+  const davetci = k.davetEden ? data[ogrIdx(k.davetEden)] : null;
+  const indirimli = davetci ? Math.round((k.ucret||0) * (1 - DAVET_INDIRIMI)) : (k.ucret||0);
+  const odemeSor = ilkOdemeAlindi && !odendi && i > -1;
   const ov = document.createElement('div'); ov.className = 'ds-secim-ov';
   ov.innerHTML = `<div class="ds-secim">
       <div class="ds-eyebrow">Kayıt tamamlandı</div>
-      <div class="ds-secim-baslik">${htmlKac(o.ad)} eklendi</div>
-      <div class="ds-secim-metin">${ilkOdemeAlindi ? '' : 'İlk ödeme bekleniyor; Ana sayfada onaylayabilirsiniz.<br>'}${telVar
+      <div class="ds-secim-baslik">${htmlKac(k.ad)} eklendi</div>
+      <div class="ds-secim-metin">${davetci ? `<b>${htmlKac(davetci.ad)}</b> davetiyle geldi; ilk pakette %${DAVET_INDIRIMI*100} indirim hakkı var.<br>` : ''}${odendi ? 'İlk ödeme kaydedildi.<br>' : ilkOdemeAlindi ? '' : 'İlk ödeme bekleniyor; alındığında Ana sayfadan onaylayın' + (davetci ? ', indirim orada önerilir' : '') + '.<br>'}${telVar
         ? 'Öğrencinin üye paneline girebilmesi için şifre oluşturun. Açılan ekrandan giriş bilgilerini ve kullanım rehberini WhatsApp ile gönderebilirsiniz.'
         : 'Telefon numarası kayıtlı olmadığı için panel şifresi oluşturulamaz. Numarayı ekledikten sonra öğrenci kartındaki anahtar düğmesini kullanın.'}</div>
       ${rehberKartHtml('Öğrenciye panelin nasıl kullanılacağını anlatan görsel.')}
       <div class="ds-secim-btnlar" style="margin-top:16px">
-        ${telVar && i > -1 ? `<button class="btn btn-primary" data-sifre="1">${dsIc('key')}Şifre oluştur ve gönder<small>Giriş bilgileri mesajına rehber bağlantısı da eklenir</small></button>` : ''}
+        ${odemeSor ? `<button class="btn btn-primary" data-odeme="1">${dsIc('wallet')}İlk ödemeyi kaydet<small>${davetci ? `Davet indirimiyle ${tlBicim(indirimli)} (${tlBicim(k.ucret||0)} yerine)` : `${tlBicim(k.ucret||0)} · Aylık Özet'te "Alınan" tutara eklenir`}</small></button>` : ''}
+        ${telVar && i > -1 ? `<button class="btn ${odemeSor?'btn-ghost':'btn-primary'}" data-sifre="1">${dsIc('key')}Şifre oluştur ve gönder<small>Giriş bilgileri mesajına rehber bağlantısı da eklenir</small></button>` : ''}
         ${telVar ? `<button class="btn btn-ghost" data-rehber="1">${dsIc('msg')}Yalnızca rehberi gönder</button>` : ''}
+        ${davetci && davetci.tel ? `<button class="btn btn-ghost" data-tesekkur="1">${dsIc('heart')}${htmlKac(davetci.ad.split(' ')[0])} Hanım'a teşekkür et<small>${davetOdulleri.some(x => x.davet_edilen === k._id) ? 'Kazandığı %'+DAVET_INDIRIMI*100+' indirim hakkını da bildirir' : 'Davet ödülü ilk ödeme kaydedilince tanımlanır'}</small></button>` : ''}
         <button class="btn btn-ghost" data-kapat="1">Sonra</button>
       </div>
     </div>`;
-  ov.addEventListener('click', e => {
+  ov.addEventListener('click', async e => {
     if (e.target === ov || e.target.closest('[data-kapat]')) ov.remove();
+    else if (e.target.closest('[data-odeme]')) { ov.remove(); const tamam = await kayitOdemesiAl(i); kayitSonrasi(data[ogrIdx(o._id)] || o, ilkOdemeAlindi, tamam); }
     else if (e.target.closest('[data-sifre]')) { ov.remove(); sifreVer(i); }
-    else if (e.target.closest('[data-rehber]')) rehberPaylas(o);
+    else if (e.target.closest('[data-rehber]')) rehberPaylas(k);
+    else if (e.target.closest('[data-tesekkur]')) waAcMetin(davetci.tel, davetTesekkurMesaji(davetci, davetOdulleri.find(x => x.davet_edilen === k._id)));
   });
   document.body.appendChild(ov);
 }
@@ -1974,9 +2121,10 @@ async function arsivEslesmesiSor(tel) {
 function aramaYap(q) {
   const liste = document.getElementById('ogr-liste');
   if(!liste) return;
-  const filtre = q.toLowerCase();
-  const filtreOgrs = data.filter(o=>o.ad.toLowerCase().includes(filtre)||(o.tel||'').includes(filtre));
-  liste.innerHTML = filtreOgrs.map((o)=>ogrKarti(o,data.indexOf(o))).join('');
+  const filtre = (q||'').toLocaleLowerCase('tr');
+  const telFiltre = filtre.replace(/\D/g,'');
+  const filtreOgrs = data.filter(o=>o.ad.toLocaleLowerCase('tr').includes(filtre)||(telFiltre&&(o.tel||'').replace(/\D/g,'').includes(telFiltre)));
+  liste.innerHTML = ogrSirala(filtreOgrs).map((o)=>ogrKarti(o,data.indexOf(o))).join('');
 }
 
 // ── EKLE FORMU ──
@@ -2220,7 +2368,10 @@ function aylikHesapla(ofset){
   data.forEach((o,i)=>{
     if(!(+o.ucret>0)){plansiz.push(o.ad+' (ücret yok)');return;}
     if(o.ilkOdemeAlindi&&!o.odemeBekliyor&&!(o.gunler||[]).length&&efektifKalan(o)>0){plansiz.push(o.ad+' (ders günü yok)');return;}
-    odemePlani(o,ayBas,aySon).forEach(e=>beklenenler.push({...e,o,i}));
+    // Davet indirimleri öğrencinin bir sonraki paket ödemesine yansır
+    const od=odenecekTutar(o);
+    const sonraki=od.indirim?odemePlani(o,gunBas(new Date()),new Date(2100,0,1))[0]:null;
+    odemePlani(o,ayBas,aySon).forEach(e=>{const x={...e,o,i};if(sonraki&&+e.tarih===+sonraki.tarih){x.tutar=od.tutar;x.indirimNot=od.not;}beklenenler.push(x);});
     // Kısmi ödemeden kalan ₺ borç bu ay alınacaklara eklenir
     if((o.borcTl||0)>0 && gunBas(new Date())>=ayBas && gunBas(new Date())<=aySon) beklenenler.push({tarih:gunBas(new Date()),tutar:o.borcTl,durum:'borc',o,i});
   });
@@ -2274,7 +2425,7 @@ function renderAylik(){
       return `<div class="ds-sat">
         <div class="ds-sat-tarih"><b>${e.tarih.getDate()}</b><small>${AY_ADLARI[e.tarih.getMonth()].slice(0,3)}</small></div>
         <div class="ds-sat-orta"><div class="ds-sat-ad">${e.o.ad}</div><div class="ds-kucuk">${e.o.tur==='ems'?'EMS':'Pilates'} · ${e.durum==='plan'?'Paket bitişi '+gunFmt(e.tarih):e.durum==='borc'?'Kısmi ödemeden kalan borç':e.durum==='ilk'?'İlk paket ödemesi':e.durum==='onay'?'Öğrenci ödediğini bildirdi':'Paketi bitti, yenilenmedi'}</div></div>
-        <div class="ds-sat-sag"><div class="ds-tutar">${tlBicim(e.tutar)}</div><span class="ds-durum ds-${renk}">${et}</span></div>
+        <div class="ds-sat-sag"><div class="ds-tutar">${tlBicim(e.tutar)}</div>${e.indirimNot?`<small class="ds-indirim-not">${dsIc('heart')}${e.indirimNot}</small>`:''}<span class="ds-durum ds-${renk}">${et}</span></div>
         ${buAy&&(e.durum!=='plan'||e.tarih-bugunT<=7*864e5)?`<div class="ds-sat-eylem">
           <button class="btn btn-primary btn-sm" onclick="aylikOdemeAl(${e.i},'${e.durum}')">${dsIc('check')}Ödeme alındı</button>
           <button class="btn btn-ghost btn-sm" onclick="waAc(${e.i},'wa')">${dsIc('msg')}Hatırlat</button></div>`:''}
@@ -2316,7 +2467,7 @@ function aylikOzetKarti(){
 // ════════════════════════════════════════════════════════════════════
 // GELİŞTİRMELER (03_gelistirmeler.sql ile birlikte çalışır)
 // ════════════════════════════════════════════════════════════════════
-let yoklamaData = [], tatilMap = {}, dersTalepleri = [], yoneticiAyar = {};
+let yoklamaData = [], tatilMap = {}, dersTalepleri = [], yoneticiAyar = {}, davetOdulleri = [], davetGecmisi = [];
 const YOKLAMA_ETIKET = {
   geldi:['Geldi','yesil'], gelmedi:['Gelmedi','kirmizi'], iptal:['İptal · hak kullanıldı','gri'],
   studyo_iptal:['Stüdyo iptali','gri'], ertelendi:['Ertelendi','altin'], telafi:['Telafi dersi','altin']
@@ -2339,21 +2490,25 @@ tatilMi = function(yil, ay, gun){ return tatilMap[`${yil}-${pad(ay+1)}-${pad(gun
 
 async function ekVeriYukle(){
   const bas = gunEkle(todayStr(), -120);
-  const [y, t, d, a] = await Promise.all([
+  const [y, t, d, a, od, dg] = await Promise.all([
     sb.from('yoklama').select('*').gte('tarih', bas),
     sb.from('tatiller').select('*'),
     sb.from('ders_talepleri').select('*').eq('durum','bekliyor').order('tarih'),
-    sb.from('yonetici_ayarlar').select('anahtar,deger')
+    sb.from('yonetici_ayarlar').select('anahtar,deger'),
+    sb.from('davet_odulleri').select('*').order('verilis',{ascending:false}),
+    sb.from('davet_kod_gecmisi').select('*').order('tarih',{ascending:false})
   ]);
   if(!y.error) yoklamaData = y.data||[];
   if(!t.error){ tatilMap = {}; (t.data||[]).forEach(r=>tatilMap[r.tarih]=r.ad); }
   if(!d.error) dersTalepleri = d.data||[];
   if(!a.error){ yoneticiAyar = {}; (a.data||[]).forEach(r=>yoneticiAyar[r.anahtar]=r.deger); }
+  if(!od.error) davetOdulleri = od.data||[];
+  if(!dg.error) davetGecmisi = dg.data||[];
 }
 function aktifSayfa(){return document.querySelector('.page.active')?.id;}
 function sayfayiYenile(){
   const p = aktifSayfa();
-  const r = {ana:renderAna,ogr:renderOgr,takvim:renderTakvim,aylik:renderAylik,gelir:renderGelir,toplumesaj:renderTopluMesaj}[p];
+  const r = {ana:renderAna,ogr:renderOgr,takvim:renderTakvim,aylik:renderAylik,gelir:renderGelir,toplumesaj:renderTopluMesaj,davetler:renderDavetler,qr:renderQr}[p];
   if(r) r();
   if(document.getElementById('ds-detay')) ogrDetay(document.getElementById('ds-detay').dataset.ogr);
 }
@@ -2558,13 +2713,32 @@ async function odemeAlPenceresi(o, {ust, beklenen, metin}){
   return f.tutar;
 }
 function odemeGeliri(o, tutar, acik){return {tip:'gelir',tutar,acik:`${o.ad} — ${acik}`,tarih:todayStr(),ogrenciId:o._id};}
+// Davet eden üyenin "İndirimi uygula" ile ayırdığı, bir sonraki paket ödemesinden düşülecek tutarlar.
+function bekleyenOduller(o){return davetOdulleri.filter(x=>x.davet_eden===o._id&&x.durum==='kullanildi'&&+x.kalan>0);}
+// Bu ödemede düşülen tutarı haklara eskiden yeniye dağıtır; kullanılmayan kısım bir sonraki ödemeye kalır.
+function odulDagit(oduller,dusulen){
+  let kalanDus=dusulen;
+  return oduller.slice().sort((a,b)=>(a.kullanim||'')<(b.kullanim||'')?-1:1).map(x=>{
+    const d=Math.min(+x.kalan,kalanDus);kalanDus-=d;return {id:x.id,kalan:+x.kalan-d,d};
+  }).filter(x=>x.d>0);
+}
+async function odulMahsup(r){
+  if(!r||!r.odulKullanim||!r.odulKullanim.length) return;
+  for(const k of r.odulKullanim){const {error}=await sb.from('davet_odulleri').update(k.kalan>0?{kalan:k.kalan}:{kalan:0,mahsup_tarihi:new Date().toISOString()}).eq('id',k.id);
+    if(error){alert('Ödeme kaydedildi ama davet indirimi "uygulandı" olarak işaretlenemedi: '+error.message);return;}}
+}
 async function paketOdemesiIsle(i, {ust, metin, ilk, acik}){
   const o=data[i];
   const indirim = ilk && o.davetEden ? Math.round((o.ucret||0)*DAVET_INDIRIMI) : 0;
-  const beklenen=(o.ucret||0)-indirim;
-  const tutar=await odemeAlPenceresi(o,{ust, beklenen, metin:metin+(indirim?`<br>Davet indirimi %${DAVET_INDIRIMI*100}: −${tlBicim(indirim)}`:'')});
+  const oduller = bekleyenOduller(o);
+  const odul = Math.min(oduller.reduce((t,x)=>t+(+x.kalan),0), Math.max(0,(o.ucret||0)-indirim));
+  const beklenen=(o.ucret||0)-indirim-odul;
+  const tutar=await odemeAlPenceresi(o,{ust, beklenen, metin:metin
+    +(indirim?`<br>Davet indirimi %${DAVET_INDIRIMI*100}: −${tlBicim(indirim)}`:'')
+    +(odul?`<br>Arkadaş davet ödülü (üyenin uyguladığı indirim): −${tlBicim(odul)}`:'')});
   if(tutar===null) return false;
-  return {tutar, eksik:Math.max(0,beklenen-tutar), acik:acik+(indirim?` (davet indirimi %${DAVET_INDIRIMI*100})`:'')};
+  return {tutar, eksik:Math.max(0,beklenen-tutar), odulKullanim:odulDagit(oduller,odul),
+    acik:acik+(indirim?` (davet indirimi %${DAVET_INDIRIMI*100})`:'')+(odul?` (davet ödülü −${tlBicim(odul)})`:'')};
 }
 async function odemeOnayla(i){
   const o=data[i];const yeniPaket=o.paket||20;const kalanMevcut=efektifKalan(o);
@@ -2574,7 +2748,7 @@ async function odemeOnayla(i){
   data[i].toplam_paket=(o.toplam_paket||o.paket||20)+yeniPaket-(o.borc||0);
   data[i].borc=0; data[i].baslangic=todayStr(); data[i].borcTl=(o.borcTl||0)+r.eksik;
   gosterYukleniyor();
-  try{await ogrKaydet(data[i]);if(r.tutar>0)await gelirKaydet(odemeGeliri(o,r.tutar,r.acik));await veriYukle();sayfayiYenile();}
+  try{await ogrKaydet(data[i]);if(r.tutar>0)await gelirKaydet(odemeGeliri(o,r.tutar,r.acik));await odulMahsup(r);await veriYukle();sayfayiYenile();}
   catch(e){alert('Hata: '+e.message);}finally{gizleYukleniyor();}
 }
 async function ilkOdemeOnayla(i){
@@ -2586,9 +2760,13 @@ async function ilkOdemeOnayla(i){
   try{
     await ogrKaydet(data[i]);
     await sb.from('ogrenciler').update({yapilan:0}).eq('id',o._id); // ilk pakette sayaç sıfırdan başlar
-    if(r.tutar>0)await gelirKaydet(odemeGeliri(o,r.tutar,r.acik));
+    if(r.tutar>0)await gelirKaydet(odemeGeliri(o,r.tutar,r.acik));await odulMahsup(r);
     await veriYukle();sayfayiYenile();
-  }catch(e){alert('Hata: '+e.message);}finally{gizleYukleniyor();}
+  }catch(e){alert('Hata: '+e.message);return;}finally{gizleYukleniyor();}
+  // İlk ödemeyle birlikte davet edene ödül tanımlandı: teşekkür mesajı önerilir.
+  const davetci=o.davetEden?data[ogrIdx(o.davetEden)]:null;
+  if(davetci&&davetci.tel&&confirm(`${davetci.ad} bu öğrenciyi davet etmişti ve %${DAVET_INDIRIMI*100} indirim hakkı kazandı ${davetOdulleri.find(x=>x.davet_edilen===o._id)?.durum==='sirada'?'(sıraya alındı; her ay bir hak aktif olur)':'(30 gün geçerli)'}.\n\nTeşekkür mesajı WhatsApp ile gönderilsin mi?`))
+    waAcMetin(davetci.tel, davetTesekkurMesaji(davetci, davetOdulleri.find(x=>x.davet_edilen===o._id)));
 }
 async function pakiYenile(i){
   const o=data[i];const yeniPaket=o.paket||20;const kalanMevcut=efektifKalan(o);
@@ -2597,7 +2775,7 @@ async function pakiYenile(i){
   data[i].toplam_paket=(o.toplam_paket||o.paket||20)+yeniPaket-(o.borc||0);
   data[i].borc=0; data[i].baslangic=todayStr(); data[i].borcTl=(o.borcTl||0)+r.eksik;
   gosterYukleniyor();
-  try{await ogrKaydet(data[i]);if(r.tutar>0)await gelirKaydet(odemeGeliri(o,r.tutar,r.acik));await veriYukle();sayfayiYenile();}
+  try{await ogrKaydet(data[i]);if(r.tutar>0)await gelirKaydet(odemeGeliri(o,r.tutar,r.acik));await odulMahsup(r);await veriYukle();sayfayiYenile();}
   catch(e){alert('Hata: '+e.message);}finally{gizleYukleniyor();}
 }
 async function borcOdemesiAl(ogrId){
@@ -2642,7 +2820,7 @@ function ogrDetay(ogrId){
       <div><div class="ds-baslik">Yoklama</div>${yk.length?`<div class="ds-mini-liste">${yk.map(y=>`<div class="ds-tik" onclick="yoklamaDiger('${o._id}','${y.tarih}')"><span>${tarihTR(y.tarih)} ${gunAdi(new Date(y.tarih+'T12:00').getDay())}</span><span class="ds-durum ds-${YOKLAMA_ETIKET[y.durum][1]}">${YOKLAMA_ETIKET[y.durum][0]}</span><span class="ds-kucuk">${htmlKac(y.aciklama||'')}</span></div>`).join('')}</div>`:'<div class="ds-bos">Henüz yoklama kaydı yok.</div>'}</div>
     </div>
     <div class="ds-baslik">Davet</div>
-    <div class="ds-kucuk" style="line-height:1.7">Davet kodu: <b style="color:var(--ds-ink);letter-spacing:.08em">${o.davetKodu||'—'}</b>${davetEden?` · ${htmlKac(davetEden.ad)} tarafından davet edildi`:''}${davetEttikleri.length?`<br>Davet ettikleri: ${davetEttikleri.map(x=>htmlKac(x.ad)).join(', ')}`:''}</div>
+    <div class="ds-kucuk" style="line-height:1.7">Davet kodu: <b style="color:var(--ds-ink);letter-spacing:.08em">${o.davetKodu||'—'}</b>${davetEden?` · ${htmlKac(davetEden.ad)} tarafından davet edildi`:''}${davetEttikleri.length?`<br>Davet ettikleri: ${davetEttikleri.map(x=>htmlKac(x.ad)).join(', ')}`:''}${odulDetayHtml(o)}</div>
     <div class="ds-secim-btnlar ds-yan" style="margin-top:18px">
       <button class="btn btn-ghost btn-sm" onclick="document.getElementById('ds-detay').remove();waAc(${ogrIdx(o._id)},'wa')">${dsIc('msg')}Mesaj</button>
       <button class="btn btn-ghost btn-sm" onclick="document.getElementById('ds-detay').remove();duzenle(${ogrIdx(o._id)})">${dsIc('edit')}Düzenle</button>
@@ -2763,12 +2941,12 @@ async function notSil(id){
 function mesajSablonlari(o){
   const ad=o.ad.split(' ')[0];
   return {
-    odemeHatirlat:['Ödeme hatırlatması',`Merhaba ${ad} Hanım,\n\nDUMANSSTUDIO paket ödemeniz (${tlBicim(o.ucret||0)}${o.borcTl>0?`, kalan borç ${tlBicim(o.borcTl)}`:''}) için hatırlatma yapmak istedik. Ödeme bilgilerine üye panelinizdeki Ödeme sayfasından ulaşabilirsiniz.\n\nTeşekkür ederiz.\nDUMANSSTUDIO`],
+    odemeHatirlat:['Ödeme hatırlatması',`Merhaba ${ad} Hanım,\n\nDUMANSSTUDIO paket ödemeniz (${tlBicim(odenecekTutar(o).tutar)}${odenecekTutar(o).indirim?`, davet indirimi −${tlBicim(odenecekTutar(o).indirim)} dahil`:''}${o.borcTl>0?`, kalan borç ${tlBicim(o.borcTl)}`:''}) için hatırlatma yapmak istedik. Ödeme bilgilerine üye panelinizdeki Ödeme sayfasından ulaşabilirsiniz.\n\nTeşekkür ederiz.\nDUMANSSTUDIO`],
     paketTeklif:['Paket yenileme',`Merhaba ${ad} Hanım,\n\nPaketinizde ${Math.max(0,efektifKalan(o))} ders kaldı. Derslerinize ara vermeden devam etmek için yeni paketinizi şimdiden planlayabiliriz. Uygun olduğunuzda bize yazmanız yeterli.\n\nDUMANSSTUDIO`],
     dogumgunu:['Doğum günü',`Sevgili ${ad} Hanım,\n\nDoğum gününüzü en içten dileklerimizle kutlarız. Sağlıklı, güçlü ve huzurlu bir yaş dileriz.\n\nMerve Duman ve DUMANSSTUDIO ailesi`],
     dersIptal:['Ders iptali',`Merhaba ${ad} Hanım,\n\nBugünkü dersimizi maalesef yapamayacağız. Ders hakkınız korunur; telafi günü için sizinle iletişime geçeceğiz. Anlayışınız için teşekkür ederiz.\n\nDUMANSSTUDIO`],
     geriKazanim:['Sizi özledik',`Merhaba ${ad} Hanım,\n\nBir süredir sizi stüdyomuzda göremiyoruz ve özledik. Derslerinize yeniden başlamak isterseniz size uygun gün ve saati birlikte planlayalım.\n\nDUMANSSTUDIO`],
-    davet:['Arkadaşını getir',`Merhaba ${ad} Hanım,\n\nDUMANSSTUDIO'ya bir arkadaşınızı davet etmek ister misiniz? Davet kodunuz: ${o.davetKodu||''}\nBu kodla kayıt olan arkadaşınız ilk paketinde %${DAVET_INDIRIMI*100} indirim kazanır.\n\nDUMANSSTUDIO`],
+    davet:['Arkadaşını getir',`Merhaba ${ad} Hanım,\n\nDUMANSSTUDIO'ya bir arkadaşınızı davet etmek ister misiniz? Davet kodunuz: ${o.davetKodu||''} (tek kullanımlıktır; kullanılınca üye panelinizde yeni kodunuz görünür)\nBu kodla kayıt olan arkadaşınız ilk paketinde %${DAVET_INDIRIMI*100} indirim kazanır; arkadaşınız ilk ödemesini yaptığında siz de 30 gün geçerli %${DAVET_INDIRIMI*100} indirim hakkı kazanırsınız.\n\nDUMANSSTUDIO`],
     menuHatirlat:['Günün menüsü',`Merhaba ${ad} Hanım,\n\nBugünün beslenme önerisi üye panelinizde yayında. Afiyet olsun!\n\nDUMANSSTUDIO`],
     panelRehber:['Üye paneli rehberi',`Merhaba ${ad} Hanım,\n\nDUMANSSTUDIO üye paneliyle derslerinizi, ölçümlerinizi ve ödemelerinizi telefonunuzdan takip edebilirsiniz. Nasıl kullanacağınızı bu rehberde anlattık:\n${REHBER_LINK}\n\nPanel adresi: ogrenci.dumansstudio.com\nGiriş, telefon numaranız ve size özel şifrenizle yapılır. Şifreniz yoksa ya da unuttuysanız bu mesaja yanıt vermeniz yeterli.\n\nDUMANSSTUDIO`]
   };
@@ -2844,6 +3022,172 @@ function topluMesajBaslat(){
     k++;ciz();
   });
   ciz();document.body.appendChild(ov);
+}
+
+// ── QR İLE DERSE GİRİŞ (07_qr_giris.sql) ──
+// Ayar: yonetici_ayarlar 'qr_giris' = {aktif, kod, yaricap, lat, lng, baslangic}
+const QR_ADRES='https://ogrenci.dumansstudio.com/?giris=';
+const QR_SONUC={tamam:['Giriş alındı','yesil'],zaten:['Tekrar okuttu','gri'],uzak:['Stüdyodan uzak','kirmizi'],konum_zayif:['Konum zayıf','altin'],
+  ders_yok:['Bugün dersi yok','altin'],iptal:['Dersi iptal/ertelenmiş','altin'],kod:['Eski / yanlış QR','kirmizi'],kapali:['QR kapalıyken','gri']};
+function qrAyar(){return Object.assign({aktif:false,kod:'',yaricap:150,lat:40.7796475,lng:30.3945176},yoneticiAyar.qr_giris||{});}
+async function qrAyarKaydet(degisen){
+  const yeni=Object.assign(qrAyar(),degisen);
+  gosterYukleniyor();
+  try{
+    const {error}=await sb.from('yonetici_ayarlar').upsert({anahtar:'qr_giris',deger:yeni,guncelleme:new Date().toISOString()});
+    if(error)throw error;
+    yoneticiAyar.qr_giris=yeni;renderQr();
+  }catch(e){alert('Kaydedilemedi: '+e.message);}finally{gizleYukleniyor();}
+}
+function qrKutuphane(){
+  if(window.qrcode)return Promise.resolve();
+  return new Promise((coz,red)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js';s.onload=coz;s.onerror=()=>red(new Error('QR oluşturucu yüklenemedi.'));document.head.appendChild(s);});
+}
+function qrSvg(metin,boyut){const q=qrcode(0,'M');q.addData(metin);q.make();return q.createSvgTag({cellSize:boyut||8,margin:2,scalable:true});}
+async function qrAcKapa(ac){
+  const a=qrAyar();
+  if(ac){
+    const f=await dsForm({ust:'QR ile giriş',baslik:'QR girişini aç',
+      metin:'Afişi stüdyo girişine astıktan sonra açın. Başlangıç tarihinden itibaren, panel hesabı olan öğrencilerin QR okutmadığı dersleri gece <b>"gelmedi"</b> olarak işlenir (ders paketten yine düşer). Panel hesabı olmayan öğrenciler eskisi gibi "geldi" sayılır.',
+      alanlar:[{ad:'baslangic',etiket:'Başlangıç tarihi',tip:'date',deger:gunEkle(todayStr(),1),zorunlu:true,not:'Bu tarihten önceki dersler eski kurala göre işlenir.'}],onay:'QR girişini aç'});
+    if(!f)return;
+    if(!a.kod){a.kod=Math.random().toString(36).slice(2,8).toUpperCase()+Date.now().toString(36).slice(-6).toUpperCase();}
+    await qrAyarKaydet({aktif:true,baslangic:f.baslangic,kod:a.kod});
+  }else{
+    if(!confirm('QR girişi kapatılsın mı?\n\nKapalıyken QR okutulamaz ve gece işlemi eski kurala döner: iptal edilmeyen dersler "geldi" sayılır.'))return;
+    await qrAyarKaydet({aktif:false});
+  }
+}
+async function qrKodYenile(){
+  if(!confirm('QR kod yenilensin mi?\n\nEski afiş HEMEN geçersiz olur; yeni afişi yazdırıp asmanız gerekir. Kodun dışarıya yayıldığını düşünüyorsanız kullanın.'))return;
+  const kod=Math.random().toString(36).slice(2,8).toUpperCase()+Date.now().toString(36).slice(-6).toUpperCase();
+  await qrAyarKaydet({kod});
+}
+async function qrYaricap(){
+  const a=qrAyar();
+  const f=await dsForm({ust:'QR ile giriş',baslik:'Kabul mesafesi',metin:'Telefon konumu bu mesafe içindeyse giriş kabul edilir. Telefon konumları şehir içinde 20–150 m sapabilir; çok küçük seçerseniz stüdyodaki öğrenci reddedilebilir.',
+    alanlar:[{ad:'yaricap',etiket:'Mesafe',tip:'select',deger:String(a.yaricap),secenekler:[['100','100 m (sıkı)'],['150','150 m (önerilen)'],['250','250 m'],['400','400 m (gevşek)']]}],onay:'Kaydet'});
+  if(f)await qrAyarKaydet({yaricap:+f.yaricap});
+}
+function qrKonumBuradan(){
+  if(!navigator.geolocation){alert('Bu cihaz konum bilgisini desteklemiyor.');return;}
+  gosterYukleniyor();
+  navigator.geolocation.getCurrentPosition(async p=>{
+    gizleYukleniyor();
+    const c=p.coords;
+    if(c.accuracy>60&&!confirm(`Konum doğruluğu düşük görünüyor (±${Math.round(c.accuracy)} m). Yine de stüdyo konumu olarak kaydedilsin mi?\n\nDaha iyi sonuç için stüdyonun içinde, birkaç saniye bekleyip tekrar deneyin.`))return;
+    if(!confirm('Şu an bulunduğunuz yer stüdyonun konumu olarak kaydedilsin mi? (Bunu stüdyonun içindeyken yapın.)'))return;
+    await qrAyarKaydet({lat:+c.latitude.toFixed(7),lng:+c.longitude.toFixed(7)});
+  },e=>{gizleYukleniyor();alert(e.code===1?'Konum izni verilmedi.':'Konum alınamadı, tekrar deneyin.');},{enableHighAccuracy:true,timeout:20000,maximumAge:0});
+}
+async function qrAfisYazdir(){
+  const a=qrAyar();
+  try{await qrKutuphane();}catch(e){alert(e.message);return;}
+  const w=window.open('','_blank');if(!w){alert('Açılır pencereye izin verin.');return;}
+  w.document.write(`<!doctype html><html lang="tr"><head><meta charset="utf-8"><title>DumansStudio — Derse giriş QR</title>
+  <style>@page{size:A4;margin:0}*{box-sizing:border-box;margin:0}body{font-family:Georgia,'Times New Roman',serif;color:#1a1714;background:#fff}
+  .a{width:210mm;height:297mm;padding:22mm 20mm;display:flex;flex-direction:column;align-items:center;text-align:center;border:0}
+  .m{font-size:13pt;letter-spacing:.4em;color:#946C18}.t{font-size:40pt;margin:10mm 0 3mm;font-weight:500}.s{font-family:Arial,sans-serif;font-size:13pt;color:#555;line-height:1.5}
+  .q{width:120mm;height:120mm;margin:10mm 0 8mm;padding:6mm;border:1.2mm solid #d4af37;border-radius:6mm}.q svg{width:100%;height:100%}
+  ol{font-family:Arial,sans-serif;font-size:12pt;text-align:left;line-height:1.9;color:#333;margin:0 auto}.n{margin-top:auto;font-family:Arial,sans-serif;font-size:9.5pt;color:#888;line-height:1.5}</style></head>
+  <body><div class="a"><div class="m">DUMANSSTUDIO</div><div class="t">Derse giriş</div>
+  <div class="s">Dersinize girmeden önce bu kodu üye panelinizden<br>ya da telefonunuzun kamerasıyla okutun.</div>
+  <div class="q">${qrSvg(QR_ADRES+a.kod,10)}</div>
+  <ol><li>QR kodu okutun.</li><li>Konum iznine "İzin ver" deyin.</li><li>"Girişiniz alındı" ekranını görün. İyi dersler!</li></ol>
+  <div class="n">Konumunuz yalnızca stüdyoda olduğunuzu doğrulamak için kullanılır ve saklanmaz.<br>Okutulmayan dersler gün sonunda "gelmedi" olarak işlenir. · ogrenci.dumansstudio.com</div></div>
+  <script>setTimeout(function(){window.focus();window.print();},500)<\/script></body></html>`);
+  w.document.close();
+}
+async function renderQr(){
+  const el=document.getElementById('qr-c');if(!el)return;
+  const a=qrAyar();const bugunS=todayStr();
+  const {data:kayit}=await sb.from('qr_girisler').select('*').eq('tarih',bugunS).order('zaman',{ascending:false});
+  const k=kayit||[];
+  const bugunDersi=data.filter(o=>(o.gunler||[]).includes(new Date().getDay())&&o.ilkOdemeAlindi!==false&&efektifKalan(o)>0&&!tatilMap[bugunS]);
+  const girenler=new Set(k.filter(x=>x.sonuc==='tamam').map(x=>x.ogrenci_id));
+  const ykGeldi=new Set(yoklamaData.filter(y=>y.tarih===bugunS&&y.durum==='geldi').map(y=>y.ogrenci_id));
+  const bekleyen=bugunDersi.filter(o=>!girenler.has(o._id)&&!ykGeldi.has(o._id));
+  el.innerHTML=`<div class="ds-ay">
+    <div class="ds-ay-ad" style="margin-bottom:4px">QR ile derse giriş</div>
+    <div class="ds-kucuk" style="margin-bottom:14px">Öğrenci girişteki afişi okutur; telefonu stüdyoya yakınsa dersi "geldi" olarak işlenir. Konum yalnızca uzaklığı ölçmek için kullanılır, saklanmaz.</div>
+    <div class="card ds-qr-durum">
+      <div><div class="ds-eyebrow">${dsIc(a.aktif?'check':'ban')} Durum</div><div class="ds-orta" style="color:${a.aktif?'#4A6645':'var(--ds-ink5)'}">${a.aktif?'Açık':'Kapalı'}</div>
+        <div class="ds-kucuk">${a.aktif?`${a.baslangic?tarihTR(a.baslangic)+' tarihinden itibaren ':''}QR okutulmayan dersler gece "gelmedi" işlenir.`:'Kapalıyken iptal edilmeyen dersler gece "geldi" sayılır.'}</div></div>
+      <button class="btn ${a.aktif?'btn-ghost':'btn-primary'}" onclick="qrAcKapa(${!a.aktif})">${a.aktif?'Kapat':'QR girişini aç'}</button>
+    </div>
+    <div class="ds-qr-iki">
+      <div class="card ds-qr-onizleme"><div class="ds-eyebrow" style="margin-bottom:10px">Giriş afişi</div><div id="qr-resim" class="ds-qr-resim"><div class="spinner"></div></div>
+        <div class="ds-secim-btnlar ds-yan" style="justify-content:center;margin-top:12px">
+          <button class="btn btn-primary btn-sm" onclick="qrAfisYazdir()">${dsIc('printer')}Afişi yazdır</button>
+          <button class="btn btn-ghost btn-sm" onclick="qrKodYenile()">${dsIc('refresh')}Kodu yenile</button></div></div>
+      <div class="card"><div class="ds-eyebrow" style="margin-bottom:10px">Ayarlar</div>
+        <div class="ds-qr-ayar"><span>Kabul mesafesi</span><b>${a.yaricap} m</b><button class="ds-link" onclick="qrYaricap()">Değiştir</button></div>
+        <div class="ds-qr-ayar"><span>Stüdyo konumu</span><b>${(+a.lat).toFixed(5)}, ${(+a.lng).toFixed(5)}</b><button class="ds-link" onclick="qrKonumBuradan()">Bulunduğum yer yap</button></div>
+        <div class="ds-kucuk" style="margin-top:8px;line-height:1.6">Konumu ilk kurulumda bir kez, stüdyonun içindeyken "Bulunduğum yer yap" ile ayarlamanızı öneririz. Panel hesabı olmayan öğrenciler QR okutamaz; onlara Öğrenciler sayfasından şifre oluşturun.</div></div>
+    </div>
+    <div class="ds-baslik">Bugün · ${girenler.size} giriş${a.aktif&&bekleyen.length?` · ${bekleyen.length} öğrenci henüz okutmadı`:''}</div>
+    ${k.length?`<div class="card ds-liste">${k.map(x=>{const o=data.find(d=>d._id===x.ogrenci_id);const [et,renk]=QR_SONUC[x.sonuc]||[x.sonuc,'gri'];
+      return `<div class="ds-sat" style="grid-template-columns:auto 1fr auto"><div class="ds-sat-tarih"><b>${new Date(x.zaman).toLocaleTimeString('tr-TR',{hour:'2-digit',minute:'2-digit'})}</b></div>
+        <div class="ds-sat-orta"><div class="ds-sat-ad">${htmlKac(o?o.ad:'Silinmiş öğrenci')}</div><div class="ds-kucuk">${x.mesafe!=null?'Stüdyoya ~'+x.mesafe+' m':''}${x.dogruluk!=null&&x.dogruluk<9999?' · konum ±'+x.dogruluk+' m':''}</div></div>
+        <div class="ds-sat-sag"><span class="ds-durum ds-${renk}">${et}</span></div></div>`;}).join('')}</div>`:'<div class="ds-bos">Bugün henüz QR okutulmadı.</div>'}
+    ${a.aktif&&bekleyen.length?`<div class="ds-not">${dsIc('clock')} Bugün dersi olup henüz okutmayanlar: ${bekleyen.map(o=>htmlKac(o.ad)+(o._authId?'':' (panel hesabı yok)')).join(', ')}. Telefonu yanında olmayan bir öğrenciyi Takvim'den elle "geldi" işaretleyebilirsiniz.</div>`:''}
+  </div>`;
+  try{await qrKutuphane();const r=document.getElementById('qr-resim');if(r)r.innerHTML=a.kod?qrSvg(QR_ADRES+a.kod,6):'<div class="ds-kucuk">QR girişini açınca kod oluşturulur.</div>';}
+  catch(e){const r=document.getElementById('qr-resim');if(r)r.innerHTML='<div class="ds-kucuk">'+e.message+'</div>';}
+}
+
+// ── DAVET SIRALAMASI: en çok yeni üye getiren öğrenciler ──
+let davetDonem='tumu';
+const DAVET_DONEMLERI={ay:['Bu ay',()=>{const n=new Date();return new Date(n.getFullYear(),n.getMonth(),1);}],
+  uc:['Son 3 ay',()=>{const n=new Date();return new Date(n.getFullYear(),n.getMonth()-2,1);}],
+  yil:['Bu yıl',()=>new Date(new Date().getFullYear(),0,1)],tumu:['Tümü',()=>new Date(2000,0,1)]};
+function davetTesekkurGenel(o,n){
+  return `Merhaba ${o.ad.split(' ')[0]} Hanım,\n\nBugüne kadar ${n} arkadaşınızı DUMANSSTUDIO ailesine kattınız. Bizi önerdiğiniz için çok teşekkür ederiz!\n\nDUMANSSTUDIO`;
+}
+function renderDavetler(){
+  const el=document.getElementById('davetler-c');if(!el)return;
+  const bas=DAVET_DONEMLERI[davetDonem][1]();
+  const kayitlar=davetGecmisi.filter(g=>new Date(g.tarih)>=bas);
+  const odedi=id=>davetOdulleri.some(x=>x.davet_edilen===id)||data.some(x=>x._id===id&&x.ilkOdemeAlindi!==false);
+  const gruplar={};
+  kayitlar.forEach(g=>{(gruplar[g.sahibi]=gruplar[g.sahibi]||[]).push(g);});
+  const liste=Object.entries(gruplar).map(([id,l])=>{
+    const o=data.find(x=>x._id===id);if(!o)return null;
+    const gelir=gelirData.filter(g=>g.tip==='gelir'&&l.some(k=>k.kullanan===g.ogrenciId)).reduce((t,g)=>t+(+g.tutar||0),0);
+    return {o,l,sayi:l.length,odeyen:l.filter(k=>odedi(k.kullanan)).length,aktif:l.filter(k=>data.some(x=>x._id===k.kullanan)).length,gelir,son:l.reduce((m,k)=>k.tarih>m?k.tarih:m,'')};
+  }).filter(Boolean).sort((a,b)=>b.sayi-a.sayi||b.odeyen-a.odeyen||(a.son<b.son?1:-1));
+  const enCok=liste.length?liste[0].sayi:1;
+  const toplam=kayitlar.length, odeyen=kayitlar.filter(k=>odedi(k.kullanan)).length;
+  const gelirToplam=liste.reduce((t,x)=>t+x.gelir,0);
+  const trK=ts=>new Date(ts).toLocaleDateString('tr-TR',{day:'numeric',month:'short',year:'numeric'});
+  el.innerHTML=`<div class="ds-ay">
+    <div class="ds-ay-ad" style="margin-bottom:4px">Davet sıralaması</div>
+    <div class="ds-kucuk" style="margin-bottom:14px">Davet koduyla en çok yeni üye getiren öğrenciler. Her kod bir kez kullanılır; kullanılınca öğrenciye yeni kod verilir.</div>
+    <div class="ds-donem">${Object.entries(DAVET_DONEMLERI).map(([k,v])=>`<button class="btn ${k===davetDonem?'btn-primary':'btn-ghost'}" onclick="davetDonem='${k}';renderDavetler()">${v[0]}</button>`).join('')}</div>
+    <div class="ds-ay-uc" style="margin-top:12px">
+      <div class="card"><div class="ds-eyebrow">${dsIc('users')} Davetle gelen</div><div class="ds-orta">${toplam}</div><div class="ds-kucuk">yeni üye</div></div>
+      <div class="card"><div class="ds-eyebrow">${dsIc('check')} İlk ödemesini yapan</div><div class="ds-orta">${odeyen}</div><div class="ds-kucuk">${toplam?'%'+Math.round(odeyen/toplam*100):'—'}</div></div>
+      <div class="card"><div class="ds-eyebrow">${dsIc('wallet')} Davetle gelenlerden</div><div class="ds-orta">${tlBicim(gelirToplam)}</div><div class="ds-kucuk">toplam alınan ödeme</div></div>
+    </div>
+    <div class="ds-baslik">${liste.length} davet eden öğrenci</div>
+    ${liste.length?`<div class="card ds-liste">${liste.map((x,s)=>`<details class="ds-davet-sira">
+      <summary>
+        <span class="ds-sira${s<3?' ds-sira-'+(s+1):''}">${s+1}</span>
+        <span class="ds-sira-orta"><b>${htmlKac(x.o.ad)}</b><small>${x.odeyen} ödeme yaptı · ${x.aktif} hâlâ üye · son davet ${trK(x.son)}</small>
+          <i class="ds-sira-cubuk"><i style="width:${Math.max(6,Math.round(x.sayi/enCok*100))}%"></i></i></span>
+        <span class="ds-sira-sayi"><b>${x.sayi}</b><small>davet</small></span>
+      </summary>
+      <div class="ds-sira-ic">
+        ${x.l.map(k=>{const d=data.find(y=>y._id===k.kullanan);return `<div><span>${d?htmlKac(d.ad):'<i>Ayrılmış üye</i>'}</span><span class="ds-kucuk">${trK(k.tarih)}</span><span class="ds-durum ds-${odedi(k.kullanan)?'yesil':'gri'}">${odedi(k.kullanan)?'Ödeme yaptı':'İlk ödeme bekleniyor'}</span></div>`;}).join('')}
+        ${x.gelir?`<div class="ds-kucuk" style="padding-top:6px">Bu davetlerden alınan ödeme: <b>${tlBicim(x.gelir)}</b></div>`:''}
+        <div class="ds-kucuk" style="padding-top:2px">${odulDetayHtml(x.o).replace(/^<br>/,'')||'Henüz davet ödülü yok.'}</div>
+        <div class="ds-secim-btnlar ds-yan" style="margin-top:10px">
+          ${x.o.tel?`<button class="btn btn-ghost btn-sm" onclick="waAcMetin('${x.o.tel}',davetTesekkurGenel(data[ogrIdx('${x.o._id}')],${davetGecmisi.filter(g=>g.sahibi===x.o._id).length}))">${dsIc('heart')}Teşekkür et</button>`:''}
+          <button class="btn btn-ghost btn-sm" onclick="ogrDetay('${x.o._id}')">${dsIc('user')}Öğrenci detayı</button>
+        </div>
+      </div></details>`).join('')}</div>`
+    :`<div class="ds-bos">${davetDonem==='tumu'?'Henüz davet koduyla gelen üye yok.':'Bu dönemde davet koduyla gelen üye yok.'}</div>`}
+  </div>`;
 }
 
 // ── TAM YEDEK (tüm tablolar) ──
@@ -3505,7 +3849,7 @@ function renderEkleForm(o={}){
       </select>
     </div>
     <div><div class="field-label">PAKET (DERS SAYISI)</div><input id="f-paket" class="field-input" type="number" value="${o.paket||20}"></div>
-    <div><div class="field-label">ÜCRET (₺)</div><input id="f-ucret" class="field-input" type="number" value="${o.ucret||0}"></div>
+    <div><div class="field-label">ÜCRET (₺)</div><input id="f-ucret" class="field-input" type="number" value="${o.ucret||0}" oninput="davetKontrol()"></div>
     <div><div class="field-label">DERS SAATİ</div><input id="f-saat" class="field-input" type="time" value="${o.saat||'09:00'}"></div>
     <div><div class="field-label">DERS GÜNLERİ</div>
       <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">
@@ -3516,7 +3860,8 @@ function renderEkleForm(o={}){
       </div>
     </div>
     <div><div class="field-label">İPTAL HAKKI</div><input id="f-iptal" class="field-input" type="number" value="${o.iptalHakki??1}"></div>
-    ${yeni?`<div><div class="field-label">DAVET KODU</div><input id="f-davet" class="field-input" placeholder="Ör. DS4K7P" style="text-transform:uppercase"><div class="ds-kucuk" style="margin-top:4px">Bir öğrencinin davetiyle geldiyse kodunu yazın; ilk ödemede %10 indirim önerilir.</div></div>`:''}
+    ${!o.davetEden?`<div><div class="field-label">DAVET KODU</div><input id="f-davet" class="field-input" placeholder="Ör. DS4K7P" style="text-transform:uppercase" oninput="davetKontrol()"><div id="f-davet-durum" class="ds-kucuk" style="margin-top:4px">Bir öğrencinin davetiyle geldiyse kodunu yazın; ilk paket ödemesinde %${DAVET_INDIRIMI*100} indirim önerilir.</div></div>`
+      :`<div><div class="field-label">DAVET</div><div class="ds-kucuk">${htmlKac(data[ogrIdx(o.davetEden)]?.ad||'Kayıtlı olmayan bir öğrenci')} tarafından davet edildi.</div></div>`}
     ${yeni?`<label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
       <input type="checkbox" id="f-ilkodeme" style="width:auto"> İlk ödeme henüz alınmadı
     </label>`:''}
@@ -3555,9 +3900,10 @@ async function kaydet(){
   const paket=parseInt(document.getElementById('f-paket')?.value)||20;
   let davetEden=onceki?onceki.davetEden:null;
   const davetKod=(document.getElementById('f-davet')?.value||'').trim().toUpperCase();
-  if(!onceki&&davetKod){
+  if(davetKod&&!davetEden){
     const davetci=data.find(x=>(x.davetKodu||'').toUpperCase()===davetKod);
-    if(!davetci){alert('Bu davet kodu bulunamadı: '+davetKod);return;}
+    if(!davetci){alert(kullanilmisKodMu(davetKod)?KULLANILMIS_KOD_MESAJI:'Bu davet kodu bulunamadı: '+davetKod);return;}
+    if(onceki&&davetci._id===onceki._id){alert('Öğrenci kendi davet kodunu kullanamaz.');return;}
     davetEden=davetci._id;
   }
   const o={
